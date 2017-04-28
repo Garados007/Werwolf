@@ -4,14 +4,15 @@
 
 
 //Database
-define('db_server', 'localhost');
-define('db_user', 'root');
-define('db_pw', '');
+define('DB_SERVER', 'localhost');
+define('DB_USER', 'root');
+define('DB_PW', '');
+define('DB_NAME', 'werwolf');
 
 //Runtime Setting
-define('release_mode', false);
+define('RELEASE_MODE', false);
 
 //Server Setting
-define('uri_host', 'http://localhost/');
-define('uri_path', 'werwolf/'); //if you leave this blank, then the root of the webspace is the root of this project
+define('URI_HOST', 'http://localhost/');
+define('URI_PATH', 'werwolf/'); //if you leave this blank, then the root of the webspace is the root of this project
 
