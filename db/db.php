@@ -34,6 +34,18 @@ class DB {
 		else return self::getMultiResult(file_get_contents($path));
 	}
 	
+	public static function executeFormatFile($path, $data) {
+		if (!file_exists($path)) return false;
+		extract ($data);
+		ob_start();
+		$success = true;
+		include $path;
+		$sql = ob_get_contents();
+		ob_end_clean();
+		if ($success === false) return false;
+		return self::getMultiResult($sql);
+	}
+	
 	public static function getError() {
 		return self::$connection->error;
 	}
