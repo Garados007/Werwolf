@@ -35,7 +35,9 @@ class DB {
 	}
 	
 	public static function executeFormatFile($path, $data) {
+		// echo ".";
 		if (!file_exists($path)) return false;
+		// echo ".";
 		extract ($data);
 		ob_start();
 		$success = true;

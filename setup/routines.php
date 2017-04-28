@@ -23,18 +23,26 @@ catch (Exception $ex) {
 	return;
 }
 
-echo '<br/>Try to create tables if not exists';
-if ($result = DB::executeFormatFile(dirname(__FILE__).'/sql/createDatabase.sql', array())) {
-	$result->executeAll();
-	if (DB::getError() != null) {
-		echo '<br/>Error while execution.<br/>Error:\''.DB::getError().'\'';
-		return;
+function execSql($file) {
+	if ($result = DB::executeFormatFile($file, array())) {
+		$result->executeAll();
+		if (DB::getError() != null) {
+			echo '<br/>Error while execution.<br/>Error:\''.DB::getError().'\'';
+			return false;
+		}
 	}
+	else {
+		echo '<br/>Error while execution.<br/>Error:"'.DB::getError().'"';
+		return false;
+	}
+	return true;
 }
-else {
-	echo '<br/>Error while execution.<br/>Error:"'.DB::getError().'"';
-	return;
-}
+
+echo '<br/>Try to create tables if not exists';
+if (!execSql(dirname(__FILE__).'/sql/createDatabase.sql')) return;
+
+echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
+if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 
 
 
