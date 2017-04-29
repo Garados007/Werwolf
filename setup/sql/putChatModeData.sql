@@ -45,5 +45,6 @@ REPLACE INTO <?php echo DB_PREFIX; ?>RoleModeKeys
 	('wolf'),
 	('major'),
 	('armor'),
-	('pair')
+	('pair'),
+	('grandpa')
 ;
