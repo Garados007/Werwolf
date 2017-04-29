@@ -25,3 +25,25 @@ REPLACE INTO <?php echo DB_PREFIX; ?>ChatModes
 	('lovepair', 'storytel', TRUE,  TRUE),
 	('lovepair', 'pair',     TRUE,  TRUE)
 ;
+
+REPLACE INTO <?php echo DB_PREFIX; ?>ChatModeKeys
+	(ChatMode) VALUES
+	('common'),
+	('story'),
+	('voteMajr'),
+	('voteArmr'),
+	('voteVilg'),
+	('voteWolf'),
+	('lovepair')
+;
+
+REPLACE INTO <?php echo DB_PREFIX; ?>RoleModeKeys
+	(RoleKey) VALUES
+	('log'),
+	('storytel'),
+	('villager'),
+	('wolf'),
+	('major'),
+	('armor'),
+	('pair')
+;
