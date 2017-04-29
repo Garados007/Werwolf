@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Chats (
 	ChatMode VARCHAR(8) NOT NULL,
 	Opened BOOLEAN NOT NULL,
 	
+	UNIQUE (Game, ChatMode),
 	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id) -- ,
 	-- FOREIGN KEY (ChatMode(8)) REFERENCES <?php echo DB_PREFIX; ?>ChatModeKeys(ChatMode)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
