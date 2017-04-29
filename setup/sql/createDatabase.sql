@@ -4,8 +4,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Groups (
 	Created INT NOT NULL,
 	LastGame INT NOT NULL,
 	Leader INT UNSIGNED NOT NULL,
-	CurrentGame INT UNSIGNED,
-	FOREIGN KEY (CurrentGame) REFERENCES <?php echo DB_PREFIX; ?>Games(Id)
+	CurrentGame INT UNSIGNED
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
@@ -17,6 +16,9 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
 	
 	FOREIGN KEY (MainGroup) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+ALTER TABLE <?php echo DB_PREFIX; ?>Groups ADD CONSTRAINT
+	FOREIGN KEY (CurrentGame) REFERENCES <?php echo DB_PREFIX; ?>Games(Id);
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Phases (
 	Phase VARCHAR(8) NOT NULL PRIMARY KEY,
@@ -96,7 +98,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatLog (
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
 	Chat INT UNSIGNED NOT NULL PRIMARY KEY,
 	VoteStart INT NOT NULL,
-	VoteEnd INT NOT,
+	VoteEnd INT,
 	ResultTarget INT UNSIGNED,
 	
 	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
