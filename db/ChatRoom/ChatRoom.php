@@ -1,6 +1,7 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
 
 class ChatRoom {
 	//the id of this chatroom
@@ -11,6 +12,8 @@ class ChatRoom {
 	public $chatMode;
 	//say if the chatroom is opened - if not, then its readonly
 	public $opened;
+	//the connected voting
+	public $voting;
 	
 	public function __construct($id) {
 		$result = DB::executeFormatFile(
@@ -26,6 +29,9 @@ class ChatRoom {
 			$this->opened = boolval($entry["Opened"]);
 		}
 		$result->free();
+		$this->voting = new VoteSetting($this->id);
+		if ($this->voting->chat === null)
+			$this->voting = null;
 	}
 	
 	public static function createChatRoom($game, $mode) {
@@ -51,5 +57,9 @@ class ChatRoom {
 			)
 		);
 		$result->free();
+	}
+
+	public function createVoting($end) {
+		$this->voting = VoteSetting::createVoteSetting($this->id, $end);
 	}
 }
