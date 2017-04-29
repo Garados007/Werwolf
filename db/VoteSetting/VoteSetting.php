@@ -3,7 +3,7 @@
 include_once dirname(__FILE__).'/../db.php';
 
 class VoteSetting {
-	//the chat where this voting is asigned
+	//the chat id where this voting is asigned
 	public $chat;
 	//the start date when this voting starts
 	public $voteStart;

@@ -1,13 +1,15 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
+include_once dirname(__FILE__).'/../Player/Player.php';
 
 class VoteEntry {
 	//the vote setting id
 	public $setting;
-	//the user who votes
+	//the user id who votes
 	public $voter;
-	//the target of the voting
+	//the target id of the voting
 	public $target;
 	//the date of vote
 	public $date;
@@ -23,7 +25,7 @@ class VoteEntry {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVotesOfSetting.sql',
 			array(
-				"setting" => $setting
+				"setting" => $setting->chat
 			)
 		);
 		$list = array();
@@ -36,12 +38,12 @@ class VoteEntry {
 		return $list;
 	}
 	
-	public static function getVoteByUser($setting, $user) {
+	public static function getVoteByUser($setting, $player) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVotesOfUser.sql',
 			array(
-				"setting" => $setting,
-				"user" => $user
+				"setting" => $setting->chat,
+				"user" => $player->user
 			)
 		);
 		$item;
@@ -60,13 +62,14 @@ class VoteEntry {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addVote.sql',
 			array(
-				"setting" => $setting,
-				"voter" => $voter,
-				"target" => $target,
+				"setting" => $setting->chat,
+				"voter" => $user->user,
+				"target" => $target->user,
 				"date" => $date
 			)
 		);
 		$result->free();
-		return new VoteEntry($setting, $user, $target, $date);
+		return new VoteEntry($setting->chat, $user->user, 
+			$target->user, $date);
 	}
 }
