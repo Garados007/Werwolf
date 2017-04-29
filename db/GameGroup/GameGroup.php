@@ -1,6 +1,6 @@
 <?php
 
-include_once dirname(__FILE__).'/../../db/db.php';
+include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../Phase/Phase.php';
 
 class GameGroup { 
