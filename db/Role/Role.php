@@ -10,7 +10,7 @@ class Role {
 	//the index of all player with this role
 	public $index;
 	
-	public __construct($roleKey, $index) {
+	public function __construct($roleKey, $index) {
 		$this->roleKey = $roleKey;
 		$this->index = $index;
 	}

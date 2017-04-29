@@ -38,6 +38,16 @@ function execSql($file) {
 	return true;
 }
 
+function importPhp($dir) {
+	$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
+	$it->rewind();
+	while ($it->valid()) {
+		if (!$it->isDot() && $it->isFile() &&$it->getExtension() == 'php')
+			include_once $it->getPathname();
+		$it->next();
+	}
+}
+
 echo '<br/>Try to create tables if not exists';
 if (!execSql(dirname(__FILE__).'/sql/createDatabase.sql')) return;
 
@@ -47,6 +57,8 @@ if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 echo '<br/>Add data to '.DB_PREFIX.'Phases table';
 if (!execSql(dirname(__FILE__).'/sql/putPhases.sql')) return;
 
-
-
+echo '<br/>Try to include DB files';
+importPhp(dirname(__FILE__).'/../db');
+echo '<br/>All Files are okay.';
+			
 echo '<br/>Checkup Finished. Everything is okay.';

@@ -46,9 +46,9 @@ class Group {
 				"user" => $user
 			)
 		);
-		result->getResult()->free();
-		$entry = result->getResult()->getEntry();
-		result->free();
+		$result->getResult()->free();
+		$entry = $result->getResult()->getEntry();
+		$result->free();
 		return new Group($entry["id"]);
 	}
 	

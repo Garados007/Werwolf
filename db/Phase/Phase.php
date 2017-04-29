@@ -8,7 +8,7 @@ class Phase {
 	//the next phase
 	public $next;
 	
-	public function __construct(id) {
+	public function __construct($id) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPhase.sql',
 			array(

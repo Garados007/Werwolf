@@ -75,7 +75,7 @@ class ChatMode {
 		return self::$roleKeys;
 	}
 	
-	public static getAllModesFromChat($chat) {
+	public static function getAllModesFromChat($chat) {
 		$result = array();
 		foreach (self::getRoleKeys() as $role) {
 			$result[$role] = new ChatMode($chat, $role);
