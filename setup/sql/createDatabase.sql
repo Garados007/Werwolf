@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Groups (
 	Created INT NOT NULL,
 	LastGame INT NOT NULL,
 	Leader INT UNSIGNED NOT NULL,
-	ActiveStory INT UNSIGNED
+	CurrentGame INT UNSIGNED,
+	FOREIGN KEY (CurrentGame) REFERENCES <?php echo DB_PREFIX; ?>Games(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
