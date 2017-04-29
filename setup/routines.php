@@ -44,6 +44,8 @@ if (!execSql(dirname(__FILE__).'/sql/createDatabase.sql')) return;
 echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
 if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 
+echo '<br/>Add data to '.DB_PREFIX.'Phases table';
+if (!execSql(dirname(__FILE__).'/sql/putPhases.sql')) return;
 
 
 
