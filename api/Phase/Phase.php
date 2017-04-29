@@ -14,10 +14,11 @@ class Phase {
 			array(
 				"id" => $id
 			)
-		)->getResult();
-		if ($entry = $result->getEntry()) {
+		);
+		if ($entry = $result->getResult()->getEntry()) {
 			$this->current = $entry["Phase"];
 			$this->next = $entry["NextPhase"];
 		}
+		$result->flush();
 	}
 }
