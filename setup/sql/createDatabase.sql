@@ -93,10 +93,9 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatLog (
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
-	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	Chat INT UNSIGNED NOT NULL,
+	Chat INT UNSIGNED NOT NULL PRIMARY KEY,
 	VoteStart INT NOT NULL,
-	VoteEnd INT NOT NULL,
+	VoteEnd INT NOT,
 	ResultTarget INT UNSIGNED,
 	
 	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
@@ -109,5 +108,5 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
 	VoteDate INT NOT NULL,
 	
 	PRIMARY KEY (Setting, Voter),
-	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Id)
+	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
