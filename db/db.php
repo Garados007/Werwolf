@@ -51,6 +51,10 @@ class DB {
 	public static function getError() {
 		return self::$connection->error;
 	}
+	
+	public static function escape($text) {
+		return addslashes(self::$connection->real_escape_string($text), '%_');
+	}
 }
 
 class DBMultiResult {

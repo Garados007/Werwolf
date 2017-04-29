@@ -27,4 +27,29 @@ class ChatRoom {
 		}
 		$result->free();
 	}
+	
+	public static function createChatRoom($game, $mode) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/createChatRoom.sql',
+			array(
+				"game" => $game,
+				"mode" => $mode
+			)
+		);
+		$result->getResult->free();
+		$entry = $result->getResult->getEntry();
+		$result->free();
+		return new ChatRoom($entry["Id"]);
+	}
+	
+	public function changeOpenedState($opened) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/changeOpenedState.sql',
+			array(
+				"opened" => $this->opened = $opened,
+				"id" => $this->id
+			)
+		);
+		$result->free();
+	}
 }
