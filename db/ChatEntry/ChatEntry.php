@@ -1,8 +1,9 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class ChatEntry {
+class ChatEntry extends JsonExport {
 	//the reference to the chat
 	public $chat;
 	//the user who postet this text
@@ -13,6 +14,7 @@ class ChatEntry {
 	public $sendDate;
 	
 	public function __construct($chat, $user, $text, $sendDate) {
+		$this->jsonNames = array('chat', 'user', 'text', 'sendDate');
 		$this->chat = $chat;
 		$this->user = $user;
 		$this->text = $text;

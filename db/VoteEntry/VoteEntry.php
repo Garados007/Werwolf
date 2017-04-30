@@ -3,6 +3,7 @@
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
 include_once dirname(__FILE__).'/../Player/Player.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
 class VoteEntry {
 	//the vote setting id
@@ -15,6 +16,7 @@ class VoteEntry {
 	public $date;
 	
 	public function __construct($setting, $voter, $target, $date) {
+		$this->jsonNames = array('setting', 'voter', 'target', 'date');
 		$this->setting = $setting;
 		$this->voter = $voter;
 		$this->target = $target;

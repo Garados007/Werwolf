@@ -18,14 +18,14 @@ class DB {
 	}
 	
 	public static function getResult($sql) { //DBResult
-		if (self::$connection !== null) self::connect();
+		if (self::$connection === null) self::connect();
 		return new DBResult(self::$connection->query($sql));
 	}
 	
 	public static function getMultiResult($sql) { //DBMultiResult
-		if (self::$connection !== null) self::connect();
+		if (self::$connection === null) self::connect();
 		$result = self::$connection->multi_query($sql);
-		if ($result === false) return false;
+		if (!$result) return false;
 		return new DBMultiResult(self::$connection);
 	}
 	
@@ -49,26 +49,44 @@ class DB {
 	}
 	
 	public static function getError() {
+		if (self::$connection == null) return null;
 		return self::$connection->error;
 	}
 	
 	public static function escape($text) {
-		return addslashes(self::$connection->real_escape_string($text), '%_');
+		if (self::$connection === null) self::connect();
+		return str_replace(
+			array('%','_'),
+			array('\%','\_'),
+			self::$connection->real_escape_string($text)
+		);
 	}
 }
 
 class DBMultiResult {
 	private $connection;
+	private $currentResult;
 	
-	public function __construct($connection) {
-		$this->connection = $connection;
+	public function __construct(&$connection) {
+		$this->connection = &$connection;
+		$this->currentResult = $this->connection->store_result();
 	}
 	
 	public function getResult() {
-		if (!$this->hasMoreResults()) return false;
-		$result = new DBResult($this->connection->store_result());
-		$this->connection->next_result();
+		if (is_bool($this->currentResult)) $result = $this->currentResult;
+		else $result = new DBResult($this->currentResult);
+		if ($this->hasMoreResults()) {
+			$this->connection->next_result();
+			$this->currentResult = $this->connection->store_result();
+		}
+		else $this->currentResult = false;
 		return $result;
+	}
+	
+	public function freeResult() {
+		if ($result = $this->getResult())
+			if ($result !== true)
+				$result->free();
 	}
 	
 	public function getAllResultsAsEntrys() {
@@ -84,6 +102,10 @@ class DBMultiResult {
 	
 	public function flush() {
 		while ($this->connection->next_result()) {;}
+	}
+	
+	public function free() {
+		$this->flush(); //Alias for flush();
 	}
 	
 	public function executeAll() {
@@ -116,6 +138,7 @@ class DBResult {
 	}
 	
 	public function free() {
-		$this->result->free();
+		if ($this->result && $this->result !== true)
+			$this->result->free();
 	}
 }

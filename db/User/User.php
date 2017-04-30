@@ -1,14 +1,16 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class User {
+class User extends JsonExport {
 	//group id
 	public $group;
 	//user id
 	public $user;
 	
 	public function __construct($group, $user) {
+		$this->jsonNames = array('group','user');
 		$this->group = $group;
 		$this->user = $user;
 	}

@@ -2,8 +2,9 @@
 
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class ChatRoom {
+class ChatRoom extends JsonExport {
 	//the id of this chatroom
 	public $id;
 	//the game of this chatroom
@@ -16,6 +17,8 @@ class ChatRoom {
 	public $voting;
 	
 	public function __construct($id) {
+		$this->jsonNames = array('id', 'game', 'chatMode', 'opened',
+			'voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(

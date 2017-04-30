@@ -1,14 +1,16 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class Phase {
+class Phase extends JsonExport {
 	//the current phase
 	public $current; 
 	//the next phase
 	public $next;
 	
 	public function __construct($id) {
+		$this->jsonNames = array('current', 'next');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPhase.sql',
 			array(

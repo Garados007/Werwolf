@@ -2,8 +2,9 @@
 
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../Phase/Phase.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class GameGroup { 
+class GameGroup extends JsonExport { 
 	//the id of this group
 	public $id;
 	//the id of the global group of this game
@@ -16,6 +17,8 @@ class GameGroup {
 	public $phase;
 	
 	public function __construct($id) {
+		$this->jsonNames = array('id', 'mainGroupId', 'started',
+			'finished', 'phase');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadGroup.sql',
 			array(

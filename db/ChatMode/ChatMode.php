@@ -1,8 +1,9 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class ChatMode {
+class ChatMode extends JsonExport {
 	//the chat text channel
 	public $chatmode;
 	//the role permission
@@ -15,6 +16,8 @@ class ChatMode {
 	public $visible;
 	
 	public function __construct($chatmode, $role) {
+		$this->jsonNames = array('chatmode', 'role', 'enableWrite',
+			'enableRead', 'visible');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatMode.sql',
 			array(

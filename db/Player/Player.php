@@ -2,8 +2,9 @@
 
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../Role/Role.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class Player {
+class Player extends JsonExport {
 	//the id of the current game
 	public $game;
 	//the id of the user
@@ -16,6 +17,8 @@ class Player {
 	public $roles;
 	
 	public function __construct($game, $user) {
+		$this->jsonNames = array('game', 'user', 'alive', 'extraWolfLive',
+			'roles');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPlayer.sql',
 			array(

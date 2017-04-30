@@ -2,8 +2,9 @@
 
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../Player/Player.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class Role {
+class Role extends JsonExport {
 	//the identifier of this player role
 	public $roleKey;
 	//if multiple player can have this role, so this is 
@@ -11,6 +12,7 @@ class Role {
 	public $index;
 	
 	public function __construct($roleKey, $index) {
+		$this->jsonNames = array('roleKey', 'index');
 		$this->roleKey = $roleKey;
 		$this->index = $index;
 	}
