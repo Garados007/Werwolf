@@ -41,7 +41,7 @@ class Group {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addGroup.sql',
 			array(
-				"name" => $name,
+				"name" => DB::escape($name),
 				"time" => time(),
 				"user" => $user
 			)
@@ -52,7 +52,7 @@ class Group {
 		return new Group($entry["id"]);
 	}
 	
-	public function setCurrenGame($game) {
+	public function setCurrentGame($game) {
 		$id = $game === null || $game->finished !== null ? null :
 			$game->id;
 		$result = DB::executeFormatFile(

@@ -48,7 +48,7 @@ function importPhp($dir) {
 	}
 }
 
-echo '<br/>Try to create tables if not exists';
+echo 'Try to create tables if not exists';
 if (!execSql(dirname(__FILE__).'/sql/createDatabase.sql')) return;
 
 echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
@@ -57,8 +57,12 @@ if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 echo '<br/>Add data to '.DB_PREFIX.'Phases table';
 if (!execSql(dirname(__FILE__).'/sql/putPhases.sql')) return;
 
-echo '<br/>Try to include DB files';
+echo '<br/>Try to include DB files for syntax check';
 importPhp(dirname(__FILE__).'/../db');
+echo '<br/>All Files are okay.';
+
+echo '<br/>Try to include Logic files for syntax check';
+importPhp(dirname(__FILE__).'/../logic');
 echo '<br/>All Files are okay.';
 			
 echo '<br/>Checkup Finished. Everything is okay.';

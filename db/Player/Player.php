@@ -28,9 +28,10 @@ class Player {
 			$this->user = $entry["User"];
 			$this->alive = $entry["Alive"];
 			$this->extraWolfLive = $entry["ExtraWolfLive"];
+			$result->free();
 			$this->roles = Role::getAllRolesOfPlayer($this);
 		}
-		$result->free();
+		else $result->free();
 	}
 	
 	public static function createNewPlayer($game, $user, $roleKeys) {
