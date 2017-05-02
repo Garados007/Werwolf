@@ -25,6 +25,7 @@ class GameGroup extends JsonExport {
 				"id" => $id
 			)
 		);
+		echo DB::getError();
 		if ($entry = $result->getResult()->getEntry()) {
 			$this->id = $entry["Id"];
 			$this->mainGroupId = $entry["MainGroup"];
@@ -42,7 +43,8 @@ class GameGroup extends JsonExport {
 				"mainGroup" => $mainGroupId
 			)
 		);
-		$result->getResult()->free(); //insert
+		echo DB::getError();
+		if ($set = $result->getResult()) $set->free(); //insert
 		if ($entry = $result->getResult()->getEntry()) { //select id
 			$result->flush();
 			return new GameGroup($entry["Id"]);

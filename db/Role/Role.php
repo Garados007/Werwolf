@@ -43,9 +43,9 @@ class Role extends JsonExport {
 				"role" => $roleKey
 			)
 		);
-		$result->getResult()->free(); //select index
-		$result->getResult()->free(); //insert
-		$entry = $result->getResult()->$getEntry();
+		if ($set = $result->getResult()) $set->free(); //select index
+		if ($set = $result->getResult()) $set->free(); //insert
+		$entry = $result->getResult()->getEntry();
 		$result->free();
 		return new Role($roleKey, intval($entry["RoleIndex"]));
 	}

@@ -25,7 +25,8 @@ class User extends JsonExport {
 		$list = array();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = new User($entry["GroupId"], $entry["UserId"]);
+			$list[] = new User($entry["GroupId"], 
+				intval($entry["UserId"]));
 		}
 		$result->free();
 		return $list;
@@ -33,29 +34,33 @@ class User extends JsonExport {
 	
 	public static function loadAllGroupsByUser($user) {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/loadAllGroupsByUserload.sql',
+			dirname(__FILE__).'/sql/loadAllGroupsByUser.sql',
 			array(
 				"user" => $user
 			)
 		);
 		$list = array();
+		echo DB::getError();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = new User($entry["GroupId"], $entry["UserId"]);
+			$list[] = new User(intval($entry["GroupId"]), 
+				intval($entry["UserId"]));
 		}
 		$result->free();
 		return $list;
 	}
 	
 	public static function createUser($group, $user) {
+		// var_dump($user);
+		// debug_print_backtrace();
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addUser.sql',
 			array(
-				"group" => $group,
-				"user" => $user
+				"group" => is_numeric($group) ? $group : $group->id,
+				"user" => is_numeric($user) ? $user : $user->user
 			)
 		);
-		$result->free();
+		if ($result) $result->free();
 		return new User($group, $user);
 	}
 	

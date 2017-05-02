@@ -27,10 +27,10 @@ class Player extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->game = $entry["Game"];
-			$this->user = $entry["User"];
-			$this->alive = $entry["Alive"];
-			$this->extraWolfLive = $entry["ExtraWolfLive"];
+			$this->game = intval($entry["Game"]);
+			$this->user = intval($entry["User"]);
+			$this->alive = boolval($entry["Alive"]);
+			$this->extraWolfLive = boolval($entry["ExtraWolfLive"]);
 			$result->free();
 			$this->roles = Role::getAllRolesOfPlayer($this);
 		}

@@ -30,6 +30,7 @@ class Game {
 		$group = self::GetGroup($group);
 		//create Game object
 		$game = GameGroup::createNew($group->id);
+		self::$gameBackup[$game->id] = $game;
 		//attach game to group
 		$group->setCurrentGame($game);
 		//create player and assign roles
@@ -39,10 +40,10 @@ class Game {
 		if (self::$creationRolesTable === null)
 			self::$creationRolesTable = json_decode(file_get_contents(
 				dirname(__FILE__).'/roleKeys.json'), true);
-		for ($i = -1; $i<count($playerList); ++$i) {
+		for ($i = -1; $i<count($playerList); $i++) {
 			$user = $i == -1 ? $group->leader : $playerList[$i];
-			$role = $i == -1 ? "storytel" :
-				count($roles) > $i ? $roles[$i] : "villager";
+			$role = $i < 0 ? "storytel" :
+				(count($roles) > $i ? $roles[$i] : "villager");
 			$player = Player::createNewPlayer($game->id, $user,
 				self::$creationRolesTable[$role]);
 			if (!isset(self::$playerBackup[$game->id]))
@@ -50,7 +51,6 @@ class Game {
 			self::$playerBackup[$game->id][$user] = $player;
 		}
 		//finish
-		self::$gameBackup[$game->$id] = $game;
 		return $game;
 	}
 	
@@ -72,13 +72,15 @@ class Game {
 	public static function GetAllUserFromGroup($group) {
 		if (is_array($group)) return $group;
 		$list = array();
-		foreach ($User::loadAllUserByGroup(is_numeric($group) ? $group : $group->id) as $user)
-			$list[] = $user->$user;
+		$users = User::loadAllUserByGroup(
+			is_numeric($group) ? $group : $group->id);
+		foreach ($users as $user)
+			$list[] = $user->user;
 		return $list;
 	}
 	
 	public static function AddUserToGroup($user, $group) {
-		return User::createUser($user, $group);
+		return User::createUser($group, $user);
 	}
 	
 	private static $playerBackup = array();

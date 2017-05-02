@@ -52,6 +52,15 @@ class Api {
 		return intval($this->params[$name]);
 	}
 	
+	private function getStrArray($name) {
+		if (!is_array($this->params[$name]))
+			return array(strval($this->params[$name]));
+		$list = array();
+		foreach ($this->params[$name] as $value)
+			$list[] = strval($value);
+		return $list;
+	}
+	
 	private function check($names) {
 		foreach ($names as $name) {
 			if (!isset($this->params[$name])) {
@@ -66,10 +75,13 @@ class Api {
 		if (!$this->check(['mode'])) return;
 		switch ($this->params["mode"]) {
 			case "createGroup": $this->createGroup(); break;
+			case "getGroup": $this->getGroup(); break;
 			case "addUserToGroup": $this->addUserToGroup(); break;
 			case "getUserFromGroup": $this->getUserFromGroup(); break;
 			case "getGroupFromUser": $this->getGroupFromUser(); break;
-			
+			case "createGame": $this->createGame(); break;
+			case "getGame": $this->getGame(); break;
+			case "getPlayer": $this->getPlayer(); break;
 			
 			default: $this->error = "not supported mode"; break;
 		}
@@ -91,6 +103,17 @@ class Api {
 			"method" => 'createGroup',
 			"group" => $group->exportJson(),
 			"user" => $user->exportJson()
+		);
+	}
+	
+	private function getGroup() {
+		if (!$this->check(['group'])) return;
+		$group = Game::GetGroup(
+			$this->getInt('group')
+		);
+		$this->result = array(
+			"method" => 'getGroup',
+			"group" => $group->exportJson()
 		);
 	}
 	
@@ -130,5 +153,43 @@ class Api {
 		);
 	}
 	
+	//Game functions
 	
+	private function createGame() {
+		if (!$this->check(['group','roles'])) return;
+		$game = Game::CreateGame(
+			$this->getInt('group'),
+			$this->getStrArray('roles')
+		);
+		$this->result = array(
+			"method" => 'createGame',
+			"group" => $this->getInt('group'),
+			"game" => $game->exportJson()
+		);
+	}
+	
+	private function getGame() {
+		if (!$this->check(['game'])) return;
+		$game = Game::GetGame(
+			$this->getInt('game')
+		);
+		$this->result = array(
+			"method" => 'getGame',
+			"game" => $game->exportJson()
+		);
+	}
+
+	//Player functions
+	
+	private function getPlayer() {
+		if (!$this->check(['game','user'])) return;
+		$player = Game::getPlayer(
+			$this->getInt('game'),
+			$this->getInt('user')
+		);
+		$this->result = array(
+			"method" => "getPlayer",
+			"player" => $player->exportJson()
+		);
+	}
 }

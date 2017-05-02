@@ -1,6 +1,6 @@
 <?php
 
-//include_once dirname(__FILE__).'/../config.php';
+include_once dirname(__FILE__).'/../config.php';
 
 class DB {
 	private static $connection = null;
@@ -25,6 +25,12 @@ class DB {
 	public static function getMultiResult($sql) { //DBMultiResult
 		if (self::$connection === null) self::connect();
 		$result = self::$connection->multi_query($sql);
+		if ($error = self::getError()) {
+			echo $error;
+			echo "<br/>".PHP_EOL;
+			debug_print_backtrace();
+			exit;
+		}
 		if (!$result) return false;
 		return new DBMultiResult(self::$connection);
 	}

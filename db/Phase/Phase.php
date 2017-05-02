@@ -17,6 +17,7 @@ class Phase extends JsonExport {
 				"id" => $id
 			)
 		);
+		echo DB::getError();
 		if ($entry = $result->getResult()->getEntry()) {
 			$this->current = $entry["Phase"];
 			$this->next = $entry["NextPhase"];
