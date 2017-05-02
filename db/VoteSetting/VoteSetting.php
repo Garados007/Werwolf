@@ -1,8 +1,9 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class VoteSetting {
+class VoteSetting extends JsonExport {
 	//the chat id where this voting is asigned
 	public $chat;
 	//the start date when this voting starts
@@ -13,6 +14,7 @@ class VoteSetting {
 	public $result;
 	
 	public function __construct($chat) {
+		$this->jsonNames = array('chat', 'voteStart', 'voteEnd', 'result');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVoteSetting.sql',
 			array(

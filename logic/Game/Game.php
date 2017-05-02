@@ -5,6 +5,7 @@ include_once dirname(__FILE__).'/../../db/GameGroup/GameGroup.php';
 include_once dirname(__FILE__).'/../../db/User/User.php';
 include_once dirname(__FILE__).'/../../db/Player/Player.php';
 
+
 class Game {
 	private static $groupBackup = array();
 	
