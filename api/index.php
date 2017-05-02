@@ -9,6 +9,9 @@ if (isset($_GET["name"])) $param["name"] = str_replace('+', ' ', $_GET["name"]);
 if (isset($_GET["group"])) $param["group"] = $_GET["group"];
 if (isset($_GET["roles"])) $param["roles"] = explode(',',$_GET["roles"]);
 if (isset($_GET["game"])) $param["game"] = $_GET["game"];
+if (isset($_GET["role"])) $param["role"] = $_GET["role"];
+if (isset($_GET["cmode"])) $param["cmode"] = $_GET["cmode"];
+if (isset($_GET["chat"])) $param["chat"] = $_GET["chat"];
 
 
 foreach ($_POST as $key => $value)

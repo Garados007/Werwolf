@@ -1,6 +1,7 @@
 <?php
 
 include_once dirname(__FILE__).'/../logic/Game/Game.php';
+include_once dirname(__FILE__).'/../logic/Chat/Chat.php';
 
 class Api {
 	public $params;
@@ -82,6 +83,12 @@ class Api {
 			case "createGame": $this->createGame(); break;
 			case "getGame": $this->getGame(); break;
 			case "getPlayer": $this->getPlayer(); break;
+			case "getChatMode": $this->getChatMode(); break;
+			case "getChatRoomId": $this->getChatRoomId(); break;
+			case "getAccessibleChatRooms": $this->getAccessibleChatRooms(); break;
+			case "getChatRoom": $this->getChatRoom(); break;
+			case "getPlayerInRoom": $this->getPlayerInRoom(); break;
+			
 			
 			default: $this->error = "not supported mode"; break;
 		}
@@ -190,6 +197,77 @@ class Api {
 		$this->result = array(
 			"method" => "getPlayer",
 			"player" => $player->exportJson()
+		);
+	}
+	
+	//Chat functions
+	
+	private function getChatMode() {
+		if (!$this->check(['cmode','role'])) return;
+		$chatMode = Chat::GetChatMode(
+			$this->getStr('cmode'),
+			$this->getStr('role')
+		);
+		$this->result = array(
+			"method" => "getChatMode",
+			"chatMode" => $chatMode->exportJson()
+		);
+	}
+	
+	private function getChatRoomId() {
+		if (!$this->check(['game','cmode'])) return;
+		$id = Chat::GetChatRoomId(
+			$this->getInt('game'),
+			$this->getStr('cmode')
+		);
+		$this->result = array(
+			"method" => "getChatRoomId",
+			"game" => $this->getInt('game'),
+			"mode" => $this->getStr('cmode'),
+			"id" => $id
+		);
+	}
+	
+	private function getAccessibleChatRooms() {
+		if (!$this->check(['game','user'])) return;
+		$player = Game::getPlayer(
+			$this->getInt('game'),
+			$this->getInt('user')
+		);
+		$rooms = Chat::GetAccessibleChatRooms($player);
+		$list = array();
+		foreach($rooms as $key => $value) 
+			$list[$key] = $value->exportJson();
+		$this->result = array(
+			"method" => "getAccessibleChatRooms",
+			"player" => $player->exportJson(),
+			"rooms" => $list
+		);
+	}
+	
+	private function getChatRoom() {
+		if (!$this->check(['chat'])) return;
+		$chat = Chat::GetChatRoom(
+			$this->getInt('chat')
+		);
+		$this->result = array(
+			"method" => "getChatRoom",
+			"chat" => $chat->exportJson()
+		);
+	}
+	
+	private function getPlayerInRoom() {
+		if (!$this->check(['chat'])) return;
+		$players = Chat::GetPlayerInRoom(
+			$this->getInt('chat')
+		);
+		$list = array();
+		foreach ($players as $player)
+			$list[] = $player->exportJson();
+		$this->result = array(
+			"method" => "getPlayerInRoom",
+			"chat" => $this->getInt('chat'),
+			"player" => $list
 		);
 	}
 }

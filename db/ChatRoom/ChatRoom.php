@@ -30,11 +30,12 @@ class ChatRoom extends JsonExport {
 			$this->game = $entry["Game"];
 			$this->chatMode = $entry["ChatMode"];
 			$this->opened = boolval($entry["Opened"]);
+			$result->free();
+			$this->voting = new VoteSetting($this->id);
+			if ($this->voting->chat === null)
+				$this->voting = null;
 		}
-		$result->free();
-		$this->voting = new VoteSetting($this->id);
-		if ($this->voting->chat === null)
-			$this->voting = null;
+		else $result->free();
 	}
 	
 	public static function createChatRoom($game, $mode) {
@@ -45,10 +46,23 @@ class ChatRoom extends JsonExport {
 				"mode" => $mode
 			)
 		);
-		$result->getResult->free();
-		$entry = $result->getResult->getEntry();
+		if ($set = $result->getResult()) $set->free();
+		echo DB::getError();
+		$entry = $result->getResult()->getEntry();
 		$result->free();
 		return new ChatRoom($entry["Id"]);
+	}
+	
+	public static function getChatRoomId($game, $mode) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/getChatRoomId.sql',
+			array(
+				"game" => $game,
+				"mode" => $mode
+			)
+		);
+		if ($entry = $result->getResult()->getEntry())
+			return $entry["Id"];
 	}
 	
 	public function changeOpenedState($opened) {

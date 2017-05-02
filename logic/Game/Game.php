@@ -4,6 +4,8 @@ include_once dirname(__FILE__).'/../../db/Group/Group.php';
 include_once dirname(__FILE__).'/../../db/GameGroup/GameGroup.php';
 include_once dirname(__FILE__).'/../../db/User/User.php';
 include_once dirname(__FILE__).'/../../db/Player/Player.php';
+include_once dirname(__FILE__).'/../../db/ChatRoom/ChatRoom.php';
+include_once dirname(__FILE__).'/../../db/ChatMode/ChatMode.php';
 
 
 class Game {
@@ -50,6 +52,9 @@ class Game {
 				self::$playerBackup[$game->id] = array();
 			self::$playerBackup[$game->id][$user] = $player;
 		}
+		//create chat rooms
+		foreach (ChatMode::getChatKeys() as $key)
+			ChatRoom::createChatRoom($game->id, $key);
 		//finish
 		return $game;
 	}
