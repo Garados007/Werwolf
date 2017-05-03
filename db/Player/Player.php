@@ -52,4 +52,21 @@ class Player extends JsonExport {
 			$player->roles[] = Role::createRole($player, $key);
 		return $player;
 	}
+
+	public function kill($byWolf) {
+		if ($byWolf && $this->extraWolfLive)
+			$this->extraWolfLive = false;
+		else
+			$this->alive = $this->extraWolfLive = false;
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/killPlayer.sql',
+			array(
+				"game" => $this->game,
+				"user" => $this->user,
+				"alive" => $this->alive,
+				"wolf" => $this->extraWolfLive
+			)
+		);
+		$result->free();
+	}
 }

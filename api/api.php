@@ -82,6 +82,8 @@ class Api {
 			case "getGroupFromUser": $this->getGroupFromUser(); break;
 			case "createGame": $this->createGame(); break;
 			case "getGame": $this->getGame(); break;
+			case "nextRound": $this->nextRound(); break;
+			case "checkIfFinished": $this->checkIfFinished(); break;
 			case "getPlayer": $this->getPlayer(); break;
 			case "getChatMode": $this->getChatMode(); break;
 			case "getChatRoomId": $this->getChatRoomId(); break;
@@ -191,6 +193,29 @@ class Api {
 		$this->result = array(
 			"method" => 'getGame',
 			"game" => $game->exportJson()
+		);
+	}
+	
+	private function nextRound() {
+		if (!$this->check(['game'])) return;
+		$game = Game::NextRound(
+			$this->getInt('game')
+		);
+		$this->result = array(
+			"method" => 'nextRound',
+			"game" => $game->exportJson()
+		);
+	}
+	
+	private function checkIfFinished() {
+		if (!$this->check(['game'])) return;
+		$finished = Game::CheckIfFinished(
+			$this->getInt('game')
+		);
+		$this->result = array(
+			"method" => 'checkIfFinished',
+			"game" => $this->getInt('game'),
+			"finished" => $finished
 		);
 	}
 

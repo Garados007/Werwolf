@@ -67,7 +67,7 @@ class ChatRoom extends JsonExport {
 	
 	public function changeOpenedState($opened) {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/changeOpenedState.sql',
+			dirname(__FILE__).'/sql/changeOpenState.sql',
 			array(
 				"opened" => $this->opened = $opened,
 				"id" => $this->id

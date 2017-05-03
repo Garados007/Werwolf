@@ -47,7 +47,9 @@ class Role extends JsonExport {
 		if ($set = $result->getResult()) $set->free(); //insert
 		$entry = $result->getResult()->getEntry();
 		$result->free();
-		return new Role($roleKey, intval($entry["RoleIndex"]));
+		$role = new Role($roleKey, intval($entry["RoleIndex"]));
+		$player->roles[] = $role;
+		return $role;
 	}
 	
 	public static function removeRole($player, $roleKey) {

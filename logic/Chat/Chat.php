@@ -101,6 +101,7 @@ class Chat {
 	public static function EndVoting($room) {
 		if (is_numeric($room)) $room = self::GetChatRoom($room);
 		if ($room->voting) {
+			//find target
 			$max = 0;
 			$list = array();
 			foreach (VoteEntry::getVotesBySetting($room->id) as $vote) {
@@ -118,6 +119,25 @@ class Chat {
 			if (count($list2) > 0)
 				$result = $list2[rand(0, count($list)-1)];
 			$room->voting->endVoting($result);
+			//attach effect
+			if ($result !== null) {
+				$phase = Game::GetGame($room->game)->phase;
+				$player = Game::getPlayer($room->game, $result);
+				switch ($phase) {
+					case 'majorsel': 
+						Role::createRole($player, 'major');
+						break;
+					case 'villkill': 
+						$player->kill(false);
+						break;
+					case 'armorsel': 
+						Role::createRole($player, 'pair');
+						break;
+					case 'wolfkill': 
+						$player->kill(true);
+						break;
+				}
+			}
 			return $result;
 		}
 	}

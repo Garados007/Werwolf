@@ -60,7 +60,7 @@ class GameGroup extends JsonExport {
 				"next" => $this->phase->next
 			)
 		)->executeAll();
-		$this->phase = new Phase($this->phase-next);
+		$this->phase = new Phase($this->phase->next);
 	}
 	
 	public function finish() {
