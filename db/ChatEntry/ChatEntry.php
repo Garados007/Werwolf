@@ -23,7 +23,7 @@ class ChatEntry extends JsonExport {
 	
 	public static function loadAllEntrys($chat, $minSendDate) {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/loadAllEntrys.php',
+			dirname(__FILE__).'/sql/loadAllEntrys.sql',
 			array(
 				"chat" => $chat,
 				"minSendDate" => $minSendDate

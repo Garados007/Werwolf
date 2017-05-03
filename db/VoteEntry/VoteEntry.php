@@ -5,7 +5,7 @@ include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
 include_once dirname(__FILE__).'/../Player/Player.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
-class VoteEntry {
+class VoteEntry extends JsonExport {
 	//the vote setting id
 	public $setting;
 	//the user id who votes
@@ -27,7 +27,7 @@ class VoteEntry {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVotesOfSetting.sql',
 			array(
-				"setting" => $setting->chat
+				"setting" => is_numeric($setting) ? $setting : $setting->chat
 			)
 		);
 		$list = array();
@@ -44,14 +44,14 @@ class VoteEntry {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVotesOfUser.sql',
 			array(
-				"setting" => $setting->chat,
-				"user" => $player->user
+				"setting" => is_numeric($setting) ? $setting : $setting->chat,
+				"user" => is_numeric($player) ? $player : $player->user
 			)
 		);
 		$item;
 		$set = $result->getResult();
 		if ($entry = $set->getEntry()) {
-			$list = new VoteEntry($entry["Setting"], $entry["Voter"],
+			$item = new VoteEntry($entry["Setting"], $entry["Voter"],
 				$entry["Target"], $entry["VoteDate"]);
 			$set->free();
 		}
@@ -64,14 +64,16 @@ class VoteEntry {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addVote.sql',
 			array(
-				"setting" => $setting->chat,
-				"voter" => $user->user,
-				"target" => $target->user,
+				"setting" => is_numeric($setting) ? $setting : $setting->chat,
+				"voter" => is_numeric($user) ? $user : $user->user,
+				"target" => is_numeric($target) ? $target : $target->user,
 				"date" => $date
 			)
 		);
 		$result->free();
-		return new VoteEntry($setting->chat, $user->user, 
-			$target->user, $date);
+		return new VoteEntry(
+			is_numeric($setting) ? $setting : $setting->chat, 
+			is_numeric($user) ? $user : $user->user, 
+			is_numeric($target) ? $target : $target->user, $date);
 	}
 }

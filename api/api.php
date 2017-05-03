@@ -88,6 +88,14 @@ class Api {
 			case "getAccessibleChatRooms": $this->getAccessibleChatRooms(); break;
 			case "getChatRoom": $this->getChatRoom(); break;
 			case "getPlayerInRoom": $this->getPlayerInRoom(); break;
+			case "getLastChat": $this->getLastChat(); break;
+			case "addChat": $this->addChat(); break;
+			case "createVoting": $this->createVoting(); break;
+			case "endVoting": $this->endVoting(); break;
+			case "deleteVoting": $this->deleteVoting(); break;
+			case "addVote": $this->addVote(); break;
+			case "getVotesFromRoom": $this->getVotesFromRoom(); break;
+			case "getVoteFromPlayer": $this->getVoteFromPlayer(); break;
 			
 			
 			default: $this->error = "not supported mode"; break;
@@ -268,6 +276,113 @@ class Api {
 			"method" => "getPlayerInRoom",
 			"chat" => $this->getInt('chat'),
 			"player" => $list
+		);
+	}
+	
+	private function getLastChat() {
+		if (!$this->check(['chat', 'since'])) return;
+		$chat = Chat::GetLastChat(
+			$this->getInt('chat'),
+			$this->getInt('since')
+		);
+		$list = array();
+		foreach ($chat as $c)
+			$list[] = $c->exportJson();
+		$this->result = array(
+			"method" => "getLastChat",
+			"since" => $this->getInt('since'),
+			"room" => $this->getInt('chat'),
+			"chat" => $list
+		);
+	}
+	
+	private function addChat() {
+		if (!$this->check(['chat','user','text'])) return;
+		$chat= Chat::AddChat(
+			$this->getInt('chat'),
+			$this->getInt('user'),
+			$this->getStr('text')
+		);
+		$this->result = array(
+			"method" => 'addChat',
+			"room" => $this->getInt('chat'),
+			"chat" => $chat->exportJson()
+		);
+	}
+	
+	private function createVoting() {
+		if (!$this->check(['chat','end'])) return;
+		$voting = Chat::CreateVoting(
+			$this->getInt('chat'),
+			$this->getInt('end')
+		);
+		$this->result = array(
+			"method" => 'createVoting',
+			"room" => $this->getInt('chat'),
+			"voting" => $voting->exportJson()
+		);
+	}
+	
+	private function endVoting() {
+		if (!$this->check(['chat'])) return;
+		$result = Chat::EndVoting(
+			$this->getInt('chat')
+		);
+		$this->result = array(
+			"method" => 'endVoting',
+			"room" => $this->getInt('chat'),
+			"result" => $result
+		);
+	}
+	
+	private function deleteVoting() {
+		if (!$this->check(['chat'])) return;
+		Chat::DeleteVoting(
+			$this->getInt('chat')
+		);
+		$this->result = array(
+			"method" => 'deleteVoting',
+			"room" => $this->getInt('chat')
+		);
+	}
+	
+	private function addVote() {
+		if (!$this->check(['chat','user','target'])) return;
+		$vote = Chat::AddVote(
+			$this->getInt('chat'),
+			$this->getInt('user'),
+			$this->getInt('target')
+		);
+		$this->result = array(
+			"method" => 'addVote',
+			"vote" => $vote->exportJson()
+		);
+	}
+	
+	private function getVotesFromRoom() {
+		if (!$this->check(['chat'])) return;
+		$votes = Chat::GetVotesFromRoom(
+			$this->getInt('chat')
+		);
+		$list = array();
+		foreach ($votes as $vote) $list[] = $vote->exportJson();
+		$this->result = array(
+			"method" => 'getVotesFromRoom',
+			"room" => $this->getInt('chat'),
+			"votes" => $list
+		);
+	}
+	
+	private function getVoteFromPlayer() {
+		if (!$this->check(['chat','user'])) return;
+		$vote = Chat::GetVoteFromPlayer(
+			$this->getInt('chat'),
+			$this->getInt('user')
+		);
+		$this->result = array(
+			"method" => 'getVoteFromPlayer',
+			"chat" => $this->getInt('chat'),
+			"vote" => $vote->exportJson()
 		);
 	}
 }

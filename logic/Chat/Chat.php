@@ -5,6 +5,8 @@ include_once dirname(__FILE__).'/../../db/ChatMode/ChatMode.php';
 include_once dirname(__FILE__).'/../../db/ChatRoom/ChatRoom.php';
 include_once dirname(__FILE__).'/../../db/Player/Player.php';
 include_once dirname(__FILE__).'/../../db/Role/Role.php';
+include_once dirname(__FILE__).'/../../db/VoteSetting/VoteSetting.php';
+include_once dirname(__FILE__).'/../../db/VoteEntry/VoteEntry.php';
 include_once dirname(__FILE__).'/../Game/Game.php';
 
 class Chat {
@@ -76,5 +78,73 @@ class Chat {
 			if ($visible) $list[] = $player;
 		}
 		return $list;
+	}
+	
+	public static function GetLastChat($room, $since) {
+		if (!is_numeric($room)) $room = $room->id;
+		if ($since == 0) $since = null;
+		return ChatEntry::loadAllEntrys($room, $since);
+	}
+	
+	public static function AddChat($room, $player, $text) {
+		if (!is_numeric($room)) $room = $room->id;
+		if (!is_numeric($player)) $player = $player->user;
+		return ChatEntry::addEntry($room, $player, $text);
+	}
+		
+	public static function CreateVoting($room, $end) {
+		if (!is_numeric($room)) $room = $room->id;
+		if ($end == 0) $end = null;
+		return VoteSetting::createVoteSetting($room, $end);
+	}
+	
+	public static function EndVoting($room) {
+		if (is_numeric($room)) $room = self::GetChatRoom($room);
+		if ($room->voting) {
+			$max = 0;
+			$list = array();
+			foreach (VoteEntry::getVotesBySetting($room->id) as $vote) {
+				if (!isset($list[$vote->target]))
+					$list[$vote->target] = 1;
+				else $list[$vote->target]++;
+				if ($max < $list[$vote->target])
+					$max = $list[$vote->target];
+			}
+			$list2 = array();
+			foreach ($list as $key => $value)
+				if ($value == $max)
+					$list2[] = $key;
+			$result = null;
+			if (count($list2) > 0)
+				$result = $list2[rand(0, count($list)-1)];
+			$room->voting->endVoting($result);
+			return $result;
+		}
+	}
+	
+	public static function DeleteVoting($room) {
+		if (is_numeric($room)) $room = self::GetChatRoom($room);
+		if ($room->voting) {
+			$room->voting->deleteVoting();
+			$room->voting = null;
+		}
+	}
+	
+	public static function AddVote($room, $player, $target) {
+		if (!is_numeric($room)) $room = $room->id;
+		if (!is_numeric($player)) $player = $player->user;
+		if (!is_numeric($target)) $taget = $target->user;
+		return VoteEntry::CreateVote($room, $player, $target);
+	}
+	
+	public static function GetVotesFromRoom($room) {
+		if (!is_numeric($room)) $room = $room->id;
+		return VoteEntry::getVotesBySetting($room);
+	}
+	
+	public static function GetVoteFromPlayer($room, $player) {
+		if (!is_numeric($room)) $room = $room->id;
+		if (!is_numeric($player)) $player = $player-id;
+		return VoteEntry::getVoteByUser($room, $player);
 	}
 }
