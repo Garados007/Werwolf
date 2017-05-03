@@ -65,4 +65,15 @@ echo '<br/>Try to include Logic files for syntax check';
 importPhp(dirname(__FILE__).'/../logic');
 echo '<br/>All Files are okay.';
 			
+echo '<br/>Check account manager file';
+if (!is_file(dirname(__FILE__).'/../account/manager.php')) {
+	echo '<br/>/account/manager.php file does not exists. Please make a copy of /account/manager.raw.template.php';
+	return;
+}	
+include_once dirname(__FILE__).'/../account/manager.php';
+
+echo '<br/>setup account manager plugin';
+AccountManager::InitSystem();
+echo '<br/>account manager initialized';
+			
 echo '<br/>Checkup Finished. Everything is okay.';

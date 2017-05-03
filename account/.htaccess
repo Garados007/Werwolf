@@ -1,0 +1,7 @@
+RewriteEngine on
+RewriteRule ^login/?$ index.php?page=login [L]
+RewriteRule ^logout/?$ index.php?page=logout [L]
+RewriteRule ^checked/?$ index.php?page=checked [L]
+RewriteRule ^index.php$ index.php [L,QSA]
+RewriteRule ^easy/(.*)$ easy/$1 [L,QSA]
+RewriteRule ^(.*)$ - [L,R=404]
