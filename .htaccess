@@ -1,2 +1,5 @@
 RewriteEngine on
 RewriteRule ^db/?(.*)$ - [L,R=403]
+RewriteRule ^logic/?(.*)$ - [L,R=403]
+RewriteRule ^(ui)?/?$ ui/index/ [QSA]
+RewriteRule ^ui/([a-zA-Z0-9]*)/?$ ui/$1/index.php [L,QSA]

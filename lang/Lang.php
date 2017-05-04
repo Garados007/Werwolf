@@ -45,6 +45,17 @@ class Lang {
 		self::$current = LANG_BACKUP;
 		self::$data = array();
 	}
+	
+	public static function GetAllLanguages() {
+		$list = array();
+		$dir = new DirectoryIterator(dirname(__FILE__));
+		foreach ($dir as $fileinfo) {
+			if ($fileinfo->isDir() && !$fileinfo->isDot()) {
+				$list[] = $fileinfo->getFilename();
+			}
+		}
+		return $list;
+	}
 }
 
 Lang::InitLanguage();

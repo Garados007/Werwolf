@@ -18,3 +18,5 @@ define('RELEASE_MODE', false);
 define('URI_HOST', 'http://localhost/');
 define('URI_PATH', 'werwolf/'); //if you leave this blank, then the root of the webspace is the root of this project
 
+//Language Setting
+define('LANG_BACKUP', 'de'); //this is the backup language when none is setted
