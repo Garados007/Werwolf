@@ -61,14 +61,14 @@ if (isset($_GET["set-lang"])) {
 		<div>
 			<div class="top-bar">
 				<div>
-					<div class="user-change-button">
+					<div class="user-change-button" title="<?php echo Lang::GetString('ui-game-index', 'player-list-icon'); ?>">
 						<img src="/<?php echo URI_PATH; ?>ui/img/Users-Group-icon.png"></img>
 					</div>
 					<div class="tab-list">
 						<div class="tab-container">
 						</div>
 					</div>
-					<div class="game-options">
+					<div class="game-options" title="<?php echo Lang::GetString('ui-game-index', 'options-icon'); ?>">
 						<img src="/<?php echo URI_PATH; ?>ui/img/Very-Basic-Menu-icon.png"></img>
 					</div>
 				</div>

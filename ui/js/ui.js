@@ -14,12 +14,10 @@ var UI = new function() {
 		});
 	};
 	
-	this.CreateTab = function(text) {
-		return v.CreateButton(text, undefined, {
+	this.CreateTab = function(text, title, click) {
+		return v.CreateButton(text, click, {
 			css: [ "tab-button" ],
-			children: [
-				v.CreateButton('x')
-			]
+			title: title
 		});
 	}
 };

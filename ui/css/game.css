@@ -90,22 +90,23 @@ body {
 .tab-list {
 	position: relative;
 }
-.tab-list .ui-button {
-	display: inline-block;
-}
 .tab-container {
 	position: absolute;
 	left: 0;
 	right: 0;
 	bottom: 0;
 	font-size: 2.4em;
-	padding: 0 0.5em;
+	padding: 0.1em 0.5em 0;
+	white-space: nowrap;
+	overflow: hidden;
 }
 .tab-button {
 	z-index: 2;
 	position: relative;
-	padding: 0 1.3em 0 0.2em;
+	padding: 0 0.2em;
 	cursor: pointer;
+	display: inline-block;
+	margin-right: 0.3em;
 }
 .tab-button:before {
 	content: "";
@@ -132,19 +133,4 @@ body {
 .tab-button:hover:before {
 	background-color: #c35b22;
 	border-color: #c35b22;
-}
-.tab-button > .ui-button {
-	background-color: rgba(122, 0, 0, 1);
-	margin-left: 0.3em;
-	width: 1em;
-	height: 1em;
-	text-align: center;
-	line-height: 0.8em;
-	font-size: 0.8em;
-	position: absolute;
-	top: 0.2em;
-	transition: background-color 0.3s;
-}
-.tab-button > .ui-button:hover {
-	background-color: red;
 }

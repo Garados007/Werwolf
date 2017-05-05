@@ -95,6 +95,8 @@ var Logic = new function() {
 				}
 				if (list.length == 0) Logic.Reaction.InitNoGroup();
 				else Logic.ApiAccess.Multi(list);
+				var game = new WerWolf.AddGame();
+				game.Attach();
 			});
 			Logic.RequestEvents.getAccountState.addSingle(function() {
 				Logic.ApiAccess.GetGroupsFromUser(Data.UserId);
@@ -106,8 +108,9 @@ var Logic = new function() {
 		},
 		InitNoGroup: function() {
 			$(".tab-list").find(".loading-frame").remove();
-			var game = new WerWolf.Game();
+			var game = new WerWolf.NewGame();
 			game.Attach();
+			game.Activate();
 		}
 	};
 };
