@@ -2,6 +2,7 @@
 
 include_once dirname(__FILE__).'/../logic/Game/Game.php';
 include_once dirname(__FILE__).'/../logic/Chat/Chat.php';
+include_once dirname(__FILE__).'/../account/manager.php';
 
 class Api {
 	public $params;
@@ -76,6 +77,7 @@ class Api {
 		if (!$this->check(['mode'])) return;
 		switch ($this->params["mode"]) {
 			case "multi": $this->multi(); break;
+			case "getAccountState": $this->getAccountState(); break;
 			case "createGroup": $this->createGroup(); break;
 			case "getGroup": $this->getGroup(); break;
 			case "addUserToGroup": $this->addUserToGroup(); break;
@@ -101,7 +103,7 @@ class Api {
 			case "getVoteFromPlayer": $this->getVoteFromPlayer(); break;
 			
 			
-			default: $this->error = "not supported mode"; break;
+			default: $this->error = "not supported mode ".$this->params["mode"]; break;
 		}
 	}
 	
@@ -122,6 +124,16 @@ class Api {
 		$this->result = array(
 			"method" => 'multi',
 			"results" => $result
+		);
+	}
+	
+	//Account functions
+	
+	private function getAccountState() {
+		$state = AccountManager::GetCurrentAccountData();
+		$this->result = array(
+			"method" => 'getAccountState',
+			"state" => $state
 		);
 	}
 	

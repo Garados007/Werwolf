@@ -16,6 +16,10 @@ body {
 	width: 100%;
 	min-height: 30%;
 }
+.image-box > img {
+	position: relative;
+	width: 100%;
+}
 .language-selector {
 	position: absolute;
 	top: 0;

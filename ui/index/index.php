@@ -10,6 +10,7 @@ if (isset($_GET["set-lang"])) {
 <html>
 <head>
 	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo Lang::GetString('ui-index', 'header-title'); ?></title>
 	<link href="/<?php echo URI_PATH; ?>ui/css/index.css" rel="stylesheet" />
 	<script src="/<?php echo URI_PATH; ?>ui/js/jquery-3.2.1.min.js"></script>
@@ -27,6 +28,7 @@ if (isset($_GET["set-lang"])) {
 <body>
 	<div class="content-frame">
 		<div class="image-box">
+			<img src="/<?php echo URI_PATH; ?>ui/img/title.png"></img>
 			<div class="language-selector">
 				<div class="visible-block">
 					<img class="lang-img" src="/<?php echo URI_PATH; ?>ui/img/lang/<?php echo strtolower(Lang::GetLanguage()); ?>.png"></img>

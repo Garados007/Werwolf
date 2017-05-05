@@ -24,6 +24,8 @@ class Lang {
 			self::$data[$file] = json_decode(file_get_contents(
 				dirname(__FILE__).'/'.self::$current."/{$file}.json"), true);
 		}
+		if ($name === null)
+			return self::$data[$file];
 		if (!isset(self::$data[$file][$name])) return null;
 		$block = self::$data[$file][$name];
 		if ($subname !== null) {

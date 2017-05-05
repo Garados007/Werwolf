@@ -1,0 +1,150 @@
+body {
+	margin: 0;
+	padding: 0;
+	font-family: sans-serif;
+}
+.main-window {
+	display: table;
+	width: 100vw;
+	height: 100vh;
+	background-color: #461c06;
+}
+.main-window > div {
+	display: table-row;
+}
+.main-window > div > div {
+	display: table-cell;
+}
+.top-bar {
+	height: 1px;
+	border-bottom: 2px solid #301203;
+	position: relative;
+}
+.top-bar > div {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+.top-bar > div > div {
+	display: table-cell;
+}
+.user-change-button, .game-options {
+	width: 1px;
+	height: 2em;
+	width: 2em;
+	padding: 0.2em 0.5em;
+	background-color: #823c17;
+	transition: background-color 0.3s;
+	cursor: pointer;
+}
+.user-change-button:hover, .game-options:hover {
+	background-color: #c35b22;
+}
+.main-content {
+	position: relative;
+}
+
+/*loading*/
+
+.loading-frame {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+}
+.loading-frame > div {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+.loading-frame > div > div {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	border-radius: 1em;
+	background-color: #823c17;
+	margin: 0 0.5em;
+	animation-name: loading-frame-frames;
+	animation-duration: 3s;
+	animation-iteration-count: infinite;
+	animation-play-state: running;
+	animation-direction: normal;
+}
+.loading-frame > div > div:nth-child(1) { animation-delay: 0s }
+.loading-frame > div > div:nth-child(2) { animation-delay: 0.25s }
+.loading-frame > div > div:nth-child(3) { animation-delay: 0.5s }
+@keyframes loading-frame-frames {
+	0%   { transform: translate(0, 0); }
+	80%  { transform: translate(0, 0); }
+	90%  { transform: translate(0, -2em); }
+	97%  { transform: translate(0, 1em); }
+	100% { transform: translate(0, 0); }
+}
+
+/*tabs*/
+
+.tab-list {
+	position: relative;
+}
+.tab-list .ui-button {
+	display: inline-block;
+}
+.tab-container {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	font-size: 2.4em;
+	padding: 0 0.5em;
+}
+.tab-button {
+	z-index: 2;
+	position: relative;
+	padding: 0 1.3em 0 0.2em;
+	cursor: pointer;
+}
+.tab-button:before {
+	content: "";
+	position: absolute;
+	border-left: 3px solid #823c17;
+	border-top: 3px solid #823c17;
+	border-right: 3px solid #823c17;
+	background-color: #461c06;
+	top: -60%;
+	bottom: -49%;
+	left: -3%;
+	right: -3%;
+	z-index: -1;
+	-webkit-transform: perspective(20em) rotateX(60deg);
+	transform: perspective(20em) rotatex(60deg);
+	transition: background-color 0.1s;
+}
+.tab-button.active {
+	z-index: 5;
+}
+.tab-button.active:before {
+	background-color: #823c17;
+}
+.tab-button:hover:before {
+	background-color: #c35b22;
+	border-color: #c35b22;
+}
+.tab-button > .ui-button {
+	background-color: rgba(122, 0, 0, 1);
+	margin-left: 0.3em;
+	width: 1em;
+	height: 1em;
+	text-align: center;
+	line-height: 0.8em;
+	font-size: 0.8em;
+	position: absolute;
+	top: 0.2em;
+	transition: background-color 0.3s;
+}
+.tab-button > .ui-button:hover {
+	background-color: red;
+}
