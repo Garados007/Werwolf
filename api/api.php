@@ -116,7 +116,7 @@ class Api {
 		}
 		$result = array();
 		foreach ($tasks as $task) {
-			$api = new Api($task);
+			$api = new Api(json_decode($task, true));
 			$result[] = $api->exportResult();
 		}
 		$this->result = array(
