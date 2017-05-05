@@ -75,6 +75,7 @@ class Api {
 	private function work() {
 		if (!$this->check(['mode'])) return;
 		switch ($this->params["mode"]) {
+			case "multi": $this->multi(); break;
 			case "createGroup": $this->createGroup(); break;
 			case "getGroup": $this->getGroup(); break;
 			case "addUserToGroup": $this->addUserToGroup(); break;
@@ -102,6 +103,26 @@ class Api {
 			
 			default: $this->error = "not supported mode"; break;
 		}
+	}
+	
+	//Multirequest
+	
+	private function multi() {
+		if (!$this->check(['tasks'])) return;
+		$tasks = $this->param['tasks'];
+		if (!is_array($tasks)) {
+			$this->error = "tasks is not an array";
+			return;
+		}
+		$result = array();
+		foreach ($tasks as $task) {
+			$api = new Api($task);
+			$result[] = $api->exportResult();
+		}
+		$this->result = array(
+			"method" => 'multi',
+			"results" => $result
+		);
 	}
 	
 	//Group functions
