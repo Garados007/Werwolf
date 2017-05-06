@@ -4,7 +4,9 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Groups (
 	Created INT NOT NULL,
 	LastGame INT NOT NULL,
 	Leader INT UNSIGNED NOT NULL,
-	CurrentGame INT UNSIGNED
+	CurrentGame INT UNSIGNED,
+	EnterKey TEXT(12) NOT NULL,
+	UNIQUE (EnterKey(12))
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>User (

@@ -61,6 +61,13 @@ WerWolf.NewGame = function() {
 			return;
 		}
 		Logic.ApiAccess.CreateGroup(name, Data.UserId);
+	}, function() {
+		var key = thisref.content.find(".joinGroupKey").val();
+		if (key == "") {
+			alert(Lang.Get("insertKeyMessage"));
+			return;
+		}
+		Logic.ApiAccess.AddUserToGroupByKey(Data.UserId, key);
 	});
 	var remove = this.Remove;
 	this.Remove = function() {
@@ -145,8 +152,10 @@ WerWolf.PrepairGame = function(id, data) {
 	};
 	
 	var frame = this.content.find(".game-frame");
-	frame.children().remove();
-	frame.append(UI.CreateGamePreSettings(data.name, "key", userList.length));
+	if (data.leader == Data.UserId) {
+		frame.children().remove();
+		frame.append(UI.CreateGamePreSettings(data.name, data.enterKey, userList.length));
+	}
 };
 WerWolf.PrepairGame.prototype = Object.create(WerWolf.RunningGame.prototype);
 

@@ -83,6 +83,7 @@ class Api {
 			case "createGroup": $this->createGroup(); break;
 			case "getGroup": $this->getGroup(); break;
 			case "addUserToGroup": $this->addUserToGroup(); break;
+			case "addUserToGroupByKey": $this->addUserToGroupByKey(); break;
 			case "getUserFromGroup": $this->getUserFromGroup(); break;
 			case "getGroupFromUser": $this->getGroupFromUser(); break;
 			case "createGame": $this->createGame(); break;
@@ -190,6 +191,23 @@ class Api {
 		$this->result = array(
 			"method" => 'addUserToGroup',
 			"user" => $user->exportJson()
+		);
+	}
+	
+	private function addUserToGroupByKey() {
+		if (!$this->check(['user','key'])) return;
+		$group = Game::GetGroupByKey(
+			$this->getStr('key')
+		);
+		$user = $group == null ? null : Game::AddUserToGroup(
+			$this->getInt('user'),
+			$group->id
+		);
+		$this->result = array(
+			"method" => "addUserToGroupByKey",
+			"success" => $user != null,
+			"group" => $group == null ? null : $group->exportJson(),
+			"user" => $user == null ? null : $user->exportJson()
 		);
 	}
 	

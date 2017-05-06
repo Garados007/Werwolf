@@ -17,11 +17,13 @@ class Group extends JsonExport {
 	public $leader;
 	//the current game of this group
 	public $currentGame;
+	//the key which is needed for enter this group
+	public $entryKey;
 	
 	public function __construct($id) {
 		$this->jsonNames = array(
 			'id', 'name', 'created', 'lastTime',
-			'leader', 'currentGame'
+			'leader', 'currentGame', 'enterKey'
 		);
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadGroup.sql',
@@ -36,10 +38,37 @@ class Group extends JsonExport {
 			$this->lastTime = $entry["LastGame"];
 			$this->leader = $entry["Leader"];
 			$this->currentGame = $entry["CurrentGame"];
+			$this->enterKey = $entry["EnterKey"];
 		}
 		$result->flush();
 		if ($this->currentGame !== null)
 			$this->currentGame = new GameGroup($this->currentGame);
+	}
+	
+	public static function getIdFromKey($key) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/existsKey.sql',
+			array(
+				"key" => DB::escape(strtoupper($key))
+			)
+		);
+		$set = $result->getResult();
+		if ($set && $entry = $set->getEntry()) return intval($entry['Id']);
+		else return null;
+	}
+	
+	private static function createKey() {
+		$c = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+		$l = strlen($c);
+		$s;
+		do {
+			$s = '';
+			for ($i = 0; $i < 12; $i++) {
+				$s .= $c[rand(0, $l - 1)];
+			}
+		}
+		while (self::getIdFromKey($s) !== null);
+		return $s;
 	}
 	
 	public static function createGroup($name, $user) {
@@ -48,7 +77,8 @@ class Group extends JsonExport {
 			array(
 				"name" => DB::escape($name),
 				"time" => time(),
-				"user" => $user
+				"user" => $user,
+				"key" => self::createKey()
 			)
 		);
 		echo DB::getError();

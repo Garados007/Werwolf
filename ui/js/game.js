@@ -57,6 +57,14 @@ var Logic = new function() {
 		addUserToGroup: function(data) {
 			thisref.RequestEvents.addUserToGroup.invoke(data);
 		},
+		addUserToGroupByKey: function(data) {
+			if (Data.NewGameTab != null) {
+				if (data.success) 
+					Logic.Reaction.ShowGroup(data.group);
+				else alert(Lang.Get("wrongKeyMessage"));
+			}
+			thisref.RequestEvents.addUserToGroup.invoke(data);
+		},
 		getUserFromGroup: function(data) {
 			//console.log(data, Data.CurrentGames);
 			if (Data.CurrentGames[data.group] != undefined)
@@ -103,6 +111,13 @@ var Logic = new function() {
 			thisref.SendApiRequest({
 				mode: "getGroup",
 				group: id
+			});
+		},
+		AddUserToGroupByKey: function(user, key) {
+			thisref.SendApiRequest({
+				mode: "addUserToGroupByKey",
+				user: user,
+				key: key
 			});
 		},
 		

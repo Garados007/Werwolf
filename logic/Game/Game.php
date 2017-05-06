@@ -18,6 +18,12 @@ class Game {
 		return self::$groupBackup[$group] = new Group($group);
 	}
 	
+	public static function GetGroupByKey($key) {
+		$id = Group::getIdFromKey($key);
+		if ($id == null) return null;
+		else return self::GetGroup($id);
+	}
+	
 	public static function CreateGroup($name, $user) {
 		$group = Group::createGroup($name, $user);
 		self::$groupBackup[$group->id] = $group;
