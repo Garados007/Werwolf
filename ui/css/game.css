@@ -225,6 +225,28 @@ body {
 .user-roles {
     padding-left: 0.6em;
 }
+.input-group {
+	position: relative;
+}
+.role-table {
+	display: table;
+	width: 100%;
+}
+.role-setting {
+	display: table-row;
+}
+.role-setting > * {
+	display: table-cell;
+}
+.role-setting > *:nth-child(1) {
+	width: 1px;
+	padding-right: 1em;
+}
+.role-setting.inliner > div > div {
+	display: inline;
+	font-weight: bold;
+	font-size: 1.1em;
+}
 
 
 

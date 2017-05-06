@@ -23,6 +23,7 @@ if (isset($_GET["set-lang"])) {
 	<link href="/<?php echo URI_PATH; ?>ui/css/loadingbox.css" rel="stylesheet" />
 	<link href="/<?php echo URI_PATH; ?>ui/css/game.css" rel="stylesheet" />
 	<script src="/<?php echo URI_PATH; ?>ui/js/language-texts.js.php"></script>
+	<script src="/<?php echo URI_PATH; ?>ui/js/const.js.php"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/jquery-3.2.1.min.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/toolkit.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/toolkit.view.js"></script>

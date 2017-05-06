@@ -11,8 +11,20 @@
 	"joinGroup": "Gruppe beitreten",
 	"insertNameMessage": "Bitte geben Sie eine Gruppennamen ein!",
 	"loadingName": "Name wird geladen...",
+	"inviteKeyDescription": "Um weitere Spieler einzuladen, kopieren Sie einfach diesen Schlüssel und senden ihn weiter. Diese Spieler müssen dann den Schlüssel eingeben, um einfach dieser Gruppe beizutreten. Beachte: Absolut jeder, der diesen Schlüssel hat, kann beitreten!",
+	"startNewGame": "Neues Spiel starten",
+	"setRolesDescription": "Bitte legen Sie fest, wie viele Spieler welche Rolle bekommen sollen. Der nicht zugewiesene Rest wird automatisch zum Dorfbewohner.",
+	"startGame": "Spiel starten",
 	"roles": {
 		"leader": "Gruppenleiter",
-		"member": "Mitglied"
+		"member": "Mitglied",
+		"armor": "Armor",
+		"grandpa": "Großvater",
+		"log": "System",
+		"major": "Major",
+		"pair": "Liebespaar",
+		"storytel": "Erzähler",
+		"villager": "Dorfbewohner",
+		"wolf": "Wolf"
 	}
 }

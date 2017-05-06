@@ -116,7 +116,11 @@ WerWolf.PrepairGame = function(id, data) {
 		mode: "getUserFromGroup",
 		group: this.id
 	}));
+	
+	var userList = [];
 	this.UpdateUser = function(user) {
+		userList = user;
+		thisref.content.find(".user-count").text(""+user.length);
 		var container = thisref.content.find(".user-list");
 		var request = [];
 		for (var i = 0; i<user.length; ++i) {
@@ -139,6 +143,10 @@ WerWolf.PrepairGame = function(id, data) {
 			Logic.ApiAccess.Multi(request);
 		thisref.content.find(".user-frame .loading-frame").remove();
 	};
+	
+	var frame = this.content.find(".game-frame");
+	frame.children().remove();
+	frame.append(UI.CreateGamePreSettings(data.name, "key", userList.length));
 };
 WerWolf.PrepairGame.prototype = Object.create(WerWolf.RunningGame.prototype);
 

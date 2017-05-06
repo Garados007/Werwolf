@@ -107,4 +107,102 @@ var UI = new function() {
 			]
 		});
 	};
+	
+	this.CreateGamePreSettings = function(name, gameKey, userCount, clickStart) {
+		var list = [];
+		var used;
+		for (var i = 0; i<Const.RoleKeys.length; ++i) {
+			var key = Const.RoleKeys[i];
+			//eliminate unwanted keys (they are implicit given)
+			if (key == 'log' || key == 'major' || key == 'pair' || key == 'villager') continue;
+			list.push(v.CreateElementRaw({
+				css: ["role-setting"],
+				children: [
+					v.CreateElement("div", Lang.Get("roles", key)),
+					key == "storytel" ?
+					v.CreateInput("number", null, {
+						css: ["role-ammount", "role-ammount-"+key],
+						value: 1,
+						readonly: "true"
+					}) :
+					v.CreateInput("number", function() {
+						this.value = this.value.replace(/[^0-9]/g, '');
+						if (this.value == '') this.value = 0;
+						var inputs = $(this).parent().parent().find("input");
+						var sum = 0;
+						for (var i = 0; i<inputs.length; ++i)
+							sum += inputs[i].value * 1;
+						used.text(sum);
+					}, {
+						css: ["role-ammount", "role-ammount-"+key],
+						min: 0,
+						step: 1,
+						value: 0,
+						pattern: "\d+"
+					})
+				]
+			}));
+		}
+		list.push(v.CreateElementRaw({
+			css: ["role-setting", "inliner"],
+			children: [
+				v.CreateElement("div", ""),
+				v.CreateElementRaw({
+					children: [
+						used = v.CreateElementRaw({
+							text: "1"
+						}),
+						v.CreateElementRaw({
+							text: "/"
+						}),
+						v.CreateElementRaw({
+							css: ["user-count"],
+							text: ""+userCount
+						})
+					]
+				})
+			]
+		}));
+		console.log(userCount);
+		return v.CreateElementRaw({
+			css: ["v-container"],
+			children: [
+				v.CreateElementRaw({
+					css: ["new-game-box"],
+					children: [
+						v.CreateElement("h2", name),
+						v.CreateElementRaw({
+							css: ["input-group"],
+							children: [
+								v.CreateElement("span", Lang.Get("inviteKeyDescription")),
+								v.CreateInput("text", null, {
+									css: ["joinGroupKey"],
+									placeholder: gameKey,
+									value: gameKey,
+									readonly: "true"
+								})
+							]
+						})
+					]
+				}),
+				v.CreateElementRaw({
+					css: ["new-game-box"],
+					children: [
+						v.CreateElement("h2", Lang.Get("startNewGame")),
+						v.CreateElementRaw({
+							css: ["input-group"],
+							children: [
+								v.CreateElement("span", Lang.Get("setRolesDescription")),
+								v.CreateElementRaw({
+									css: ["role-table"],
+									children: list
+								})
+							]
+						}),
+						v.CreateButton(Lang.Get("startGame"), clickStart)
+					]
+				})
+			]
+		});
+	};
 };
