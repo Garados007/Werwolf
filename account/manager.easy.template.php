@@ -63,7 +63,7 @@ class AccountManager {
 	}
 	//this function is called, when the backend needs the user name
 	public static function GetAccountName($id) {
-		if ($reponse = DB::executeFormatFile(dirname(__FILE__).'/easy/selectAll.sql', array())) {
+		if ($response = DB::executeFormatFile(dirname(__FILE__).'/easy/selectAll.sql', array())) {
 			$set = $response->getResult();
 			while ($entry = $set->getEntry()) {
 				if ($entry["Id"] == $id) return $entry["Name"];

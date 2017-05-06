@@ -1,4 +1,18 @@
 {
 	"newTabName": "Neues Spiel hinzufügen",
-	"newGameTabName": "Neues Spiel"
+	"newGameTabName": "Neues Spiel",
+	"createNewGameGroup": "Eine neue Spielegruppe erstellen",
+	"joinExistingGroup": "Einer bestehenden Gruppe beitreten",
+	"newGroupName": "Name der neuen Gruppe:",
+	"newGroupNameInputPlaceholder": "Der Name der neuen Gruppe",
+	"createNewGroup": "Erstelle Gruppe",
+	"joinGroupKey": "Der Gruppenschlüssel zum Beitreten:",
+	"joinGroupKeyInputPlaceholder": "Der Gruppenschlüssel",
+	"joinGroup": "Gruppe beitreten",
+	"insertNameMessage": "Bitte geben Sie eine Gruppennamen ein!",
+	"loadingName": "Name wird geladen...",
+	"roles": {
+		"leader": "Gruppenleiter",
+		"member": "Mitglied"
+	}
 }

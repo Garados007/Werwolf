@@ -24,7 +24,8 @@ class Api {
 			return json_encode(array(
 				"success" => false,
 				"error" => $this->error,
-				"errorkey" => $this->errorKey
+				"errorkey" => $this->errorKey,
+				"request" => $this->params
 			));
 		}
 		else {
@@ -78,6 +79,7 @@ class Api {
 		switch ($this->params["mode"]) {
 			case "multi": $this->multi(); break;
 			case "getAccountState": $this->getAccountState(); break;
+			case "getAccountName": $this->getAccountName(); break;
 			case "createGroup": $this->createGroup(); break;
 			case "getGroup": $this->getGroup(); break;
 			case "addUserToGroup": $this->addUserToGroup(); break;
@@ -111,14 +113,14 @@ class Api {
 	
 	private function multi() {
 		if (!$this->check(['tasks'])) return;
-		$tasks = $this->param['tasks'];
+		$tasks = $this->params['tasks'];
 		if (!is_array($tasks)) {
 			$this->error = "tasks is not an array";
 			return;
 		}
 		$result = array();
 		foreach ($tasks as $task) {
-			$api = new Api(json_decode($task, true));
+			$api = new Api(json_decode(json_decode($task, true), true));
 			$result[] = $api->exportResult();
 		}
 		$this->result = array(
@@ -134,6 +136,18 @@ class Api {
 		$this->result = array(
 			"method" => 'getAccountState',
 			"state" => $state
+		);
+	}
+	
+	private function getAccountName() {
+		if (!$this->check(['user'])) return;
+		$name = AccountManager::GetAccountName(
+			$this->getInt("user")
+		);
+		$this->result = array(
+			"method" => 'getAccountName',
+			"user" => $this->getInt("user"),
+			"name" => $name
 		);
 	}
 	

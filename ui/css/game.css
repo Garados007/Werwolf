@@ -60,6 +60,7 @@ body {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	white-space: nowrap;
 }
 .loading-frame > div > div {
 	display: inline-block;
@@ -134,3 +135,105 @@ body {
 	background-color: #c35b22;
 	border-color: #c35b22;
 }
+
+/*new game*/
+
+.v-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+.new-game-box {
+	margin: 1em;
+	border: 1px solid #823c17;
+	border-radius: 1em;
+	padding: 1em;
+	background-color: transparent;
+	transition: background-color 0.3s;
+}
+.new-game-box:hover {
+	background-color:rgba(108, 50, 19, 1);
+}
+.new-game-box  h2 {
+	margin: 0 0 1em 0;
+	text-decoration: underline;
+}
+.new-game-box .input-group {
+	position: relative;
+	padding: 0 0 0.5em 0;
+}
+.new-game-box span, .new-game-box input {
+	display: block;
+	width: 100%;
+	padding: 0.2em 0;
+}
+.new-game-box input {
+	font-size: 1.2em;
+	padding: 0.1em;
+}
+.new-game-box .ui-button {
+	display: block;
+	margin: 1em 0 0 0;
+	text-align: center;
+	background-color: #823c17;
+	cursor: pointer;
+	font-size: 1.4em;
+	font-weight: bold;
+	transition: background-color 0.3s;
+	padding: 0.5em 0;
+	border-radius: 0.5em;
+}
+.new-game-box .ui-button:hover {
+	background-color: #c35b22;
+}
+
+/*game user frame*/
+
+.game-user-frame {
+	display: table;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+}
+.game-user-frame > div {
+	display: table-cell;
+	position: relative;
+}
+.user-frame {
+	max-width: 30em;
+	width: 25%;
+	border-right: 2px solid #301203;
+}
+.user-entry {
+    border: 1px solid #301203;
+    margin: 0.1em;
+    padding: 0.1em 0.3em;
+}
+.user-name {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.user-roles {
+    padding-left: 0.6em;
+}
+
+
+
+
+
+
+
+
+
+
+
+

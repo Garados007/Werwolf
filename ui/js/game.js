@@ -13,7 +13,11 @@ var Logic = new function() {
 	this.RequestHandler = {
 		multi: function(data) {
 			data.results.forEach(function(element) {
-				element = JSON.parse(element);
+				try { element = JSON.parse(element); }
+				catch (ex) {
+					console.log(ex, element);
+					return;
+				}
 				if (!element.success)
 					thisref.RequestHandler.error(element);
 				else element = element.result;
@@ -38,6 +42,27 @@ var Logic = new function() {
 			Data.UserName = data.state.name;
 			thisref.RequestEvents.getAccountState.invoke(data);
 		},
+		getAccountName: function(data) {
+			Data.UserIdNameRef[data.user] = data.name;
+			thisref.RequestEvents.getAccountName.invoke(data);
+		},
+		createGroup: function(data) {
+			Logic.Reaction.ShowGroup(data.group);
+			thisref.RequestEvents.createGroup.invoke(data);
+		},
+		getGroup: function(data) {
+			Logic.Reaction.ShowGroup(data.group);
+			thisref.RequestEvents.getGroup.invoke(data);
+		},
+		addUserToGroup: function(data) {
+			thisref.RequestEvents.addUserToGroup.invoke(data);
+		},
+		getUserFromGroup: function(data) {
+			//console.log(data, Data.CurrentGames);
+			if (Data.CurrentGames[data.group] != undefined)
+				Data.CurrentGames[data.group].UpdateUser(data.user);
+			thisref.RequestEvents.getUserFromGroup.invoke(data);
+		},
 		
 		getGroupFromUser: function(data) {
 			Data.UserGroups = data.group;
@@ -61,11 +86,23 @@ var Logic = new function() {
 				mode: "getAccountState"
 			});
 		},
+		GetAccountName: function(user) {
+			thisref.SendApiRequest({
+				mode: "getAccountName",
+				user: user
+			});
+		},
 		CreateGroup: function(name, user) {
 			thisref.SendApiRequest({
 				mode: "createGroup",
 				name: name,
 				user: user
+			});
+		},
+		GetGroup: function(id) {
+			thisref.SendApiRequest({
+				mode: "getGroup",
+				group: id
 			});
 		},
 		
@@ -87,7 +124,6 @@ var Logic = new function() {
 			Logic.RequestEvents.getGroupFromUser.addSingle(function() {
 				var list = [];
 				for (var i = 0; i<Data.UserGroups.length; ++i) {
-					Logic.Reaction.InitGroup(Data.UserGroups[i]);
 					list.push(JSON.stringify({
 						mode: "getGroup",
 						group: Data.UserGroups[i]
@@ -103,14 +139,23 @@ var Logic = new function() {
 			});
 			Logic.ApiAccess.GetAccountState();
 		},
-		InitGroup: function(id) {
-			
-		},
 		InitNoGroup: function() {
 			$(".tab-list").find(".loading-frame").remove();
 			var game = new WerWolf.NewGame();
 			game.Attach();
 			game.Activate();
+		},
+		ShowGroup: function(group) {
+			$(".tab-list").find(".loading-frame").remove();
+			console.log(group);
+			if (group.currentGame == null) {
+				var game = new WerWolf.PrepairGame(group.id, group);
+				game.Attach();
+				game.Activate();
+				console.log(game);
+			}
+			
+			if (Data.NewGameTab != null) Data.NewGameTab.Remove();
 		}
 	};
 };
@@ -119,7 +164,10 @@ Data = {
 	UserId: null,
 	UserName: null,
 	UserGroups: [],
-	Games: []
+	Games: [],
+	NewGameTab: null,
+	CurrentGames: {},
+	UserIdNameRef: {}
 };
 
 $(function(){
