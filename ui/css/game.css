@@ -7,7 +7,7 @@ body {
 	display: table;
 	width: 100vw;
 	height: 100vh;
-	background-color: #461c06;
+	background-color: #6c3213;
 }
 .main-window > div {
 	display: table-row;
@@ -33,12 +33,12 @@ body {
 	height: 2em;
 	width: 2em;
 	padding: 0.2em 0.5em;
-	background-color: #823c17;
+	background-color: #c35b22;
 	transition: background-color 0.3s;
 	cursor: pointer;
 }
 .user-change-button:hover, .game-options:hover {
-	background-color: #c35b22;
+	background-color: #ff7a33;
 }
 .main-content {
 	position: relative;
@@ -67,7 +67,7 @@ body {
 	width: 1em;
 	height: 1em;
 	border-radius: 1em;
-	background-color: #823c17;
+	background-color: #c35b22;
 	margin: 0 0.5em;
 	animation-name: loading-frame-frames;
 	animation-duration: 3s;
@@ -112,10 +112,10 @@ body {
 .tab-button:before {
 	content: "";
 	position: absolute;
-	border-left: 3px solid #823c17;
-	border-top: 3px solid #823c17;
-	border-right: 3px solid #823c17;
-	background-color: #461c06;
+	border-left: 3px solid #c35b22;
+	border-top: 3px solid #c35b22;
+	border-right: 3px solid #c35b22;
+	background-color: #6c3213;
 	top: -60%;
 	bottom: -49%;
 	left: -3%;
@@ -129,11 +129,11 @@ body {
 	z-index: 5;
 }
 .tab-button.active:before {
-	background-color: #823c17;
+	background-color: #c35b22;
 }
 .tab-button:hover:before {
-	background-color: #c35b22;
-	border-color: #c35b22;
+	background-color: #ff7a33;
+	border-color: #ff7a33;
 }
 
 /*new game*/
@@ -150,14 +150,14 @@ body {
 }
 .new-game-box {
 	margin: 1em;
-	border: 1px solid #823c17;
+	border: 1px solid #c35b22;
 	border-radius: 1em;
 	padding: 1em;
 	background-color: transparent;
 	transition: background-color 0.3s;
 }
 .new-game-box:hover {
-	background-color:rgba(108, 50, 19, 1);
+	background-color:#823c17;
 }
 .new-game-box  h2 {
 	margin: 0 0 1em 0;
@@ -180,7 +180,7 @@ body {
 	display: block;
 	margin: 1em 0 0 0;
 	text-align: center;
-	background-color: #823c17;
+	background-color: #c35b22;
 	cursor: pointer;
 	font-size: 1.4em;
 	font-weight: bold;
@@ -189,7 +189,7 @@ body {
 	border-radius: 0.5em;
 }
 .new-game-box .ui-button:hover {
-	background-color: #c35b22;
+	background-color: #ff7a33;
 }
 
 /*game user frame*/
@@ -219,7 +219,7 @@ body {
     padding: 0.1em 0.3em;
 }
 .user-entry.current {
-	background-color: #823c17;
+	background-color: #c35b22;
 }
 .user-name {
     font-weight: bold;
@@ -283,7 +283,7 @@ body {
 .chat-room-header, .chat-room-textbox {
 	display: table;
 	width: 100%;
-	background-color: #823c17;
+	background-color: #c35b22;
 }
 .chat-room-header > div,
 .chat-room-textbox > * {
@@ -309,7 +309,7 @@ body {
 }
 .chat-room-box.open .chat-room-header {
 	font-weight: bold;
-	background-color: #c35b22;
+	background-color: #ff7a33;
 }
 .chat-room-box.readonly .chat-room-textbox {
 	display: none;
