@@ -1,4 +1,43 @@
 {
 	"newTabName": "开启新游戏",
-	"newGameTabName": "新游戏"
+	"newGameTabName": "新游戏",
+	"createNewGameGroup": "新建游戏组",
+	"joinExistingGroup": "加入已有群组",
+	"newGroupName": "新群组名称:",
+	"newGroupNameInputPlaceholder": "新群组名称",
+	"createNewGroup": "新建群组",
+	"joinGroupKey": "已有群组邀请码:",
+	"joinGroupKeyInputPlaceholder": "群组邀请码",
+	"joinGroup": "加入群组",
+	"insertNameMessage": "请输入群组名！",
+	"insertKeyMessage": "请输入群组邀请码！",
+	"wrongKeyMessage": "您所输入的邀请码是无效的！请您确认后重新输入！",
+	"loadingName": "Name wird geladen...",
+	"inviteKeyDescription": "Um weitere Spieler einzuladen, kopieren Sie einfach diesen Schlüssel und senden ihn weiter. Diese Spieler müssen dann den Schlüssel eingeben, um einfach dieser Gruppe beizutreten. Beachte: Absolut jeder, der diesen Schlüssel hat, kann beitreten!",
+	"startNewGame": "Neues Spiel starten",
+	"setRolesDescription": "Bitte legen Sie fest, wie viele Spieler welche Rolle bekommen sollen. Der nicht zugewiesene Rest wird automatisch zum Dorfbewohner. Beachten Sie: Sie als Spielleiter sind immer der Erzähler!",
+	"startGame": "Spiel starten",
+	"memberWaitTitle": "Warte auf Gruppenleiter...",
+	"memberWaitDescription": "Bitte warte bis der Gruppenleiter seine Änderungen vorgenommen hat. Es geht sofort los, wenn der Leiter alles eingestellt und das Spiel gestartet hat.",
+	"roles": {
+		"leader": "主持人",
+		"member": "游戏参与者（非主持人）",
+		"armor": "丘比特",
+		"grandpa": "白痴",
+		"log": "系统信息",
+		"major": "警长",
+		"pair": "情侣",
+		"storytel": "Erzähler",
+		"villager": "村民",
+		"wolf": "狼人"
+	},
+	"chats": {
+		"common": "Allgemein",
+		"story": "历史",
+		"voteMajr": "警长选举",
+		"voteArmr": "丘比特选择两个情侣",
+		"voteVilg": "村民投票",
+		"voteWolf": "狼人选择杀人",
+		"lovepair": "情侣"
+	}
 }

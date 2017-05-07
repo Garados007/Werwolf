@@ -178,7 +178,7 @@ WerWolf.PrepairGame = function(id, data) {
 	frame.children().remove();
 	if (data.leader == Data.UserId) {
 		frame.append(UI.CreateGamePreSettings(data.name, 
-			data.enterKey, userList.length, function() {
+			data.enterKey, 0, function() {
 				var roles = [];
 				var inputs = thisref.content.find(".role-ammount");
 				for (var i = 0; i<inputs.length; ++i) {
