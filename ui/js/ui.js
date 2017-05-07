@@ -205,4 +205,21 @@ var UI = new function() {
 			]
 		});
 	};
+	
+	this.CreateMemberWaitScreen = function() {
+		return v.CreateElementRaw({
+			css: ["v-container"],
+			children: [
+				v.CreateElementRaw({
+					css: ["new-game-box"],
+					children: [
+						v.CreateElement("h2", Lang.Get("memberWaitTitle")),
+						v.CreateElementRaw({
+							text: Lang.Get("memberWaitDescription")
+						})
+					]
+				})
+			]
+		});
+	};
 };

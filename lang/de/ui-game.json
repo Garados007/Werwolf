@@ -15,8 +15,10 @@
 	"loadingName": "Name wird geladen...",
 	"inviteKeyDescription": "Um weitere Spieler einzuladen, kopieren Sie einfach diesen Schlüssel und senden ihn weiter. Diese Spieler müssen dann den Schlüssel eingeben, um einfach dieser Gruppe beizutreten. Beachte: Absolut jeder, der diesen Schlüssel hat, kann beitreten!",
 	"startNewGame": "Neues Spiel starten",
-	"setRolesDescription": "Bitte legen Sie fest, wie viele Spieler welche Rolle bekommen sollen. Der nicht zugewiesene Rest wird automatisch zum Dorfbewohner.",
+	"setRolesDescription": "Bitte legen Sie fest, wie viele Spieler welche Rolle bekommen sollen. Der nicht zugewiesene Rest wird automatisch zum Dorfbewohner. Beachten Sie: Sie als Spielleiter sind immer der Erzähler!",
 	"startGame": "Spiel starten",
+	"memberWaitTitle": "Warte auf Gruppenleiter...",
+	"memberWaitDescription": "Bitte warte bis der Gruppenleiter seine Änderungen vorgenommen hat. Es geht sofort los, wenn der Leiter alles eingestellt und das Spiel gestartet hat.",
 	"roles": {
 		"leader": "Gruppenleiter",
 		"member": "Mitglied",

@@ -152,9 +152,12 @@ WerWolf.PrepairGame = function(id, data) {
 	};
 	
 	var frame = this.content.find(".game-frame");
+	frame.children().remove();
 	if (data.leader == Data.UserId) {
-		frame.children().remove();
 		frame.append(UI.CreateGamePreSettings(data.name, data.enterKey, userList.length));
+	}
+	else {
+		frame.append(UI.CreateMemberWaitScreen());
 	}
 };
 WerWolf.PrepairGame.prototype = Object.create(WerWolf.RunningGame.prototype);
