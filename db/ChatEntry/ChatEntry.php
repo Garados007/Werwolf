@@ -33,7 +33,7 @@ class ChatEntry extends JsonExport {
 		$set = $result->getResult();
 		while ($entry = $set->getEntry())
 			$list[] = new ChatEntry($chat, $entry["User"], $entry["Message"],
-				$entry["SendDate"]);
+				intval($entry["SendDate"]));
 		$result->free();
 		return $list;
 	}

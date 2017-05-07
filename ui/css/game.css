@@ -314,6 +314,35 @@ body {
 .chat-room-box.readonly .chat-room-textbox {
 	display: none;
 }
+.chat-room-chats-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	white-space: normal;
+}
+.chat-single-entry {
+    border: 1px solid #301203;
+    margin: 0.2em;
+    padding: 0.2em;
+}
+.chat-single-entry-date {
+    display: inline;
+    font-style: italic;
+    float: right;
+	padding-left: 1em;
+}
+.chat-single-entry-header {
+    border-bottom: 1px solid #301203;
+    font-size: 0.8em;
+}
+.chat-single-entry-name {
+    display: inline;
+}
+.chat-single-entry-text {
+	white-space: pre-wrap;
+}
 
 
 

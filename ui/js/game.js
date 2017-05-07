@@ -99,6 +99,14 @@ var Logic = new function() {
 			if (Data.ChatRoomGames[data.chat.id] != undefined)
 				Data.ChatRoomGames[data.chat.id].UpdateRoomData(data.chat);
 			thisref.RequestEvents.getChatRoom.invoke(data);
+		},
+		getLastChat: function(data) {
+			if (Data.ChatRoomGames[data.room] != undefined)
+				Data.ChatRoomGames[data.room].HandleNewChat(data.room, data.chat);
+			thisref.RequestEvents.getLastChat.invoke(data);
+		},
+		addChat: function(data) {
+			thisref.RequestEvents.addChat.invoke(data);
 		}
 	};
 	
@@ -156,6 +164,14 @@ var Logic = new function() {
 				group: group,
 				roles: roles
 			})]);
+		},
+		AddChat: function(chat, user, text) {
+			thisref.SendApiRequest({
+				mode: "addChat",
+				chat: chat,
+				user: user,
+				text: text
+			});
 		}
 	};
 	

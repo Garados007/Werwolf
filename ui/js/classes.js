@@ -89,8 +89,19 @@ WerWolf.RunningGame = function(id, data) {
 	
 	this.LoopEvents = [];
 	var intervall = setInterval(function(){
-		if (thisref.LoopEvents.length > 0)
-			Logic.ApiAccess.Multi(thisref.LoopEvents);
+		if (thisref.LoopEvents.length > 0) {
+			var d = [];
+			for (var i = 0; i<thisref.LoopEvents.length; ++i) {
+				if (thisref.LoopEvents[i] instanceof Function) {
+					var res = thisref.LoopEvents[i]();
+					if (Array.isArray(res))
+						d = d.concat(res);
+					else d.push(res);
+				}
+				else d.push(thisref.LoopEvents[i]);
+			}
+			Logic.ApiAccess.Multi(d);
+		}
 	}, 1000);
 	
 	var updateUserNames = function(data) {
@@ -250,9 +261,19 @@ WerWolf.PlayGame = function(id, data) {
 			if (rooms[key] == undefined) {
 				rooms[key] = {
 					id: key,
+					last: 0,
 					access: room[key],
 					box: UI.CreateChatBox(
-						room[key].chatmode, key).appendTo(cont)
+						room[key].chatmode, key, function(){
+							var key = $(this).attr("data-id");
+							var ta = rooms[key].box.find("textarea");
+							var text = ta.val();
+							console.log(text);
+							if (text!="") {
+								Logic.ApiAccess.AddChat(key, Data.UserId, text);
+							}
+							ta.val("");
+						}).appendTo(cont)
 				};
 				if (!room[key].enableWrite)
 					rooms[key].box.addClass("readonly");
@@ -270,10 +291,42 @@ WerWolf.PlayGame = function(id, data) {
 		rooms[room.id].data = room;
 		if (room.opened) rooms[room.id].box.addClass("open");
 		else rooms[room.id].box.removeClass("open");
-		if (room.voting != old.voting) {
+		if (old != null && room.voting != old.voting) {
 			
 		}
 	};
+	this.HandleNewChat = function(room, chat) {
+		if (chat.length == 0) return;
+		var log = rooms[room].box.find(".chat-room-chats");
+		var treshhold = 16; //16px extra
+		var doscroll = log[0].scrollTop + log[0].clientHeight >= log[0].scrollHeight - treshhold;
+		for (var i = 0; i<chat.length; ++i) {
+			if (rooms[room].last < chat[i].sendDate)
+				rooms[room].last = chat[i].sendDate + 1;
+			var entry = UI.CreateChatSingleEntry(
+				Data.UserIdNameRef[chat[i].user],
+				new Date(chat[i].sendDate*1000).toLocaleString(),
+				chat[i].text
+			);
+			entry.appendTo(log);
+		}
+		console.log(doscroll, log[0].scrollTop, log[0].clientHeight, log[0].scrollHeight);
+		if (doscroll) {
+			log[0].scrollTop = log[0].scrollHeight;
+		}
+	};
+	this.LoopEvents.push(function() {
+		var d = [];
+		for (var key in rooms) {
+			if (rooms.hasOwnProperty(key))
+				d.push(JSON.stringify({
+					mode: "getLastChat",
+					chat: rooms[key].id,
+					since: rooms[key].last
+				}));
+		}
+		return d;
+	});
 	
 	var frame = this.content.find(".game-frame");
 	frame.children().remove();

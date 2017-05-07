@@ -4,4 +4,5 @@ WHERE Chat = <?php echo $chat; ?>
 	<?php if ($minSendDate !== null) { ?>
 	AND
 	SendDate >= <?php echo $minSendDate; ?>
-	<?php } ?>;
+	<?php } ?>
+ORDER BY SendDate ASC;

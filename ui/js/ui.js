@@ -266,23 +266,33 @@ var UI = new function() {
 		});
 	};
 	
-	this.CreateChatBoxTextBox = function(clickSend) {
-		return v.CreateElementRaw({
-			css: ["chat-room-textbox"],
+	this.CreateChatBoxTextBox = function(id, clickSend) {
+		var textarea = v.CreateElementRaw({
+			element: "textarea",
+			css: ["chat-room-text"]
+		});
+		var button = v.CreateButton("", clickSend, {
+			"data-id": id,
 			children: [
 				v.CreateElementRaw({
-					element: "textarea",
-					css: ["chat-room-text"]
-				}),
-				v.CreateButton("", clickSend, {
-					children: [
-						v.CreateElementRaw({
-							element: "img",
-							src: "/"+$WWV.urlBase+"ui/img/Mail-Send-icon.png"
-						})
-					]
+					element: "img",
+					src: "/"+$WWV.urlBase+"ui/img/Mail-Send-icon.png"
 				})
 			]
+		});
+		textarea.keydown(function (e) {
+			if (e.keyCode == 13 && !e.ctrlKey && !e.shiftKey) {
+				clickSend.call(button);
+			}
+		});
+		textarea.keyup(function(e) {
+			if (e.keyCode == 13 && !e.ctrlKey && !e.shiftKey) {
+				$(this).val("");
+			}
+		});
+		return v.CreateElementRaw({
+			css: ["chat-room-textbox"],
+			children: [ textarea, button ]
 		});
 	};
 	
@@ -301,17 +311,57 @@ var UI = new function() {
 				}),
 				v.CreateElementRaw({
 					children: [
-					
+						v.CreateElementRaw({
+							children: [
+								thisref.CreateChatBoxChatList()
+							]
+						})
 					]
 				}),
 				v.CreateElementRaw({
 					children: [
 						v.CreateElementRaw({
 							children: [
-								thisref.CreateChatBoxTextBox(clickSend)
+								thisref.CreateChatBoxTextBox(id, clickSend)
 							]
 						})
 					]
+				})
+			]
+		});
+	};
+	
+	this.CreateChatBoxChatList = function() {
+		return v.CreateElementRaw({
+			css: ["chat-room-chats-container"],
+			children: [
+				v.CreateElementRaw({
+					css: ["chat-room-chats", "v-container"]
+				})
+			]
+		});
+	};
+	
+	this.CreateChatSingleEntry = function(sender, date, message) {
+		return v.CreateElementRaw({
+			css: ["chat-single-entry"],
+			children: [
+				v.CreateElementRaw({
+					css: ["chat-single-entry-header"],
+					children: [
+						v.CreateElementRaw({
+							css: ["chat-single-entry-name"],
+							text: sender
+						}),
+						v.CreateElementRaw({
+							css: ["chat-single-entry-date"],
+							text: date
+						})
+					]
+				}),
+				v.CreateElementRaw({
+					css: ["chat-single-entry-text"],
+					text: message
 				})
 			]
 		});
