@@ -66,15 +66,39 @@ var Logic = new function() {
 			thisref.RequestEvents.addUserToGroup.invoke(data);
 		},
 		getUserFromGroup: function(data) {
-			//console.log(data, Data.CurrentGames);
 			if (Data.CurrentGames[data.group] != undefined)
 				Data.CurrentGames[data.group].UpdateUser(data.user);
 			thisref.RequestEvents.getUserFromGroup.invoke(data);
 		},
-		
 		getGroupFromUser: function(data) {
 			Data.UserGroups = data.group;
 			thisref.RequestEvents.getGroupFromUser.invoke(data);
+		},
+		createGame: function(data) {
+			if (Data.CurrentGames[data.game.mainGroupId] != undefined)
+				Data.CurrentGames[data.game.mainGroupId].UpdateGameData(data.game);
+			thisref.RequestEvents.createGame.invoke(data);
+		},
+		getGame: function(data) {
+			if (Data.CurrentGames[data.game.mainGroupId] != undefined)
+				Data.CurrentGames[data.game.mainGroupId].UpdateGameData(data.game);
+			thisref.RequestEvents.getGame.invoke(data);
+		},
+		
+		getPlayer: function(data) {
+			if (Data.RunningGames[data.player.game] != undefined)
+				Data.RunningGames[data.player.game].UpdatePlayer(data.player);
+			thisref.RequestEvents.getPlayer.invoke(data);
+		},
+		getAccessibleChatRooms: function(data) {
+			if (Data.RunningGames[data.player.game] != undefined)
+				Data.RunningGames[data.player.game].UpdateRoom(data.rooms);
+			thisref.RequestEvents.getAccessibleChatRooms.invoke(data);
+		},
+		getChatRoom: function(data){
+			if (Data.ChatRoomGames[data.chat.id] != undefined)
+				Data.ChatRoomGames[data.chat.id].UpdateRoomData(data.chat);
+			thisref.RequestEvents.getChatRoom.invoke(data);
 		}
 	};
 	
@@ -120,12 +144,18 @@ var Logic = new function() {
 				key: key
 			});
 		},
-		
 		GetGroupsFromUser: function(user) {
 			thisref.SendApiRequest({
 				mode: "getGroupFromUser",
 				user: user
 			});
+		},
+		CreateGame: function(group, roles) {
+			thisref.ApiAccess.Multi([JSON.stringify({
+				mode: "createGame",
+				group: group,
+				roles: roles
+			})]);
 		}
 	};
 	
@@ -162,15 +192,23 @@ var Logic = new function() {
 		},
 		ShowGroup: function(group) {
 			$(".tab-list").find(".loading-frame").remove();
-			console.log(group);
-			if (group.currentGame == null) {
-				var game = new WerWolf.PrepairGame(group.id, group);
-				game.Attach();
-				game.Activate();
-				console.log(game);
+			if (Data.CurrentGames[group.id] != undefined) {
+				if (Data.CurrentGames[group.id].UpdateGroupInfo != undefined)
+					Data.CurrentGames[group.id].UpdateGroupInfo(group);
 			}
-			
-			if (Data.NewGameTab != null) Data.NewGameTab.Remove();
+			else {
+				if (group.currentGame == null) {
+					var game = new WerWolf.PrepairGame(group.id, group);
+					game.Attach();
+					game.Activate();
+				}
+				else {
+					var game = new WerWolf.PlayGame(group.id, group);
+					game.Attach();
+					game.Activate();
+				}
+				if (Data.NewGameTab != null) Data.NewGameTab.Remove();
+			}
 		}
 	};
 };
@@ -182,7 +220,9 @@ Data = {
 	Games: [],
 	NewGameTab: null,
 	CurrentGames: {},
-	UserIdNameRef: {}
+	UserIdNameRef: {},
+	RunningGames: {},
+	ChatRoomGames: {}
 };
 
 $(function(){

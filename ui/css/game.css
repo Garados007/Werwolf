@@ -138,7 +138,7 @@ body {
 
 /*new game*/
 
-.v-container {
+.v-container, .h-container {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -218,6 +218,9 @@ body {
     margin: 0.1em;
     padding: 0.1em 0.3em;
 }
+.user-entry.current {
+	background-color: #823c17;
+}
 .user-name {
     font-weight: bold;
     font-size: 1.1em;
@@ -248,9 +251,69 @@ body {
 	font-size: 1.1em;
 }
 
-
-
-
+/*text chat*/
+.h-container {
+	white-space: nowrap;
+	overflow-y: hidden;
+}
+.h-container-i {
+	height: 100%;
+}
+.chat-room-box {
+	display: inline-table;
+	position: relative;
+	height: 100%;
+	border-right: 2px solid #301203;
+	max-width: 100%;
+	width: 20em;
+}
+.chat-room-box > div {
+	display: table-row;
+}
+.chat-room-box > div:not(:nth-child(2)) {
+	height: 1px;
+}
+.chat-room-box > div > div{
+	display: table-cell;
+	position: relative;
+}
+.chat-room-box .ui-button {
+	cursor: pointer;
+}
+.chat-room-header, .chat-room-textbox {
+	display: table;
+	width: 100%;
+	background-color: #823c17;
+}
+.chat-room-header > div,
+.chat-room-textbox > * {
+	display: table-cell;
+	vertical-align: middle;
+}
+.chat-room-header > div:not(:nth-child(2)),
+.chat-room-textbox > div {
+	width: 1px;
+}
+.chat-room-textbox textarea {
+	width: 100%;
+	height: 5em;
+	font-family: inherit;
+}
+.chat-room-header > div:nth-child(2) {
+	font-size: 1.4em;
+	padding: 0 0.4em;
+}
+.chat-room-header img,
+.chat-room-textbox img {
+	height: 1.8em;
+}
+.chat-room-box.open .chat-room-header {
+	font-weight: bold;
+	background-color: #c35b22;
+}
+.chat-room-box.readonly .chat-room-textbox {
+	display: none;
+}
 
 
 

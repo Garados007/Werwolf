@@ -86,15 +86,21 @@ var UI = new function() {
 		});
 	};
 	
+	this.CreateRole = function(role) {
+		return v.CreateElementRaw({
+			css: ["role-"+role],
+			text: Lang.Get("roles", role)
+		});
+	};
+	
 	this.CreateUserEntry = function(id, name, roles) {
 		var r = [];
 		for (var i = 0; i<roles.length; ++i)
-			r.push(v.CreateElementRaw({
-				css: ["role-"+roles[i]],
-				text: Lang.Get("roles", roles[i])
-			}));
+			r.push(thisref.CreateRole(roles[i]));
 		return v.CreateElementRaw({
-			css: ["user-entry", "entry-"+id],
+			css: id == Data.UserId ?
+				["user-entry", "entry-"+id, "current"] :
+				["user-entry", "entry-"+id],
 			children: [
 				v.CreateElementRaw({
 					css: ["user-name"],
@@ -123,7 +129,8 @@ var UI = new function() {
 					v.CreateInput("number", null, {
 						css: ["role-ammount", "role-ammount-"+key],
 						value: 1,
-						readonly: "true"
+						readonly: "true",
+						"data-role": key
 					}) :
 					v.CreateInput("number", function() {
 						this.value = this.value.replace(/[^0-9]/g, '');
@@ -138,7 +145,8 @@ var UI = new function() {
 						min: 0,
 						step: 1,
 						value: 0,
-						pattern: "\d+"
+						pattern: "\d+",
+						"data-role": key
 					})
 				]
 			}));
@@ -163,7 +171,6 @@ var UI = new function() {
 				})
 			]
 		}));
-		console.log(userCount);
 		return v.CreateElementRaw({
 			css: ["v-container"],
 			children: [
@@ -222,4 +229,92 @@ var UI = new function() {
 			]
 		});
 	};
+	
+	this.CreateChatBoxContainer = function() {
+		return v.CreateElementRaw({
+			css: ["h-container"],
+			children: [
+				v.CreateElementRaw({
+					css: ["h-container-i"]
+				})
+			]
+		});
+	};
+	
+	this.CreateChatBoxHeader = function(name, clickUser, clickPoll) {
+		return v.CreateElementRaw({
+			css: ["chat-room-header"],
+			children: [
+				v.CreateButton("", clickUser, {
+					children: [
+						v.CreateElementRaw({
+							element: "img",
+							src: "/"+$WWV.urlBase+"ui/img/Users-Group-icon.png"
+						})
+					]
+				}),
+				v.CreateElement("div", Lang.Get("chats", name)),
+				v.CreateButton("", clickPoll, {
+					children: [
+						v.CreateElementRaw({
+							element: "img",
+							src: "/"+$WWV.urlBase+"ui/img/Messaging-Poll-Topic-Icon.png"
+						})
+					]
+				})
+			]
+		});
+	};
+	
+	this.CreateChatBoxTextBox = function(clickSend) {
+		return v.CreateElementRaw({
+			css: ["chat-room-textbox"],
+			children: [
+				v.CreateElementRaw({
+					element: "textarea",
+					css: ["chat-room-text"]
+				}),
+				v.CreateButton("", clickSend, {
+					children: [
+						v.CreateElementRaw({
+							element: "img",
+							src: "/"+$WWV.urlBase+"ui/img/Mail-Send-icon.png"
+						})
+					]
+				})
+			]
+		});
+	};
+	
+	this.CreateChatBox = function(name, id, clickSend) {
+		return v.CreateElementRaw({
+			css: ["chat-room-box", "room-"+id],
+			children: [
+				v.CreateElementRaw({
+					children: [
+						v.CreateElementRaw({
+							children: [
+								thisref.CreateChatBoxHeader(name)
+							]
+						})
+					]
+				}),
+				v.CreateElementRaw({
+					children: [
+					
+					]
+				}),
+				v.CreateElementRaw({
+					children: [
+						v.CreateElementRaw({
+							children: [
+								thisref.CreateChatBoxTextBox(clickSend)
+							]
+						})
+					]
+				})
+			]
+		});
+	};
+	
 };

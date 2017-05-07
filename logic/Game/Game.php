@@ -44,7 +44,8 @@ class Game {
 		$group->setCurrentGame($game);
 		//create player and assign roles
 		$playerList = self::GetAllUserFromGroup($group);
-		unset($playerList[$group->leader]); //this is our storyteller
+		if(($key = array_search($group->leader, $playerList)) !== false)
+			unset($playerList[$key]); //this is our storyteller
 		shuffle($playerList);
 		if (self::$creationRolesTable === null)
 			self::$creationRolesTable = json_decode(file_get_contents(
