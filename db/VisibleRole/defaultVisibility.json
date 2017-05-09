@@ -1,0 +1,8 @@
+{
+	"storytel": ["storytel", "villager", "wolf", "major", "armor", "pair", "grandpa"],
+	"villager": ["storytel", "villager", "major"],
+	"wolf": ["wolf"],
+	"armor": ["armor", "pair"],
+	"pair": ["pair"],
+	"grandpa": ["grandpa"]
+}

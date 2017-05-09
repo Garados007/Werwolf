@@ -226,7 +226,8 @@ WerWolf.PlayGame = function(id, data) {
 	}),JSON.stringify({
 		mode: "getPlayer",
 		game: data.currentGame.id,
-		user: Data.UserId
+		user: Data.UserId,
+		me: Data.UserId
 	}),JSON.stringify({
 		mode: "getAccessibleChatRooms",
 		game: data.currentGame.id,

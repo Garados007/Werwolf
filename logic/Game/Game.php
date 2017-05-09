@@ -7,6 +7,7 @@ include_once dirname(__FILE__).'/../../db/Player/Player.php';
 include_once dirname(__FILE__).'/../../db/ChatRoom/ChatRoom.php';
 include_once dirname(__FILE__).'/../../db/ChatMode/ChatMode.php';
 include_once dirname(__FILE__).'/../../db/ChatEntry/ChatEntry.php';
+include_once dirname(__FILE__).'/../../db/VisibleRole/VisibleRole.php';
 include_once dirname(__FILE__).'/../Chat/Chat.php';
 
 class Game {
@@ -60,6 +61,15 @@ class Game {
 				self::$playerBackup[$game->id] = array();
 			self::$playerBackup[$game->id][$user] = $player;
 		}
+		//setup visibility
+		$list = array();
+		for ($i = -1; $i<count($playerList); $i++) {
+			$user = $i == -1 ? $group->leader : $playerList[$i];
+			$list[] = self::getPlayer($game->id, $user);
+		}
+		foreach ($list as $player1)
+			foreach ($list as $player2)
+				VisibleRole::addDefaultVisibility($player1, $player2);
 		//create chat rooms
 		foreach (ChatMode::getChatKeys() as $key)
 			ChatRoom::createChatRoom($game->id, $key);

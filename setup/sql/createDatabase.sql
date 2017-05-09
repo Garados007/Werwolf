@@ -122,3 +122,14 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
 	PRIMARY KEY (Setting, Voter),
 	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VisibleRoles (
+	Game INT UNSIGNED NOT NULL,
+	MainUser INT UNSIGNED NOT NULL,
+	TargetUser INT UNSIGNED NOT NULL,
+	RoleKey VARCHAR(8) NOT NULL,
+	
+	PRIMARY KEY (Game, MainUser, TargetUser, RoleKey(8)),
+	FOREIGN KEY (Game, MainUser) REFERENCES <?php echo DB_PREFIX; ?>Player(Game, User),
+	FOREIGN KEY (Game, TargetUser) REFERENCES <?php echo DB_PREFIX; ?>Player(Game, User)
+);

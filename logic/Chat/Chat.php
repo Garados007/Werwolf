@@ -44,7 +44,7 @@ class Chat {
 					$id = self::GetChatRoomId($player->game, $key);
 					if (!isset($list[$id])) $list[$id] = $mode;
 					elseif (!$list[$id]->enableWrite && $mode->enableWrite)
-						$list[$id] = mode;
+						$list[$id] = $mode;
 				}
 			}
 		}
