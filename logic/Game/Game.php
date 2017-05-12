@@ -143,6 +143,9 @@ class Game {
 		}
 		ChatEntry::addEntry($story->id, 0, 
 			'{"tid":10,"var":{}}');
+		if (self::CheckIfFinished($game))
+			ChatEntry::addEntry($score->id, 0,
+				'{"tid":11,"var":{}}');
 		return $game;
 	}
 	

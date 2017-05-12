@@ -55,6 +55,9 @@
 	"systemText": {
 		"10": [
 			{ "t": "Eine neue Runde wurde gestartet" }
+		],
+		"11": [
+			{ "t": "Das Spiel ist beendet" }
 		]
 	}
 }
