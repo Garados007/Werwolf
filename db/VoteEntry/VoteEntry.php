@@ -48,7 +48,7 @@ class VoteEntry extends JsonExport {
 				"user" => is_numeric($player) ? $player : $player->user
 			)
 		);
-		$item;
+		$item = null;
 		$set = $result->getResult();
 		if ($entry = $set->getEntry()) {
 			$item = new VoteEntry($entry["Setting"], $entry["Voter"],

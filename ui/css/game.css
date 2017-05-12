@@ -309,9 +309,9 @@ body {
 }
 .chat-room-box.open .chat-room-header {
 	font-weight: bold;
-	background-color: #ff7a33;
 }
-.chat-room-box.readonly .chat-room-textbox {
+.chat-room-box.readonly .chat-room-textbox,
+.chat-room-box:not(.open) .chat-room-textbox {
 	display: none;
 }
 .chat-room-chats-container {
@@ -321,6 +321,7 @@ body {
 	right: 0;
 	bottom: 0;
 	white-space: normal;
+	overflow: hidden;
 }
 .chat-single-entry {
     border: 1px solid #301203;
@@ -343,6 +344,49 @@ body {
 .chat-single-entry-text {
 	white-space: pre-wrap;
 }
+.chat-room-box.view-poll .chat-room-header > div:nth-child(3) {
+	background-color: #ff7a33;
+}
+
+/*vote box*/
+.vote-box {
+	background-color: rgba(108, 50, 19, 0.82);
+	padding: 0.3em;
+    width: unset;
+	transform: translate(0, -100%);
+	transition: transform 0.3s;
+}
+.vote-box .ui-button {
+    border: 1px solid black;
+    padding: 0.3em;
+    margin: 0.5em;
+    text-align: center;
+    font-size: 1.1em;
+    cursor: pointer;
+	transition: background-color 0.3s;
+}
+.chat-room-box.view-poll .vote-box {
+	transform: translate(0, 0);
+}
+.vote-box .ui-button:hover {
+	background-color: #c35b22;
+}
+.cur-vote-bar {
+    border: 1px solid black;
+    height: 0.7em;
+    margin: 0.55em 0.55em 1em 0.55em;
+    position: relative;
+}
+.cur-vote-bar > div {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	background-color: #c35b22;
+	transition: width 1s;
+}
+
+
 
 
 

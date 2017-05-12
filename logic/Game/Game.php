@@ -71,8 +71,12 @@ class Game {
 			foreach ($list as $player2)
 				VisibleRole::addDefaultVisibility($player1, $player2);
 		//create chat rooms
-		foreach (ChatMode::getChatKeys() as $key)
-			ChatRoom::createChatRoom($game->id, $key);
+		self::loadOpenChatRooms();
+		foreach (ChatMode::getChatKeys() as $key) {
+			$chat = ChatRoom::createChatRoom($game->id, $key);
+			$chat->changeOpenedState(in_array($chat->chatMode,
+				self::$openChatRooms[$game->phase->current]));
+		}
 		//finish
 		return $game;
 	}
@@ -119,13 +123,16 @@ class Game {
 	}
 	
 	private static $openChatRooms = null;
+	private static function loadOpenChatRooms() {
+		if (self::$openChatRooms === null)
+			self::$openChatRooms = json_decode(
+				file_get_contents(dirname(__FILE__).'/openChatRooms.json'), true);
+	}
 	
 	public static function NextRound($game) {
 		if (is_numeric($game)) $game = self::GetGame($game);
 		$game->nextPhase();
-		if (self::$openChatRooms === null)
-			self::$openChatRooms = json_decode(
-				file_get_contents(dirname(__FILE__).'/openChatRooms.json'), true);
+		self::loadOpenChatRooms();
 		$story = null;
 		foreach (ChatMode::getChatKeys() as $key) {
 			$chat = Chat::GetChatRoom(Chat::GetChatRoomId($game, $key));
@@ -135,7 +142,7 @@ class Game {
 			if ($key == 'story') $story = $chat;
 		}
 		ChatEntry::addEntry($story->id, 0, 
-			'[{"tid":10}]');
+			'{"tid":10,"var":{}}');
 		return $game;
 	}
 	

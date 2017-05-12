@@ -16,6 +16,7 @@ if (isset($_GET["since"])) $param["since"] = $_GET["since"];
 if (isset($_GET["target"])) $param["target"] = $_GET["target"];
 if (isset($_GET["end"])) $param["end"] = $_GET["end"];
 if (isset($_GET["text"])) $param["text"] = str_replace('+', ' ', $_GET["text"]);
+if (isset($_GET["me"])) $param["me"] = $_GET["me"];
 
 
 foreach ($_POST as $key => $value)

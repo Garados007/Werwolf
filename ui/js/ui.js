@@ -297,14 +297,18 @@ var UI = new function() {
 	};
 	
 	this.CreateChatBox = function(name, id, clickSend) {
-		return v.CreateElementRaw({
-			css: ["chat-room-box", "room-"+id],
+		var e = v.CreateElementRaw({
+			css: ["chat-room-box", "room-"+id, "chat-"+name],
 			children: [
 				v.CreateElementRaw({
 					children: [
 						v.CreateElementRaw({
 							children: [
-								thisref.CreateChatBoxHeader(name)
+								thisref.CreateChatBoxHeader(name, function() {
+									
+								}, function() {
+									e.toggleClass("view-poll");
+								})
 							]
 						})
 					]
@@ -329,6 +333,7 @@ var UI = new function() {
 				})
 			]
 		});
+		return e;
 	};
 	
 	this.CreateChatBoxChatList = function() {
@@ -337,7 +342,7 @@ var UI = new function() {
 			children: [
 				v.CreateElementRaw({
 					css: ["chat-room-chats", "v-container"]
-				})
+				}),
 			]
 		});
 	};
@@ -367,4 +372,97 @@ var UI = new function() {
 		});
 	};
 	
+	this.CreateVoteBoxStartVote = function(id, name, clickStart) {
+		return v.CreateElementRaw({
+			css: ["vote-box", "startVote", "v-container"],
+			children: [
+				v.CreateElementRaw({
+					text: Lang.Get("voteDesc", name)
+				}),
+				v.CreateButton(Lang.Get("startVotingButton"), clickStart)
+			]
+		});
+	};
+	
+	this.CreateVoteBoxEndVote = function(id, name, clickEnd) {
+		return v.CreateElementRaw({
+			css: ["vote-box", "endVote", "v-container"],
+			children: [
+				v.CreateElementRaw({
+					text: Lang.Get("voteDesc", name)
+				}),
+				v.CreateElementRaw({
+					text: Lang.Get("currentVoted")
+				}),
+				v.CreateElementRaw({
+					css: ["cur-vote-bar"],
+					children: [
+						v.CreateElementRaw({
+							style: 'width: 0%'
+						})
+					]
+				}),
+				v.CreateButton(Lang.Get("endVotingButton"), clickEnd)
+			]
+		});
+	};
+	
+	this.CreateVoteOverBox = function() {
+		return v.CreateElementRaw({
+			css: ["vote-box", "voteOver", "v-container"],
+			children: [
+				v.CreateElementRaw({
+					text: Lang.Get("voteOver")
+				})
+			]
+		});
+	};
+	
+	this.CreateVoteBoxSingleVote = function(id, name, user, clickId) {
+		var votes = [];
+		if (user != null) {
+			votes.push(v.CreateElementRaw({
+				text: Lang.Get("yourVote")
+			}));
+			for (var key in user)
+				if (user.hasOwnProperty(key))
+					votes.push(v.CreateButton(user[key], function(){
+						if (clickId) clickId($(this).attr("data-id"));
+					}, {
+						"data-id": key
+					}));
+		}
+		return v.CreateElementRaw({
+			css: ["vote-box", "singleVote", "v-container"],
+			children: [
+				v.CreateElementRaw({
+					text: Lang.Get("voteDesc", name)
+				}),
+				v.CreateElementRaw({
+					text: Lang.Get("currentVoted")
+				}),
+				v.CreateElementRaw({
+					css: ["cur-vote-bar"],
+					children: [
+						v.CreateElementRaw({
+							style: 'width: 0%'
+						})
+					]
+				}),
+				v.CreateElementRaw({
+					css: ["own-votes"],
+					children: votes
+				})
+			]
+		});
+	};
+	
+	this.CreateNextRoundBox = function(clickNext) {
+		return v.CreateElementRaw({
+			css: ["round-box", "vote-box", "v-container"],
+			children: [
+				v.CreateButton(Lang.Get("nextRound"), clickNext)
+			]
+		});
+	};
 };

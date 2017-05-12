@@ -287,11 +287,16 @@ class Api {
 	//Player functions
 	
 	private function getPlayer() {
-		if (!$this->check(['game','user'])) return;
+		if (!$this->check(['game','user','me'])) return;
 		$player = Game::getPlayer(
 			$this->getInt('game'),
 			$this->getInt('user')
 		);
+		$me = Game::getPlayer(
+			$this->getInt('game'),
+			$this->getInt('user')
+		);
+		VisibleRole::filterRoles($me, $player);
 		$this->result = array(
 			"method" => "getPlayer",
 			"player" => $player->exportJson()
@@ -355,13 +360,17 @@ class Api {
 	}
 	
 	private function getPlayerInRoom() {
-		if (!$this->check(['chat'])) return;
+		if (!$this->check(['chat','me'])) return;
 		$players = Chat::GetPlayerInRoom(
 			$this->getInt('chat')
 		);
 		$list = array();
-		foreach ($players as $player)
+		$room = Chat::GetChatRoom($this->getInt('chat'));
+		$me = Game::getPlayer($room->game, $this->getInt('me'));
+		foreach ($players as $player) {
+			VisibleRole::filterRoles($me, $player);
 			$list[] = $player->exportJson();
+		}
 		$this->result = array(
 			"method" => "getPlayerInRoom",
 			"chat" => $this->getInt('chat'),
@@ -472,7 +481,7 @@ class Api {
 		$this->result = array(
 			"method" => 'getVoteFromPlayer',
 			"chat" => $this->getInt('chat'),
-			"vote" => $vote->exportJson()
+			"vote" => $vote == null ? null : $vote->exportJson()
 		);
 	}
 }

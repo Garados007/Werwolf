@@ -84,6 +84,10 @@ var Logic = new function() {
 				Data.CurrentGames[data.game.mainGroupId].UpdateGameData(data.game);
 			thisref.RequestEvents.getGame.invoke(data);
 		},
+		nextRound: function(data) {
+			console.log(data);
+			thisref.RequestEvents.nextRound.invoke(data);
+		},
 		
 		getPlayer: function(data) {
 			if (Data.RunningGames[data.player.game] != undefined)
@@ -100,13 +104,41 @@ var Logic = new function() {
 				Data.ChatRoomGames[data.chat.id].UpdateRoomData(data.chat);
 			thisref.RequestEvents.getChatRoom.invoke(data);
 		},
+		getPlayerInRoom: function(data) {
+			if (Data.ChatRoomGames[data.chat] != undefined)
+				Data.ChatRoomGames[data.chat].UpdateRoomPlayer(data.chat, data.player);
+			thisref.RequestEvents.getPlayerInRoom.invoke(data);
+		},
 		getLastChat: function(data) {
 			if (Data.ChatRoomGames[data.room] != undefined)
 				Data.ChatRoomGames[data.room].HandleNewChat(data.room, data.chat);
 			thisref.RequestEvents.getLastChat.invoke(data);
 		},
 		addChat: function(data) {
+			if (Data.ChatRoomGames[data.room] != undefined)
+				Data.ChatRoomGames[data.room].HandleNewChat(data.room, data.chat);
 			thisref.RequestEvents.addChat.invoke(data);
+		},
+		createVoting: function(data) {
+			thisref.RequestEvents.createVoting.invoke(data);
+		},
+		endVoting: function(data) {
+			thisref.RequestEvents.endVoting.invoke(data);
+		},
+		addVote: function(data) {
+			if (Data.ChatRoomGames[data.vote.setting] != undefined)
+				Data.ChatRoomGames[data.vote.setting].ShowClientVoteBox(data.vote.setting, true);
+			thisref.RequestEvents.addVote.invoke(data);
+		},
+		getVotesFromRoom: function(data) {
+			if (Data.ChatRoomGames[data.room] != undefined)
+				Data.ChatRoomGames[data.room].UpdateVotes(data.room, data.votes);
+			thisref.RequestEvents.getVotesFromRoom.invoke(data);
+		},
+		getVoteFromPlayer: function(data) {
+			if (Data.ChatRoomGames[data.chat] != undefined)
+				Data.ChatRoomGames[data.chat].ShowClientVoteBox(data.chat, data.vote != null);
+			thisref.RequestEvents.getVoteFromPlayer.invoke(data);
 		}
 	};
 	
@@ -165,12 +197,53 @@ var Logic = new function() {
 				roles: roles
 			})]);
 		},
+		NextRound: function(game) {
+			thisref.SendApiRequest({
+				mode: "nextRound",
+				game: game
+			});
+		},
+		GetPlayerInRoom: function(chat) {
+			thisref.SendApiRequest({
+				mode: "getPlayerInRoom",
+				chat: chat,
+				me: Data.UserId
+			});
+		},
 		AddChat: function(chat, user, text) {
 			thisref.SendApiRequest({
 				mode: "addChat",
 				chat: chat,
 				user: user,
 				text: text
+			});
+		},
+		CreateVoting: function(chat, end) {
+			thisref.SendApiRequest({
+				mode: "createVoting",
+				chat: chat,
+				end: end == null ? 0 : end
+			});
+		},
+		EndVoting: function(chat) {
+			thisref.SendApiRequest({
+				mode: "endVoting",
+				chat: chat
+			});
+		},
+		AddVote: function(chat, user, target) {
+			thisref.SendApiRequest({
+				mode: "addVote",
+				chat: chat,
+				user: user,
+				target: target
+			});
+		},
+		GetVoteFromPlayer: function(chat, user) {
+			thisref.SendApiRequest({
+				mode: "getVoteFromPlayer",
+				chat: chat,
+				user: user
 			});
 		}
 	};

@@ -39,5 +39,22 @@
 		"voteVilg": "Wahl: Dorfbewohner",
 		"voteWolf": "Wahl: Werwölfe",
 		"lovepair": "Liebespaar"
+	},
+	"voteDesc": {
+		"voteMajr": "Voting zur Wahl des Hauptmanns in diesem Spiel",
+		"voteArmr": "Voting zur Wahl des Liebespaares",
+		"voteVilg": "Wahl des Dorfes, wer aus ihren Reihen umgebracht werden soll",
+		"voteWolf": "Wahl unter den Werwölfen, wer aus dem Dorf umgebracht werden soll"
+	},
+	"startVotingButton": "Starte das Voting",
+	"endVotingButton": "Beende das Voting",
+	"currentVoted": "Schon abgestimmt haben:",
+	"yourVote": "Deine Stimme:",
+	"voteOver": "Das Voting ist abgeschlossen.",
+	"nextRound": "Nächste Runde starten",
+	"systemText": {
+		"10": [
+			{ "t": "Eine neue Runde wurde gestartet" }
+		]
 	}
 }
