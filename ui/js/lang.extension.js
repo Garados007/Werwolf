@@ -12,6 +12,9 @@ Lang.GetSys = function(code) {
 		else if (part.v != undefined) {
 			result += code.var[part.v];
 		}
+		else if (part.pid2s != undefined) {
+			result += Data.UserIdNameRef[code.var[part.pid2s]];
+		}
 	}
 	return result;
 };

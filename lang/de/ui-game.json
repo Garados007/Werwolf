@@ -58,6 +58,38 @@
 		],
 		"11": [
 			{ "t": "Das Spiel ist beendet" }
+		],
+		"12": [
+			{ "t": "Das Voting wurde gestartet" }
+		],
+		"13": [
+			{ "t": "Das Voting wurde beendet" }
+		],
+		"14": [
+			{ "t": "Der Spieler " },
+			{ "pid2s": "PSitS" },
+			{ "t": " wurde durch das Dorf umgebracht." }
+		],
+		"20": [
+			{ "t": "Der Armor sucht sich jetzt das Liebespaar aus." }
+		],
+		"21": [
+			{ "t": "Der Dorf erwacht jetzt aus seinem Schlaf." }
+		],
+		"22": [
+			{ "t": "Willkommen bei den Werwölfen in Düsterwald!" }
+		],
+		"23": [
+			{ "t": "Das Dorf wählt jetzt ihren Hauptmann." }
+		],
+		"24": [
+			{ "t": "Es wird Nacht und das Dorf legt sich jetzt schlafen" }
+		],
+		"25": [
+			{ "t": "Das Dorf entscheidet sich jetzt, wer aus ihren Reihen umgebracht wird." }
+		],
+		"26": [
+			{ "t": "Die Wölfe suchen sich jetzt ihr Opfer aus." }
 		]
 	}
 }

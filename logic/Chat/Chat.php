@@ -95,6 +95,7 @@ class Chat {
 	public static function CreateVoting($room, $end) {
 		if (!is_numeric($room)) $room = $room->id;
 		if ($end == 0) $end = null;
+		ChatEntry::addEntry($room, 0, '{"tid":12,"var":{}}');
 		return VoteSetting::createVoteSetting($room, $end);
 	}
 	
@@ -129,6 +130,8 @@ class Chat {
 						break;
 					case 'villkill': 
 						$player->kill(false);
+						ChatEntry::addEntry($room->id, 0, 
+							'{"tid":14,"var":{"PSitS":'.$player->user.'}}');
 						break;
 					case 'armorsel': 
 						Role::createRole($player, 'pair');
@@ -138,6 +141,7 @@ class Chat {
 						break;
 				}
 			}
+			ChatEntry::addEntry($room->id, 0, '{"tid":13,"var":{}}');
 			return $result;
 		}
 	}

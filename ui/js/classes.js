@@ -392,7 +392,8 @@ WerWolf.PlayGame = function(id, data) {
 		//Next round
 		else if (data.leader == Data.UserId) {
 			if (old == null || old.added == null) {
-				room.added = old.added = true;
+				room.added = true;
+				if (old != null) old.added = true;
 				rooms[room.id].box.find(".vote-box").remove();
 				rooms[room.id].box.find(".chat-room-chats-container")
 					.append(UI.CreateNextRoundBox(function() {

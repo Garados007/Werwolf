@@ -146,6 +146,36 @@ class Game {
 		if (self::CheckIfFinished($game))
 			ChatEntry::addEntry($story->id, 0,
 				'{"tid":11,"var":{}}');
+		else switch ($game->phase) {
+			case "armorsel": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":20,"var":{}}');
+				break;
+			case "awakenin": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":21,"var":{}}');
+				break;
+			case "mainstor":
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":22,"var":{}}');
+				break;
+			case "majorsel": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":23,"var":{}}');
+				break;
+			case "sleepnow": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":24,"var":{}}');
+				break;
+			case "villkill": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":25,"var":{}}');
+				break;
+			case "wolfkill": 
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":26,"var":{}}');
+				break;
+		}
 		return $game;
 	}
 	
