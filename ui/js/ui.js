@@ -264,7 +264,7 @@ var UI = new function() {
 					children: [
 						v.CreateElementRaw({
 							element: "img",
-							src: "/"+$WWV.urlBase+"ui/img/Messaging-Poll-Topic-Icon.png"
+							src: "/"+$WWV.urlBase+"ui/img/Messaging-Poll-Topic-icon.png"
 						})
 					]
 				})
