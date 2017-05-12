@@ -319,9 +319,12 @@ WerWolf.PlayGame = function(id, data) {
 			return v;
 		};
 		var cont = thisref.content.find(".h-container-i");
-		cont.children().sort(function(a, b) {
+		childs = cont.children().sort(function(a, b) {
 			return score($(b)) - score($(a));
-		}).appendTo(cont);
+		});
+		childs.removeClass("show");
+		childs.eq(0).addClass("show");
+		childs.appendTo(cont);
 	};
 	this.UpdateRoomData = function(room) {
 		//console.log(room);

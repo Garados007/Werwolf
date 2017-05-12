@@ -245,7 +245,7 @@ var UI = new function() {
 		});
 	};
 	
-	this.CreateChatBoxHeader = function(name, clickUser, clickPoll) {
+	this.CreateChatBoxHeader = function(name, clickUser, clickPoll, clickTitle) {
 		return v.CreateElementRaw({
 			css: ["chat-room-header"],
 			children: [
@@ -257,7 +257,9 @@ var UI = new function() {
 						})
 					]
 				}),
-				v.CreateElement("div", Lang.Get("chats", name)),
+				v.CreateButton("", clickTitle, {
+					text: Lang.Get("chats", name)
+				}),
 				v.CreateButton("", clickPoll, {
 					children: [
 						v.CreateElementRaw({
@@ -312,6 +314,12 @@ var UI = new function() {
 									
 								}, function() {
 									e.toggleClass("view-poll");
+								}, function() {
+									if (e.parent().hasClass("list")) {
+										e.parent().children().removeClass("show");
+										e.addClass("show");
+									}
+									e.parent().toggleClass("list");
 								})
 							]
 						})

@@ -396,6 +396,75 @@ body {
 	transition: width 1s;
 }
 
+@media (max-width: 500px) {
+	.chat-room-box {
+		display: table;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		width: 100%;
+		height: 100%;
+		border-right: none;
+	}
+	.chat-room-box:not(.show) {
+		display: none;
+	}
+	.h-container-i.list {
+		overflow-y: auto;
+	}
+	.h-container-i.list .chat-room-box,
+	.h-container-i.list .chat-room-box > div,
+	.h-container-i.list .chat-room-box > div > div,
+	.h-container-i.list .chat-room-header,
+	.h-container-i.list .chat-room-header > div	{
+		display: block;
+		position: unset;
+		left: unset;
+		right: unset;
+		top: unset;
+		bottom: unset;
+		width: unset;
+		height: unset;
+	}
+	.h-container-i.list .chat-room-box > div:not(:nth-child(1)),
+	.h-container-i.list .chat-room-header > div:not(:nth-child(2)){
+		display: none;
+	}
+	.h-container-i.list .chat-room-header {
+		margin: 0.5em;
+	}
+	.h-container-i.list .chat-room-header > div:nth-child(2) {
+		cursor: pointer;
+		transition: background-color 0.3s;
+	}
+	.h-container-i.list .chat-room-header > div:nth-child(2):hover {
+		background-color: #ff7a33;
+	}
+	.tab-container {
+		height: 100%;
+		left: 2px;
+		right: 2px;
+	}
+	.tab-button {
+		display: block;
+		padding: 0 0.1em;
+		margin: 0;
+		position: absolute;
+		left: 0;
+		top:0;
+		right: 0;
+		bottom: 0;
+	}
+	.tab-button:not(.active) {
+		display: none;
+	}
+	.top-bar img {
+		height: 100%;
+	}
+}
+
 
 
 
