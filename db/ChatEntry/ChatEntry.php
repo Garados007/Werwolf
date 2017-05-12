@@ -4,6 +4,8 @@ include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
 class ChatEntry extends JsonExport {
+	//the unique id of this entry
+	public $id;
 	//the reference to the chat
 	public $chat;
 	//the user who postet this text
@@ -13,8 +15,9 @@ class ChatEntry extends JsonExport {
 	//the timestamp when this text was sended
 	public $sendDate;
 	
-	public function __construct($chat, $user, $text, $sendDate) {
-		$this->jsonNames = array('chat', 'user', 'text', 'sendDate');
+	public function __construct($id, $chat, $user, $text, $sendDate) {
+		$this->jsonNames = array('id', 'chat', 'user', 'text', 'sendDate');
+		$this->id = $id;
 		$this->chat = $chat;
 		$this->user = $user;
 		$this->text = $text;
@@ -32,7 +35,8 @@ class ChatEntry extends JsonExport {
 		$list = array();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry())
-			$list[] = new ChatEntry($chat, $entry["User"], $entry["Message"],
+			$list[] = new ChatEntry(intval($entry["Id"]),
+				$chat, intval($entry["User"]), $entry["Message"],
 				intval($entry["SendDate"]));
 		$result->free();
 		return $list;
@@ -49,7 +53,10 @@ class ChatEntry extends JsonExport {
 				"time" => $time
 			)
 		);
+		if ($set = $result->getResult()) $set->free();
+		echo DB::getError();
+		$entry = $result->getResult()->getEntry();
 		$result->free();
-		return new ChatEntry($chat, $user, $text, $time);
+		return new ChatEntry(intval($entry["Id"]), $chat, $user, $text, $time);
 	}
 }

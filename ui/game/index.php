@@ -15,6 +15,7 @@ if (isset($_GET["set-lang"])) {
 }
 
 ?>
+<!DOCTYPE html>
 <html>
 <head>
 	<meta charset="utf-8" />

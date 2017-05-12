@@ -1,4 +1,4 @@
-SELECT User, Message, SendDate
+SELECT Id, User, Message, SendDate
 FROM <?php echo DB_PREFIX; ?>ChatLog
 WHERE Chat = <?php echo $chat; ?>
 	<?php if ($minSendDate !== null) { ?>

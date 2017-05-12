@@ -238,8 +238,9 @@ WerWolf.PlayGame = function(id, data) {
 	var currentGame = null;
 	this.UpdateGameData = function(game) {
 		currentGame = game;
-		if (lastPhase == null) {
-			
+		if (lastPhase != game.phase.current) {
+			lastPhase = game.phase.current;
+			thisref.OrderTabs();
 		}
 	};
 	
@@ -284,6 +285,7 @@ WerWolf.PlayGame = function(id, data) {
 					last: 0,
 					access: room[key],
 					player: [],
+					chats: [],
 					box: UI.CreateChatBox(
 						room[key].chatmode, key, function(){
 							var key = $(this).attr("data-id");
@@ -307,6 +309,20 @@ WerWolf.PlayGame = function(id, data) {
 			}
 		}
 	};
+	this.OrderTabs = function() {
+		var score = function(p) {
+			var v = 0;
+			v += (p.hasClass("open")        ? 1 : 0) * 8;
+			v += (p.hasClass("chat-story")  ? 1 : 0) * 4;
+			v += (p.hasClass("chat-common") ? 1 : 0) * 2;
+			v += (p.hasClass("readonly")    ? 0 : 1) * 1;
+			return v;
+		};
+		var cont = thisref.content.find(".h-container-i");
+		cont.children().sort(function(a, b) {
+			return score($(b)) - score($(a));
+		}).appendTo(cont);
+	};
 	this.UpdateRoomData = function(room) {
 		//console.log(room);
 		var old = rooms[room.id].data;
@@ -325,18 +341,7 @@ WerWolf.PlayGame = function(id, data) {
 			}
 		}
 		if (modified) {
-			var score = function(p) {
-				var v = 0;
-				v += p.hasClass("chat-story")  ? 8 : 0;
-				v += p.hasClass("chat-common") ? 4 : 0;
-				v += p.hasClass("open")        ? 2 : 0;
-				v += p.hasClass("readonly")    ? 0 : 1;
-				return v;
-			};
-			var cont = thisref.content.find(".h-container-i");
-			cont.children().sort(function(a, b) {
-				return score($(b)) - score($(a));
-			}).appendTo(cont);
+			thisref.OrderTabs();
 		}
 		//Votings
 		if (room.chatMode != 'story') {
@@ -433,8 +438,10 @@ WerWolf.PlayGame = function(id, data) {
 		var treshhold = 16; //16px extra
 		var doscroll = log[0].scrollTop + log[0].clientHeight >= log[0].scrollHeight - treshhold;
 		for (var i = 0; i<chat.length; ++i) {
+			if (rooms[room].chats.includes(chat[i].id)) continue;
+			rooms[room].chats.push(chat[i].id);
 			if (rooms[room].last < chat[i].sendDate)
-				rooms[room].last = chat[i].sendDate + 1;
+				rooms[room].last = chat[i].sendDate;
 			var name =chat[i].user == 0 ? Lang.Get("roles", "log") :
 				Data.UserIdNameRef[chat[i].user];
 			var text = chat[i].user == 0 ? Lang.GetSys(chat[i].text) :
@@ -444,6 +451,8 @@ WerWolf.PlayGame = function(id, data) {
 			);
 			entry.appendTo(log);
 		}
+		if (rooms[room].chats.length > 50)
+			rooms[room].chats.splice(0, rooms[room].chats.length-50);
 		if (doscroll) {
 			log[0].scrollTop = log[0].scrollHeight;
 		}
