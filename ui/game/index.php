@@ -1,5 +1,12 @@
 <?php
 
+include_once dirname(__FILE__).'/../../config.php';
+
+if (MAINTENANCE) {
+	header("Location: /".URI_PATH."ui/maintenance/", true, 302);
+	exit;
+}
+
 include_once dirname(__FILE__).'/../../account/manager.php';
 
 $user = AccountManager::GetCurrentAccountData();

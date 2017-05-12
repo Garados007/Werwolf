@@ -18,6 +18,10 @@ var Logic = new function() {
 					console.log(ex, element);
 					return;
 				}
+				if (element.maintenance) {
+					document.location.href="/"+$WWV.urlBase+"ui/maintenance/";
+					return;
+				}
 				if (!element.success)
 					thisref.RequestHandler.error(element);
 				else element = element.result;

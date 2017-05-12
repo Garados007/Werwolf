@@ -2,8 +2,8 @@
 
 include_once dirname(__FILE__).'/../../config.php';
 
-if (MAINTENANCE) {
-	header("Location: /".URI_PATH."ui/maintenance/", true, 302);
+if (!MAINTENANCE) {
+	header("Location: /".URI_PATH."ui/", true, 302);
 	exit;
 }
 
@@ -14,22 +14,29 @@ if (isset($_GET["set-lang"])) {
 }
 
 ?>
+<!DOCTYPE html>
 <html>
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title><?php echo Lang::GetString('ui-index', 'header-title'); ?></title>
+	<title><?php echo Lang::GetString('ui-maintenance', 'header'); ?></title>
 	<link href="/<?php echo URI_PATH; ?>ui/css/index.css" rel="stylesheet" />
 	<script src="/<?php echo URI_PATH; ?>ui/js/jquery-3.2.1.min.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/language.js"></script>
-	<script src="/<?php echo URI_PATH; ?>ui/js/login-frame.js"></script>
-	
 	
 	<script type="text/javascript">
-		$WWV = {
-			urlHost: "<?php echo URI_HOST; ?>",
-			urlBase: "<?php echo URI_PATH; ?>"
-		};
+		$(function() {
+			var time = 30;
+			var wait = function() {
+				if (time > 0) {
+					$(".time-left span").text(" "+time);
+					time--;
+					setTimeout(wait, 1000);
+				}
+				else document.location.reload();
+			};
+			wait();
+		});
 	</script>
 </head>
 <body>
@@ -52,19 +59,14 @@ if (isset($_GET["set-lang"])) {
 			</div>
 		</div>
 		<div class="content-title">
-			<?php echo Lang::GetString('ui-index', 'content-title'); ?>
+			<?php echo Lang::GetString('ui-maintenance', 'title'); ?>
 		</div>
-		<div class="start-button">
-			<?php echo Lang::GetString('ui-index', 'start-button'); ?>
+		<div class="time-left" style="text-align:center;font-size:1.4em;margin-bottom:2em;">
+			<?php echo Lang::GetString('ui-maintenance', 'left'); ?>
+			<span> 30</span>
 		</div>
 		<div class="footer">
 		
-		</div>
-	</div>
-	<div class="overlay">
-		<div class="overlay-window">
-			<div class="close-button">x</div>
-			<iframe class="login-window"></iframe>
 		</div>
 	</div>
 </body>

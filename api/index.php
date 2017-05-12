@@ -1,5 +1,12 @@
 <?php
 
+include_once dirname(__FILE__).'/../config.php';
+
+if (MAINTENANCE) {
+	echo '{"success":false,"error":"maintenance","errorkey":null,"request":null,"maintenance":true}';
+	exit;
+}
+
 include_once dirname(__FILE__).'/api.php';
 
 $param = array();

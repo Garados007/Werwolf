@@ -13,6 +13,7 @@ define('DB_PREFIX', 'werwolf_'); //The prefix for the tables. leave it blank for
 
 //Runtime Setting
 define('RELEASE_MODE', false);
+define('MAINTENANCE', false);
 
 //Server Setting
 define('URI_HOST', 'http://localhost/');
