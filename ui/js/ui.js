@@ -68,18 +68,22 @@ var UI = new function() {
 			css: ["game-user-frame"],
 			children: [
 				v.CreateElementRaw({
-					css: ["user-frame"],
 					children: [
 						v.CreateElementRaw({
-							css: ["v-container", "user-list"]
+							css: ["user-frame"],
+							children: [
+								v.CreateElementRaw({
+									css: ["v-container", "user-list"]
+								}),
+								thisref.CreateLoadingIndicator()
+							]
 						}),
-						thisref.CreateLoadingIndicator()
-					]
-				}),
-				v.CreateElementRaw({
-					css: ["game-frame"],
-					children: [
-						thisref.CreateLoadingIndicator()
+						v.CreateElementRaw({
+							css: ["game-frame"],
+							children: [
+								thisref.CreateLoadingIndicator()
+							]
+						})
 					]
 				})
 			]
