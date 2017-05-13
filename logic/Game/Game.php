@@ -125,6 +125,21 @@ class Game {
 		return self::$playerBackup[$game->id][$user] = new Player($game->id, $user);
 	}
 	
+	public static function killPlayer($player, $byWolf) {
+		$player->kill($byWolf);
+		if (!$player->alive) {
+			$game = self::GetGame($player->game);
+			$user = self::GetAllUserFromGroup($game->mainGroupId);
+			foreach ($user as $other) {
+				$other = self::getPlayer($player->game, $other);
+				$keys = array();
+				for ($i = 0; $i<count($other->roles); ++$i)
+					$keys[] = $other->roles[$i]->roleKey;
+				VisibleRole::addRoles($player, $other, $keys);
+			}
+		}
+	}
+	
 	private static $openChatRooms = null;
 	private static function loadOpenChatRooms() {
 		if (self::$openChatRooms === null)
@@ -178,6 +193,7 @@ class Game {
 				ChatEntry::addEntry($story->id, 0,
 					'{"tid":26,"var":{}}');
 				break;
+			default: var_dump($game); break;
 		}
 		return $game;
 	}

@@ -134,7 +134,7 @@ class Chat {
 							VisibleRole::addDefaultVisibility(Game::getPlayer($game, $user), $player);
 						break;
 					case 'villkill': 
-						$player->kill(false);
+					Game::killPlayer($player, false);
 						ChatEntry::addEntry($room->id, 0, 
 							'{"tid":14,"var":{"PSitS":'.$player->user.'}}');
 						break;
@@ -142,7 +142,7 @@ class Chat {
 						Role::createRole($player, 'pair');
 						break;
 					case 'wolfkill': 
-						$player->kill(true);
+					Game::killPlayer($player, true);
 						ChatEntry::addEntry($room->id, 0, 
 							'{"tid":16,"var":{"PSitS":'.$player->user.'}}');
 						break;
