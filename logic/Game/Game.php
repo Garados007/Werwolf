@@ -205,7 +205,6 @@ class Game {
 			if ($villager == 1) $villLeft = true;
 			if (!$pair && !$master) $othpLeft = true;
 		}
-		var_dump($wolfLeft); var_dump($villLeft); var_dump($pairLeft); var_dump($othpLeft);
 		if (!$wolfLeft || !$villLeft || !$othpLeft) {
 			$game->finish();
 			return true;
