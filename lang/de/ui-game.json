@@ -22,6 +22,7 @@
 	"roles": {
 		"leader": "Gruppenleiter",
 		"member": "Mitglied",
+		"death": "- tot -",
 		"armor": "Armor",
 		"grandpa": "Großvater",
 		"log": "System",

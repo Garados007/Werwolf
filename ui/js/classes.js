@@ -307,6 +307,12 @@ WerWolf.PlayGame = function(id, data) {
 				UI.CreateRole(key).appendTo(elem);
 			}
 		}
+		if (!player.alive) {
+			var key = "death";
+			if (elem.find(".role-"+key).length == 0) {
+				UI.CreateRole(key).appendTo(elem);
+			}
+		}
 		if (player.user == Data.UserId) {
 			var cont = thisref.content.find(".h-container-i");
 			if (player.alive) cont.removeClass("death");
