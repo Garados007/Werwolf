@@ -71,6 +71,16 @@
 			{ "pid2s": "PSitS" },
 			{ "t": " wurde durch das Dorf umgebracht." }
 		],
+		"15": [
+			{ "t": "Der Spieler " },
+			{ "pid2s": "PSitS" },
+			{ "t": " wurde zum Hauptmann gewählt." }
+		],
+		"16": [
+			{ "t": "Der Spieler " },
+			{ "pid2s": "PSitS" },
+			{ "t": " wurde als Opfer ausgewählt." }
+		],
 		"20": [
 			{ "t": "Der Armor sucht sich jetzt das Liebespaar aus." }
 		],

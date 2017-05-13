@@ -124,9 +124,11 @@ class Chat {
 			if ($result !== null) {
 				$phase = Game::GetGame($room->game)->phase;
 				$player = Game::getPlayer($room->game, $result);
-				switch ($phase) {
+				switch ($phase->current) {
 					case 'majorsel': 
 						Role::createRole($player, 'major');
+						ChatEntry::addEntry($room->id, 0, 
+							'{"tid":15,"var":{"PSitS":'.$player->user.'}}');
 						break;
 					case 'villkill': 
 						$player->kill(false);
@@ -138,6 +140,8 @@ class Chat {
 						break;
 					case 'wolfkill': 
 						$player->kill(true);
+						ChatEntry::addEntry($room->id, 0, 
+							'{"tid":16,"var":{"PSitS":'.$player->user.'}}');
 						break;
 				}
 			}
