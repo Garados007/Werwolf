@@ -5,4 +5,4 @@ WHERE Chat = <?php echo $chat; ?>
 	AND
 	SendDate >= <?php echo $minSendDate; ?>
 	<?php } ?>
-ORDER BY SendDate ASC;
+ ORDER BY SendDate ASC;
