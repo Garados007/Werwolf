@@ -108,7 +108,7 @@ class Chat {
 			foreach (VoteEntry::getVotesBySetting($room->id) as $vote) {
 				$power = 1;
 				$user = Game::getPlayer($room->game, $vote->voter);
-				foreach ($user->$roles as $role)
+				foreach ($user->roles as $role)
 					if ($role->roleKey == 'major')
 						$power = 1.5;
 				if (!isset($list[$vote->target]))

@@ -15,9 +15,6 @@ CREATE TRIGGER <?php echo DB_PREFIX; ?>Groups_DeleteGroup
 	BEFORE DELETE ON <?php echo DB_PREFIX; ?>Groups
 	FOR EACH ROW
 BEGIN
-	UPDATE <?php echo DB_PREFIX; ?>Groups
-		SET CurrentGame = NULL
-		WHERE Id = OLD.Id;
 	DELETE FROM <?php echo DB_PREFIX; ?>User
 		WHERE GroupId = OLD.Id;
 END;

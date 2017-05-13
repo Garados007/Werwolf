@@ -96,6 +96,7 @@ class Group extends JsonExport {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/setCurrentGame.sql',
 			array(
+				"oldgame" => $this->currentGame,
 				"game" => $this->currentGame = $id,
 				"time" => $this->lastTime = time(),
 				"id" => $this->id
