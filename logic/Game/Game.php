@@ -193,14 +193,19 @@ class Game {
 			$player = self::getPlayer($game, $user);
 			if (!$player->alive) continue;
 			$pair = false;
+			$master = false;
+			$villager = 0;
 			foreach ($player->roles as $role)
 				switch ($role->roleKey) {
-					case "villager": $villLeft = true; break;
-					case "wolf": $wolfLeft = true; break;
+					case "villager": $villager += 1; break;
+					case "wolf": $wolfLeft = true; $villager = 2; break;
 					case "pair": $pairLeft = true; $pair = true; break;
+					case "storytel": $master = true; break;
 				}
-			if (!$pair) $othpLeft = true;
+			if ($villager == 1) $villLeft = true;
+			if (!$pair && !$master) $othpLeft = true;
 		}
+		var_dump($wolfLeft); var_dump($villLeft); var_dump($pairLeft); var_dump($othpLeft);
 		if (!$wolfLeft || !$villLeft || !$othpLeft) {
 			$game->finish();
 			return true;
