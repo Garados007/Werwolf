@@ -322,8 +322,10 @@ body {
 }
 .chat-room-box.readonly .chat-room-textbox,
 .chat-room-box:not(.open) .chat-room-textbox,
-.h-container-i.death .chat-room-textbox,
-.h-container-i.death .chat-room-header > div:nth-child(3) {
+.h-container-i.death .chat-room-box:not(.c-over) .chat-room-textbox,
+.h-container-i.death .chat-room-header > div:nth-child(3),
+.chat-room-box.over,
+.chat-room-box.c-over .chat-room-header > div:nth-child(3) {
 	display: none;
 }
 .chat-room-chats-container {

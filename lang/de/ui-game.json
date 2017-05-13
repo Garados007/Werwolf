@@ -52,6 +52,7 @@
 	"yourVote": "Deine Stimme:",
 	"voteOver": "Das Voting ist abgeschlossen.",
 	"nextRound": "Nächste Runde starten",
+	"createNewGame": "Neues Spiel starten",
 	"systemText": {
 		"10": [
 			{ "t": "Eine neue Runde wurde gestartet" }

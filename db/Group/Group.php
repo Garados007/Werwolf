@@ -97,7 +97,7 @@ class Group extends JsonExport {
 			dirname(__FILE__).'/sql/setCurrentGame.sql',
 			array(
 				"game" => $this->currentGame = $id,
-				"time" => $id !== null ? $this->lastTime = time() : time(),
+				"time" => $this->lastTime = time(),
 				"id" => $this->id
 			)
 		);

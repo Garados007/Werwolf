@@ -78,6 +78,9 @@ var Logic = new function() {
 			Data.UserGroups = data.group;
 			thisref.RequestEvents.getGroupFromUser.invoke(data);
 		},
+		removeCurrentGame: function(data) {
+			thisref.RequestEvents.removeCurrentGame.invoke(data);
+		},
 		createGame: function(data) {
 			if (Data.CurrentGames[data.game.mainGroupId] != undefined)
 				Data.CurrentGames[data.game.mainGroupId].UpdateGameData(data.game);
@@ -192,6 +195,12 @@ var Logic = new function() {
 			thisref.SendApiRequest({
 				mode: "getGroupFromUser",
 				user: user
+			});
+		},
+		RemoveCurrentGame: function(group) {
+			thisref.SendApiRequest({
+				mode: "removeCurrentGame",
+				group: group
 			});
 		},
 		CreateGame: function(group, roles) {

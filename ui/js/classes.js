@@ -234,14 +234,49 @@ WerWolf.PlayGame = function(id, data) {
 		user: Data.UserId
 	})]);
 	
+	this.UpdateGroupInfo = function(data) {
+		if (data.currentGame == null) {
+			thisref.Remove();
+			var game = new WerWolf.PrepairGame(data.id, data);
+			game.Attach();
+			game.Activate();
+		}
+	};
+	
 	var lastPhase = null;
 	var currentGame = null;
+	var lastGame = {};
 	this.UpdateGameData = function(game) {
 		currentGame = game;
 		if (lastPhase != game.phase.current) {
 			lastPhase = game.phase.current;
 			thisref.OrderTabs();
 		}
+		if (game.finished != null && lastGame.finished == null) {
+			var rooms = thisref.content.find(".chat-room-box");
+			for (var i = 0; i<rooms.length; ++i) {
+				var room = rooms.eq(i);
+				if (room.hasClass("chat-story")) {
+					room.addClass("show").addClass("open");
+					var cont = room.find(".chat-room-chats-container");
+					cont.find(".vote-box").remove();
+					cont.append(UI.CreateNewGameBox(function(){
+						Logic.ApiAccess.RemoveCurrentGame(data.id);
+					}));
+				}
+				else {
+					room.removeClass("show");
+					if (!room.hasClass("chat-common"))
+						room.addClass("over").removeClass("open");
+					else room.addClass("c-over").addClass("open");
+				}
+			}
+			thisref.LoopEvents.push(JSON.stringify({
+				mode: "getGroup",
+				group: thisref.id
+			}));
+		}
+		lastGame = game;
 	};
 	
 	var updateUserCalled = false;
@@ -335,6 +370,9 @@ WerWolf.PlayGame = function(id, data) {
 		//console.log(room);
 		var old = rooms[room.id].data;
 		rooms[room.id].data = room;
+		//Game finished
+		if (currentGame.finished != null) return;
+		//open states
 		var modified = false;
 		if (room.opened) {
 			if (!rooms[room.id].box.hasClass("open")) {

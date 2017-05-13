@@ -86,6 +86,7 @@ class Api {
 			case "addUserToGroupByKey": $this->addUserToGroupByKey(); break;
 			case "getUserFromGroup": $this->getUserFromGroup(); break;
 			case "getGroupFromUser": $this->getGroupFromUser(); break;
+			case "removeCurrentGame": $this->removeCurrentGame(); break;
 			case "createGame": $this->createGame(); break;
 			case "getGame": $this->getGame(); break;
 			case "nextRound": $this->nextRound(); break;
@@ -235,6 +236,18 @@ class Api {
 		);
 	}
 	
+	private function removeCurrentGame() {
+		if (!$this->check(['group'])) return;
+		$group = Game::GetGroup(
+			$this->getInt('group')
+		);
+		$group->setCurrentGame(null);
+		$this->result = array(
+			"method" => 'removeCurrentGame',
+			"group" => $group->exportJson()
+		);
+	}
+	
 	//Game functions
 	
 	private function createGame() {
@@ -283,7 +296,7 @@ class Api {
 			"finished" => $finished
 		);
 	}
-
+	
 	//Player functions
 	
 	private function getPlayer() {

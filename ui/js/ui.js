@@ -430,6 +430,15 @@ var UI = new function() {
 		});
 	};
 	
+	this.CreateNewGameBox = function(clickNew) {
+		return v.CreateElementRaw({
+			css: ["vote-box", "finish", "v-container"],
+			children: [
+				v.CreateButton(Lang.Get("createNewGame"), clickNew)
+			]
+		});
+	};
+	
 	this.CreateVoteBoxSingleVote = function(id, name, user, clickId) {
 		var votes = [];
 		if (user != null) {
