@@ -118,7 +118,7 @@ class Chat {
 					$list2[] = $key;
 			$result = null;
 			if (count($list2) > 0)
-				$result = $list2[rand(0, count($list)-1)];
+				$result = $list2[rand(0, count($list2)-1)];
 			$room->voting->endVoting($result);
 			//attach effect
 			if ($result !== null) {
