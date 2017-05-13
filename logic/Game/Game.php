@@ -76,6 +76,8 @@ class Game {
 			$chat = ChatRoom::createChatRoom($game->id, $key);
 			$chat->changeOpenedState(in_array($chat->chatMode,
 				self::$openChatRooms[$game->phase->current]));
+			$chat->changeEnableVotingState(in_array($chat->chatMode,
+				self::$enableVotings[$game->phase->current]));
 			if ($key == "story")
 				ChatEntry::addEntry($chat->id, 0,
 					'{"tid":22,"var":{}}');
@@ -141,10 +143,14 @@ class Game {
 	}
 	
 	private static $openChatRooms = null;
+	private static $enableVotings = null;
 	private static function loadOpenChatRooms() {
 		if (self::$openChatRooms === null)
 			self::$openChatRooms = json_decode(
 				file_get_contents(dirname(__FILE__).'/openChatRooms.json'), true);
+		if (self::$enableVotings=== null)
+			self::$enableVotings = json_decode(
+				file_get_contents(dirname(__FILE__).'/enableVotings.json'), true);
 	}
 	
 	public static function NextRound($game) {
@@ -157,6 +163,8 @@ class Game {
 			Chat::DeleteVoting($chat->id);
 			$chat->changeOpenedState(in_array($chat->chatMode,
 				self::$openChatRooms[$game->phase->current]));
+			$chat->changeEnableVotingState(in_array($chat->chatMode,
+				self::$enableVotings[$game->phase->current]));
 			if ($key == 'story') $story = $chat;
 		}
 		ChatEntry::addEntry($story->id, 0, 

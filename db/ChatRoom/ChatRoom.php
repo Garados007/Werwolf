@@ -13,12 +13,14 @@ class ChatRoom extends JsonExport {
 	public $chatMode;
 	//say if the chatroom is opened - if not, then its readonly
 	public $opened;
+	//say if create voting is enabled
+	public $enableVoting;
 	//the connected voting
 	public $voting;
 	
 	public function __construct($id) {
 		$this->jsonNames = array('id', 'game', 'chatMode', 'opened',
-			'voting');
+			'enableVoting','voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(
@@ -30,6 +32,7 @@ class ChatRoom extends JsonExport {
 			$this->game = $entry["Game"];
 			$this->chatMode = $entry["ChatMode"];
 			$this->opened = boolval($entry["Opened"]);
+			$this->enableVoting = boolval($entry["EnableVoting"]);
 			$result->free();
 			$this->voting = new VoteSetting($this->id);
 			if ($this->voting->chat === null)
@@ -70,6 +73,19 @@ class ChatRoom extends JsonExport {
 			dirname(__FILE__).'/sql/changeOpenState.sql',
 			array(
 				"opened" => $this->opened = $opened,
+				"enablev" => $this->enableVoting,
+				"id" => $this->id
+			)
+		);
+		$result->free();
+	}
+	
+	public function changeEnableVotingState($enable) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/changeOpenState.sql',
+			array(
+				"opened" => $this->opened,
+				"enablev" => $this->enableVoting = $enable,
 				"id" => $this->id
 			)
 		);

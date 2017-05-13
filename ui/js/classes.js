@@ -404,6 +404,17 @@ WerWolf.PlayGame = function(id, data) {
 		if (modified) {
 			thisref.OrderTabs();
 		}
+		//enableVotings
+		if (Data.UserId == data.leader) {
+			if (room.enableVoting)
+				rooms[room.id].box.addClass("enable-poll");
+			else rooms[room.id].box.removeClass("enable-poll");
+		}
+		else {
+			if (room.enableVoting && room.chatMode != 'story' && room.voting != null)
+				rooms[room.id].box.addClass("enable-poll");
+			else rooms[room.id].box.removeClass("enable-poll");
+		}
 		//Votings
 		if (room.chatMode != 'story') {
 			if (data.leader == Data.UserId) {
