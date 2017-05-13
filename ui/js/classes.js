@@ -257,6 +257,7 @@ WerWolf.PlayGame = function(id, data) {
 		currentGame = game;
 		if (lastPhase != game.phase.current) {
 			lastPhase = game.phase.current;
+			console.log(game.phase.current, game.phase.currentLevel);
 			thisref.OrderTabs();
 			for (var key in rooms)
 				Logic.ApiAccess.GetPlayerInRoom(key);

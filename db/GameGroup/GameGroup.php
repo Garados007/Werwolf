@@ -31,7 +31,8 @@ class GameGroup extends JsonExport {
 			$this->mainGroupId = $entry["MainGroup"];
 			$this->started = intval($entry["Started"]);
 			$this->finished = $entry["Finished"];
-			$this->phase = new Phase($entry["CurrentPhase"]);
+			$this->phase = new Phase($entry["CurrentPhase"], 
+				intval($entry["CurrentLevel"]));
 		}
 		$result->flush();
 	}
@@ -57,10 +58,11 @@ class GameGroup extends JsonExport {
 			dirname(__FILE__).'/sql/nextPhase.sql',
 			array(
 				"id" => $this->id,
-				"next" => $this->phase->next
+				"next" => $this->phase->next,
+				"level" => $this->phase->nextLevel
 			)
 		)->executeAll();
-		$this->phase = new Phase($this->phase->next);
+		$this->phase = new Phase($this->phase->next, $this->phase->nextLevel);
 	}
 	
 	public function finish() {

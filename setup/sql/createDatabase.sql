@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
 	Started INT NOT NULL,
 	Finished INT,
 	CurrentPhase VARCHAR(8) NOT NULL,
+	CurrentLevel INT(8) NOT NULL,
 	
 	FOREIGN KEY (MainGroup) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
@@ -30,9 +31,11 @@ ALTER TABLE <?php echo DB_PREFIX; ?>Groups ADD CONSTRAINT
 	FOREIGN KEY (CurrentGame) REFERENCES <?php echo DB_PREFIX; ?>Games(Id);
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Phases (
-	Phase VARCHAR(8) NOT NULL PRIMARY KEY,
-	NextPhase VARCHAR(8) NOT NULL
-	
+	Phase VARCHAR(8) NOT NULL,
+	PhaseLevel INT(8) NOT NULL,
+	NextPhase VARCHAR(8) NOT NULL,
+	NextPhaseLevel INT(8) NOT NULL,
+	PRIMARY KEY (Phase, PhaseLevel)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatModeKeys (
