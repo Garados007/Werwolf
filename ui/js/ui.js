@@ -311,7 +311,7 @@ var UI = new function() {
 						v.CreateElementRaw({
 							children: [
 								thisref.CreateChatBoxHeader(name, function() {
-									
+									e.toggleClass("view-player");
 								}, function() {
 									e.toggleClass("view-poll");
 								}, function() {
@@ -355,6 +355,7 @@ var UI = new function() {
 				v.CreateElementRaw({
 					css: ["chat-room-chats", "v-container"]
 				}),
+				thisref.CreateSmalPlayerView()
 			]
 		});
 	};
@@ -484,6 +485,24 @@ var UI = new function() {
 			children: [
 				v.CreateButton(Lang.Get("nextRound"), clickNext)
 			]
+		});
+	};
+	
+	this.CreateSmalPlayerView = function() {
+		return v.CreateElementRaw({
+			css: ["player-smal-box", "v-container"],
+			children: [
+				v.CreateElementRaw({
+					text: Lang.Get("allPlayersInRoom")
+				})
+			]
+		});
+	};
+	
+	this.CreateSinglePlayerView = function(id, name) {
+		return v.CreateElementRaw({
+			css: ["player", "entry-" + id],
+			text: name
 		});
 	};
 };

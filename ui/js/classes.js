@@ -252,11 +252,14 @@ WerWolf.PlayGame = function(id, data) {
 	var lastPhase = null;
 	var currentGame = null;
 	var lastGame = {};
+	var rooms = {};
 	this.UpdateGameData = function(game) {
 		currentGame = game;
 		if (lastPhase != game.phase.current) {
 			lastPhase = game.phase.current;
 			thisref.OrderTabs();
+			for (var key in rooms)
+				Logic.ApiAccess.GetPlayerInRoom(key);
 		}
 		if (game.finished != null && lastGame.finished == null) {
 			var rooms = thisref.content.find(".chat-room-box");
@@ -326,7 +329,6 @@ WerWolf.PlayGame = function(id, data) {
 		}
 	};
 	
-	var rooms = {};
 	this.UpdateRoom = function(room) {
 		var cont = thisref.content.find(".h-container-i");
 		for (var key in room) {
@@ -498,6 +500,16 @@ WerWolf.PlayGame = function(id, data) {
 	};
 	this.UpdateRoomPlayer = function(room, player) {
 		rooms[room].player = player;
+		var box = rooms[room].box.find(".player-smal-box");
+		rooms[room].box.attr("data-player-count", player.length);
+		for (var i = 0; i<player.length; ++i) {
+			var elem = box.find(".entry-"+player.user);
+			if (elem.length == 0 && player[i].alive)
+				box.append(UI.CreateSinglePlayerView(
+					player[i].user, Data.UserIdNameRef[player[i].user]));
+			if (elem.length > 0 && !player[i].alive)
+				elem.remove();
+		}
 	};
 	this.UpdateVotes = function(room, votes) {
 		var bar = rooms[room].box.find(".cur-vote-bar").children().eq(0);
