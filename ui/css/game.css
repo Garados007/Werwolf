@@ -321,7 +321,9 @@ body {
 	font-weight: bold;
 }
 .chat-room-box.readonly .chat-room-textbox,
-.chat-room-box:not(.open) .chat-room-textbox {
+.chat-room-box:not(.open) .chat-room-textbox,
+.h-container-i.death .chat-room-textbox,
+.h-container-i.death .chat-room-header > div:nth-child(3) {
 	display: none;
 }
 .chat-room-chats-container {
