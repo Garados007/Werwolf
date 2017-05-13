@@ -260,7 +260,7 @@ WerWolf.PlayGame = function(id, data) {
 					room.addClass("show").addClass("open");
 					var cont = room.find(".chat-room-chats-container");
 					cont.find(".vote-box").remove();
-					cont.append(UI.CreateNewGameBox(function(){
+					cont.append(UI.CreateNewGameChatBox(function(){
 						Logic.ApiAccess.RemoveCurrentGame(data.id);
 					}));
 				}

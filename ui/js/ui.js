@@ -430,7 +430,7 @@ var UI = new function() {
 		});
 	};
 	
-	this.CreateNewGameBox = function(clickNew) {
+	this.CreateNewGameChatBox = function(clickNew) {
 		return v.CreateElementRaw({
 			css: ["vote-box", "finish", "v-container"],
 			children: [
