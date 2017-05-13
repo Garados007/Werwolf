@@ -4,6 +4,7 @@ include_once dirname(__FILE__).'/../config.php';
 
 class DB {
 	private static $connection = null;
+	private static $lastResult = false;
 	
 	public static function connect() {
 		if (self::$connection !== null) return;
@@ -17,13 +18,27 @@ class DB {
 		self::$connection = null;
 	}
 	
+	private static function clearStoredResults() {
+		do {
+			if ($res = self::$connection->store_result())
+				$res->free();
+		}
+		while (self::$connection->more_results() && self::$connection->next_result());
+	}
+	
 	public static function getResult($sql) { //DBResult
 		if (self::$connection === null) self::connect();
-		return new DBResult(self::$connection->query($sql));
+		if (!is_bool(self::$lastResult) && !self::$lastResult->hasFreed)
+			self::$lastResult->free();
+		self::clearStoredResults();
+		return new DBResult(self::$connection, self::$connection->query($sql));
 	}
 	
 	public static function getMultiResult($sql) { //DBMultiResult
 		if (self::$connection === null) self::connect();
+		if (!is_bool(self::$lastResult) && !self::$lastResult->hasFreed)
+			self::$lastResult->free();
+		self::clearStoredResults();
 		$result = self::$connection->multi_query($sql);
 		if ($error = self::getError()) {
 			echo $error;
@@ -72,15 +87,21 @@ class DB {
 class DBMultiResult {
 	private $connection;
 	private $currentResult;
+	private $lastResult;
+	public $hasFreed = false;
 	
 	public function __construct(&$connection) {
 		$this->connection = &$connection;
 		$this->currentResult = $this->connection->store_result();
+		$this->lastResult = false;
 	}
 	
 	public function getResult() {
+		if (!is_bool($this->lastResult) && !$this->lastResult->hasFreed)
+			$this->lastResult->free();
+		$this->lastResult = $this->currentResult;
 		if (is_bool($this->currentResult)) $result = $this->currentResult;
-		else $result = new DBResult($this->currentResult);
+		else $result = new DBResult($this->connection, $this->currentResult);
 		if ($this->hasMoreResults()) {
 			$this->connection->next_result();
 			$this->currentResult = $this->connection->store_result();
@@ -108,6 +129,9 @@ class DBMultiResult {
 	
 	public function flush() {
 		while ($this->connection->next_result()) {;}
+		if (!is_bool($this->currentResult)) $this->currentResult->free();
+		if (!is_bool($this->lastResult)) $this->lastResult->free();
+		$this->hasFreed = true;		
 	}
 	
 	public function free() {
@@ -121,14 +145,20 @@ class DBMultiResult {
 			$this->connection->more_results();
 		}
 		while ($this->connection->next_result());
+		if (!is_bool($this->currentResult)) $this->currentResult->free();
+		if (!is_bool($this->lastResult)) $this->lastResult->free();
+		$this->hasFreed = true;		
 	}
 }
 
 class DBResult {
 	private $result;
+	private $connection;
+	public $hasFreed = false;
 	
-	public function __construct($result) {
+	public function __construct(&$connection, $result) {
 		$this->result = $result;
+		$this->connection = &$connection;
 	}
 	
 	public function getEntry() {
@@ -144,7 +174,10 @@ class DBResult {
 	}
 	
 	public function free() {
-		if ($this->result && $this->result !== true)
+		if ($this->result && $this->result !== true) {
 			$this->result->free();
+			$this->result->close();
+		}
+		$this->hasFreed = true;
 	}
 }

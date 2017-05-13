@@ -167,6 +167,9 @@ WerWolf.PrepairGame = function(id, data) {
 			var game = new WerWolf.PlayGame(data.id, data);
 			game.Attach();
 			game.Activate();
+			setTimeout(function(){
+				location.reload();
+			}, 500);
 		}
 	};
 	
@@ -193,6 +196,9 @@ WerWolf.PrepairGame = function(id, data) {
 				var game = new WerWolf.PlayGame(data.id, data);
 				game.Attach();
 				game.Activate();
+				setTimeout(function(){
+					location.reload();
+				}, 500);
 			}));
 	}
 	else {
@@ -358,10 +364,11 @@ WerWolf.PlayGame = function(id, data) {
 	this.OrderTabs = function() {
 		var score = function(p) {
 			var v = 0;
-			v += (p.hasClass("open")        ? 1 : 0) * 8;
-			v += (p.hasClass("chat-story")  ? 1 : 0) * 4;
-			v += (p.hasClass("chat-common") ? 1 : 0) * 2;
-			v += (p.hasClass("readonly")    ? 0 : 1) * 1;
+			v += (p.hasClass("open")          ? 1 : 0) * 16;
+			v += (p.hasClass("chat-story")    ? 1 : 0) *  8;
+			v += (p.hasClass("chat-common")   ? 0 : 1) *  4;
+			v += (p.hasClass("chat-lovepair") ? 0 : 1) *  2;
+			v += (p.hasClass("readonly")      ? 0 : 1) *  1;
 			return v;
 		};
 		var cont = thisref.content.find(".h-container-i");
@@ -371,6 +378,9 @@ WerWolf.PlayGame = function(id, data) {
 		childs.removeClass("show");
 		childs.eq(0).addClass("show");
 		childs.appendTo(cont);
+		var logs = childs.find(".chat-room-chats");
+		for (var i = 0; i<logs.length; ++i)
+			logs[i].scrollTop = logs[i].scrollHeight;
 	};
 	this.UpdateRoomData = function(room) {
 		//console.log(room);
@@ -449,7 +459,6 @@ WerWolf.PlayGame = function(id, data) {
 				rooms[room.id].box.find(".vote-box").remove();
 				rooms[room.id].box.find(".chat-room-chats-container")
 					.append(UI.CreateNextRoundBox(function() {
-						console.log(data);
 						Logic.ApiAccess.NextRound(currentGame.id);
 					}));
 			}
