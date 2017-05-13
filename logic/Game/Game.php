@@ -76,6 +76,9 @@ class Game {
 			$chat = ChatRoom::createChatRoom($game->id, $key);
 			$chat->changeOpenedState(in_array($chat->chatMode,
 				self::$openChatRooms[$game->phase->current]));
+			if ($key == "story")
+				ChatEntry::addEntry($chat->id, 0,
+					'{"tid":22,"var":{}}');
 		}
 		//finish
 		return $game;
@@ -146,7 +149,7 @@ class Game {
 		if (self::CheckIfFinished($game))
 			ChatEntry::addEntry($story->id, 0,
 				'{"tid":11,"var":{}}');
-		else switch ($game->phase) {
+		else switch ($game->phase->current) {
 			case "armorsel": 
 				ChatEntry::addEntry($story->id, 0,
 					'{"tid":20,"var":{}}');
