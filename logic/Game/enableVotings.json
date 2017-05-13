@@ -5,5 +5,6 @@
 	"sleepnow": [ "story" ],
 	"armorsel": [ "story", "voteArmr" ],
 	"wolfkill": [ "story", "voteWolf" ],
-	"awakenin": [ "story" ]
+	"awakenin": [ "story" ],
+	"oraclesl": [ "story", "vtoracle" ]
 }

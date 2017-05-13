@@ -201,6 +201,10 @@ class Game {
 				ChatEntry::addEntry($story->id, 0,
 					'{"tid":26,"var":{}}');
 				break;
+			case "oraclesl":
+				ChatEntry::addEntry($story->id, 0,
+					'{"tid":27,"var":{}}');
+				break;
 			default: var_dump($game); break;
 		}
 		return $game;

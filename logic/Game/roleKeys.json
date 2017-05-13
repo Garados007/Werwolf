@@ -6,5 +6,9 @@
 	"major": [ ],
 	"armor": [ "armor", "villager" ],
 	"pair": [ ],
-	"grandpa": [ "grandpa", "villager" ]
+	"grandpa": [ "grandpa", "villager" ],
+	"witch": [ "witch", "villager" ],
+	"hunter": [ "hunter", "villager" ],
+	"girl": [ "girl", "villager" ],
+	"oracle": [ "oracle", "villager" ]
 }

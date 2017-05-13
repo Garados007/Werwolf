@@ -69,4 +69,11 @@ class Player extends JsonExport {
 		);
 		$result->free();
 	}
+	
+	public function hasRole($key) {
+		for ($i = 0; $i<count($this->roles); $i)
+			if ($this->roles[$i]->roleKey == $key)
+				return true;
+		return false;
+	}
 }

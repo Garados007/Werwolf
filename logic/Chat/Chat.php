@@ -108,9 +108,8 @@ class Chat {
 			foreach (VoteEntry::getVotesBySetting($room->id) as $vote) {
 				$power = 1;
 				$user = Game::getPlayer($room->game, $vote->voter);
-				foreach ($user->roles as $role)
-					if ($role->roleKey == 'major')
-						$power = 1.5;
+				if ($user->hasRole('major'))
+					$power = 1.5;
 				if (!isset($list[$vote->target]))
 					$list[$vote->target] = $power;
 				else $list[$vote->target] += $power;
@@ -139,7 +138,7 @@ class Chat {
 							VisibleRole::addDefaultVisibility(Game::getPlayer($game, $user), $player);
 						break;
 					case 'villkill': 
-					Game::killPlayer($player, false);
+						Game::killPlayer($player, false);
 						ChatEntry::addEntry($room->id, 0, 
 							'{"tid":14,"var":{"PSitS":'.$player->user.'}}');
 						break;
@@ -147,9 +146,19 @@ class Chat {
 						Role::createRole($player, 'pair');
 						break;
 					case 'wolfkill': 
-					Game::killPlayer($player, true);
+						Game::killPlayer($player, true);
 						ChatEntry::addEntry($room->id, 0, 
 							'{"tid":16,"var":{"PSitS":'.$player->user.'}}');
+						break;
+					case 'oraclesel':
+						$keys = array();
+						for ($i = 0; $i<count($player->roles); ++$i)
+							$keys[] = $player->roles[$i]->roleKey;
+						foreach (Game::GetAllUserFromGroup($game->mainGroupId) as $user) {
+							$user = Game::getPlayer($game, $user);
+							if ($user->hasRole('oracle'))
+								VisibleRole::addRoles($user, $player, $keys);
+						}
 						break;
 				}
 			}
