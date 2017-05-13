@@ -129,6 +129,9 @@ class Chat {
 						Role::createRole($player, 'major');
 						ChatEntry::addEntry($room->id, 0, 
 							'{"tid":15,"var":{"PSitS":'.$player->user.'}}');
+						$game = Game::GetGame($player->game);
+						foreach (Game::GetAllUserFromGroup($game->mainGroupId) as $user)
+							VisibleRole::addDefaultVisibility(Game::getPlayer($game, $user), $player);
 						break;
 					case 'villkill': 
 						$player->kill(false);

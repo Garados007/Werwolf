@@ -4,5 +4,6 @@
 	"wolf": ["wolf"],
 	"armor": ["armor", "pair"],
 	"pair": ["pair"],
-	"grandpa": ["grandpa"]
+	"grandpa": ["grandpa"],
+	"major": ["villager"]
 }
