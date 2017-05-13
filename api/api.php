@@ -307,7 +307,7 @@ class Api {
 		);
 		$me = Game::getPlayer(
 			$this->getInt('game'),
-			$this->getInt('user')
+			$this->getInt('me')
 		);
 		VisibleRole::filterRoles($me, $player);
 		$this->result = array(
