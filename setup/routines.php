@@ -51,8 +51,11 @@ function importPhp($dir) {
 echo 'Try to create tables if not exists';
 if (!execSql(dirname(__FILE__).'/sql/createDatabase.sql')) return;
 
-echo '<br/>Try to create trigger if not exists';
-if (!execSql(dirname(__FILE__).'/sql/createTrigger.sql')) return;
+if (DB_USE_TRIGGER) {
+	echo '<br/>Try to create trigger if not exists';
+	if (!execSql(dirname(__FILE__).'/sql/createTrigger.sql')) return;
+}
+else echo '<br/>DB Triggers are not activated and also not created";
 
 echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
 if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
