@@ -343,7 +343,6 @@ WerWolf.PlayGame = function(id, data) {
 							var key = $(this).attr("data-id");
 							var ta = rooms[key].box.find("textarea");
 							var text = ta.val();
-							console.log(text);
 							if (text!="") {
 								Logic.ApiAccess.AddChat(key, Data.UserId, text);
 							}

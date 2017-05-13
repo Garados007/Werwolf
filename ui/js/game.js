@@ -92,7 +92,6 @@ var Logic = new function() {
 			thisref.RequestEvents.getGame.invoke(data);
 		},
 		nextRound: function(data) {
-			console.log(data.game.phase.current);
 			thisref.RequestEvents.nextRound.invoke(data);
 		},
 		

@@ -2,8 +2,8 @@
 	"mainstor": [ "common", "story" ],
 	"majorsel": [ "common", "story", "voteMajr" ],
 	"villkill": [ "common", "story", "voteVilg", "lovepair" ],
-	"sleepnow": [ "story", "lovepair" ],
-	"armorsel": [ "story", "voteArmr", "lovepair" ],
-	"wolfkill": [ "story", "voteWolf", "lovepair" ],
-	"awakenin": [ "story", "lovepair" ]
+	"sleepnow": [ "common", "story", "lovepair" ],
+	"armorsel": [ "common", "story", "voteArmr", "lovepair" ],
+	"wolfkill": [ "common", "story", "voteWolf", "lovepair" ],
+	"awakenin": [ "common", "story", "lovepair" ]
 }
