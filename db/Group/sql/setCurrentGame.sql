@@ -20,12 +20,12 @@ DELETE FROM <?php echo DB_PREFIX; ?>VisibleRoles
 WHERE Game = <?php echo $oldgame; ?>;
 
 DELETE FROM <?php echo DB_PREFIX; ?>Votes
-WHERE Chat IN (
+WHERE Setting IN (
 	SELECT Id
 	FROM _delChatIds_<?php echo $oldgame; ?>
 );
 
-DELETE FROM <?php echo DB_PREFIX; ?>VoteSettings
+DELETE FROM <?php echo DB_PREFIX; ?>VoteSetting
 WHERE Chat IN (
 	SELECT Id
 	FROM _delChatIds_<?php echo $oldgame; ?>
