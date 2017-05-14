@@ -87,6 +87,13 @@
 			{ "pid2s": "PSitS" },
 			{ "t": " wurde als Opfer ausgewählt." }
 		],
+		"17": [
+			{ "t": "Der Spieler " },
+			{ "pid2s": "p1" },
+			{ "t": " ist vor Liebeskummer gestorben, da sein Schatz " },
+			{ "pid2s": "p2" },
+			{ "t": " gestorben ist." }
+		],
 		"20": [
 			{ "t": "Der Armor sucht sich jetzt das Liebespaar aus." }
 		],

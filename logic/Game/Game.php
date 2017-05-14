@@ -139,6 +139,19 @@ class Game {
 					$keys[] = $other->roles[$i]->roleKey;
 				VisibleRole::addRoles($player, $other, $keys);
 			}
+			if ($player->hasRole('pair')) {
+				$story = Chat::GetChatRoomId($game, 'story');
+				foreach ($user as $other) {
+					$other = self::getPlayer($player->game, $other);
+					if ($other->hasRole('pair') && $other->alive) {
+						self::killPlayer($other, false);
+						ChatEntry::addEntry($story, 0,
+							'{"tid":17,"var":{"p1":'.
+							$other->user.',"p2":'.
+							$player->user.'}}');
+					}
+				}
+			}
 		}
 	}
 	
