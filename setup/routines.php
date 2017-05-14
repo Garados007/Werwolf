@@ -57,6 +57,8 @@ if (DB_USE_TRIGGER) {
 }
 else echo '<br/>DB Triggers are not activated and also not created';
 
+include dirname(__FILE__).'/migrate.php';
+
 echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
 if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 
