@@ -235,6 +235,16 @@ class Game {
 		}
 		if (!$wolfLeft || !$villLeft || !$othpLeft) {
 			$game->finish();
+			$story = Chat::GetChatRoomId($game, 'story');
+			if ($pairLeft && !$othpLeft)
+				ChatEntry::addEntry($story, 0,
+					'{"tid":30,"var":{}}');
+			elseif ($wolfLeft)
+				ChatEntry::addEntry($story, 0,
+					'{"tid":31,"var":{}}');
+			elseif ($villLeft)
+				ChatEntry::addEntry($story, 0,
+					'{"tid":32,"var":{}}');
 			return true;
 		}
 		else return false;

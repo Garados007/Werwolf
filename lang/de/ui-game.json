@@ -110,6 +110,15 @@
 		],
 		"27": [
 			{ "t": "Die Seherin sucht sich jetzt die Person aus, deren Rollen sie sehen will." }
+		],
+		"30": [
+			{ "t": "Das Liebespaar hat das Spiel gewonnen." }
+		],
+		"31": [
+			{ "t": "Die Wölfe haben das Spiel gewonnen." }
+		],
+		"32": [
+			{ "t": "Das Dorf hat das Spiel gewonnen." }
 		]
 	}
 }
