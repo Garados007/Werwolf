@@ -70,10 +70,32 @@ class Player extends JsonExport {
 		$result->free();
 	}
 	
+	public function getRole($key) {
+		for ($i = 0; $i<count($this->roles); $i++)
+			if ($this->roles[$i]->roleKey == $key)
+				return $this->roles[$i];
+		return null;
+	}
+	
 	public function hasRole($key) {
-		for ($i = 0; $i<count($this->roles); $i)
+		for ($i = 0; $i<count($this->roles); $i++)
 			if ($this->roles[$i]->roleKey == $key)
 				return true;
 		return false;
+	}
+	
+	public function addRole($key) {
+		$role = $this->getRole($key);
+		if ($role == null)
+			$role = Role::createRole($this, $key);
+		return $role;
+	}
+	
+	public function removeRole($key) {
+		for ($i = 0; $i<count($this->roles); $i++)
+			if ($this->roles[$i]->roleKey == $key) {
+				unset($this->roles[$i]);
+			}
+		Role::removeRole($this, $key);
 	}
 }
