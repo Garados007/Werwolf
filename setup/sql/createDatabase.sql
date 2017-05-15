@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Groups (
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>User (
 	GroupId INT UNSIGNED NOT NULL,
 	UserId INT UNSIGNED NOT NULL,
+	LastOnline INT UNSIGNED NOT NULL,
 	PRIMARY KEY (GroupId, UserId),
 	FOREIGN KEY (GroupId) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;

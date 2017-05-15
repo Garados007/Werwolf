@@ -111,6 +111,11 @@ var UI = new function() {
 					text: name == null ? Lang.Get("loadingName") : name
 				}),
 				v.CreateElementRaw({
+					css: ["user-online"],
+					text: "?",
+					title: "?"
+				}),
+				v.CreateElementRaw({
 					css: ["user-roles"],
 					children: r
 				})

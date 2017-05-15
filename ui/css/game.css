@@ -227,6 +227,7 @@ body {
     border: 1px solid #301203;
     margin: 0.1em;
     padding: 0.1em 0.3em;
+	position: relative;
 }
 .user-entry.current {
 	background-color: #c35b22;
@@ -234,6 +235,12 @@ body {
 .user-name {
     font-weight: bold;
     font-size: 1.1em;
+}
+.user-online {
+	position: absolute;
+	top: 0.3em;
+	right: 0.6em;
+	font-size: 0.7em;
 }
 .user-roles {
     padding-left: 0.6em;

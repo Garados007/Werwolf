@@ -85,6 +85,7 @@ class Api {
 			case "addUserToGroup": $this->addUserToGroup(); break;
 			case "addUserToGroupByKey": $this->addUserToGroupByKey(); break;
 			case "getUserFromGroup": $this->getUserFromGroup(); break;
+			case "setUserOnline": $this->setUserOnline(); break;
 			case "getGroupFromUser": $this->getGroupFromUser(); break;
 			case "removeCurrentGame": $this->removeCurrentGame(); break;
 			case "createGame": $this->createGame(); break;
@@ -221,6 +222,25 @@ class Api {
 			"method" => 'getUserFromGroup',
 			"group" => $this->getInt('group'),
 			"user" => $list
+		);
+	}
+	
+	private function setUserOnline() {
+		if (!$this->check(['group','user'])) return;
+		$list = User::loadAllUserByGroup(
+			$this->getInt('group')
+		);
+		$res = array();
+		$user = $this->getInt('user');
+		for ($i = 0; $i < count($list); ++$i) {
+			if ($list[$i]->user == $user)
+				$list[$i]->setOnline(time());
+			$res[] = $list[$i]->exportJson();
+		}
+		$this->result = array(
+			"method" => 'setUserOnline',
+			"group" => $this->getInt('group'),
+			"user" => $res
 		);
 	}
 	

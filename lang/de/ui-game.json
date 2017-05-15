@@ -51,6 +51,11 @@
 		"voteVilg": "Wahl des Dorfes, wer aus ihren Reihen umgebracht werden soll",
 		"voteWolf": "Wahl unter den Werwölfen, wer aus dem Dorf umgebracht werden soll"
 	},
+	"lastOnlineTime": {
+		"online": "Online",
+		"recently": "Kürzlich",
+		"afewminutes": "wenige Minuten"
+	},
 	"startVotingButton": "Starte das Voting",
 	"endVotingButton": "Beende das Voting",
 	"currentVoted": "Schon abgestimmt haben:",

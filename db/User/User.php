@@ -8,11 +8,14 @@ class User extends JsonExport {
 	public $group;
 	//user id
 	public $user;
+	//the time when the user was the last time online
+	public $lastOnline;
 	
-	public function __construct($group, $user) {
-		$this->jsonNames = array('group','user');
+	public function __construct($group, $user, $lastOnline) {
+		$this->jsonNames = array('group','user','lastOnline');
 		$this->group = $group;
 		$this->user = $user;
+		$this->lastOnline = $lastOnline;
 	}
 	
 	public static function loadAllUserByGroup($group) {
@@ -26,7 +29,7 @@ class User extends JsonExport {
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
 			$list[] = new User($entry["GroupId"], 
-				intval($entry["UserId"]));
+				intval($entry["UserId"]), intval($entry["LastOnline"]));
 		}
 		$result->free();
 		return $list;
@@ -44,7 +47,7 @@ class User extends JsonExport {
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
 			$list[] = new User(intval($entry["GroupId"]), 
-				intval($entry["UserId"]));
+				intval($entry["UserId"]), intval($entry["LastOnline"]));
 		}
 		$result->free();
 		return $list;
@@ -61,7 +64,7 @@ class User extends JsonExport {
 			)
 		);
 		if ($result) $result->free();
-		return new User($group, $user);
+		return new User($group, $user, 0);
 	}
 	
 	public function remove() {
@@ -70,6 +73,18 @@ class User extends JsonExport {
 			array(
 				"group" => $this->group,
 				"user" => $this->user
+			)
+		);
+		$result->free();
+	}
+	
+	public function setOnline($time) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setLastOnline.sql',
+			array(
+				"group" => $this->group,
+				"user" => $this->user,
+				"time" => $this->lastOnline = $time
 			)
 		);
 		$result->free();

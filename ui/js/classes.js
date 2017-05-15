@@ -110,6 +110,34 @@ WerWolf.RunningGame = function(id, data) {
 	};
 	Logic.RequestEvents.getAccountName.add(updateUserNames);
 	
+	this.LoopEvents.push(JSON.stringify({
+		mode: "setUserOnline",
+		group: id,
+		user: Data.UserId
+	}));
+	this.UpdateUserOnline = function(users) {
+		var container = thisref.content.find(".user-list");
+		var now = Date.now() / 1000;
+		var nds = new Date(now * 1000).toDateString();
+		for (var i = 0; i<users.length; ++i) {
+			var entry = container.find(".entry-"+users[i].user);
+			if (entry.length == 0) continue;
+			entry = entry.find(".user-online");
+			var date = new Date(users[i].lastOnline * 1000);
+			var ods = date.toDateString();
+			var dif = now - users[i].lastOnline;
+			var text = "";
+			if (users[i].lastOnline == 0) text = "?";
+			else if (dif < 10) text = Lang.Get("lastOnlineTime", "online");
+			else if (dif < 60) text = Lang.Get("lastOnlineTime", "recently");
+			else if (dif < 300) text = Lang.Get("lastOnlineTime", "afewminutes");
+			else if (nds == ods) text = date.toLocaleTimeString();
+			else text = date.toLocaleDateString();
+			entry.text(text);
+			entry.attr("title", users[i].lastOnline == 0 ? '?' : date.toLocaleString());
+		}
+	};
+	
 	var remove = this.Remove;
 	this.Remove = function() {
 		clearInterval(intervall);

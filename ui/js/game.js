@@ -74,6 +74,11 @@ var Logic = new function() {
 				Data.CurrentGames[data.group].UpdateUser(data.user);
 			thisref.RequestEvents.getUserFromGroup.invoke(data);
 		},
+		setUserOnline: function(data) {
+			if (Data.CurrentGames[data.group] != undefined)
+				Data.CurrentGames[data.group].UpdateUserOnline(data.user);
+			thisref.RequestEvents.setUserOnline.invoke(data);
+		},
 		getGroupFromUser: function(data) {
 			Data.UserGroups = data.group;
 			thisref.RequestEvents.getGroupFromUser.invoke(data);
