@@ -127,6 +127,15 @@ class Game {
 		return self::$playerBackup[$game->id][$user] = new Player($game->id, $user);
 	}
 	
+	public static function startSpecialVoting($player, $key) {
+		$player->setSpecialVoting($key);
+		$story = Chat::GetChatRoomId($player->game, "story");
+		ChatEntry::addEntry($story, 0,
+			'{"tid":18,"var":{"p":'.$player->user.',"key":'.$key.'}}');
+	}
+	
+	public static function 
+	
 	public static function killPlayer($player, $byWolf) {
 		$player->kill($byWolf);
 		if (!$player->alive) {

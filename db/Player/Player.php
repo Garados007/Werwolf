@@ -15,10 +15,14 @@ class Player extends JsonExport {
 	public $extraWolfLive;
 	//a list of assigned roles
 	public $roles;
+	//a key, if a special voting for this player is activated
+	//Hint: Special voting is not a real voting. if a target is selected, 
+	//      the effect will taken automaticly and the voting is reseted.
+	public $specialVoting;
 	
 	public function __construct($game, $user) {
 		$this->jsonNames = array('game', 'user', 'alive', 'extraWolfLive',
-			'roles');
+			'roles', 'specialVoting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPlayer.sql',
 			array(
@@ -31,6 +35,7 @@ class Player extends JsonExport {
 			$this->user = intval($entry["User"]);
 			$this->alive = boolval($entry["Alive"]);
 			$this->extraWolfLive = boolval($entry["ExtraWolfLive"]);
+			$this->specialVoting = intval($entry["SpecialVoting"]);
 			$result->free();
 			$this->roles = Role::getAllRolesOfPlayer($this);
 		}
@@ -65,6 +70,18 @@ class Player extends JsonExport {
 				"user" => $this->user,
 				"alive" => $this->alive,
 				"wolf" => $this->extraWolfLive
+			)
+		);
+		$result->free();
+	}
+	
+	public function setSpecialVoting($key) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setSpecialVoting.sql',
+			array(
+				"game" => $this->game,
+				"user" => $this->user,
+				"key" => $this->specialVoting = $key
 			)
 		);
 		$result->free();
