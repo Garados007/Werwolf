@@ -2,7 +2,8 @@
 
 include_once dirname(__FILE__).'/../../lang/Lang.php';
 
-header("Content-Type: application/javascript");
+if (!isset($worker) || !$worker)
+	header("Content-Type: application/javascript");
 
 echo 'var Lang=new function(){var data=';
 echo json_encode(Lang::GetString('ui-game', null));

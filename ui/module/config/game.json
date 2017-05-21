@@ -1,0 +1,11 @@
+[
+	{ "file": "ui/js/language-texts.js.php" },
+	{ "file": "ui/js/lang.extension.js", "compress": "js" },
+	{ "file": "ui/js/const.js.php", "compress": "js" },
+	{ "file": "ui/js/jquery-3.2.1.min.js", "compress": false },
+	{ "file": "ui/js/toolkit.js", "compress": "js" },
+	{ "file": "ui/js/toolkit.view.js", "compress": "js" },
+	{ "file": "ui/js/ui.js", "compress": "js" },
+	{ "file": "ui/js/game.js", "compress": "js" },
+	{ "file": "ui/js/classes.js", "compress": "js" }
+]

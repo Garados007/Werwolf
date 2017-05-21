@@ -257,7 +257,7 @@ ToolKit.View = new function(){
 			css: ["ui-window-outer"],
 			children: [ frame ]
 		});
-	}
+	};
 	//Erzeugt einen Rahmen, in dem in den unteren Bereich Buttons nebeneinander angeordnet werden
 	//können. Im großen Bereich erfolgt dann der Inhalt.
 	//[buttons]: Array<jQuery> - Die Buttons für den unteren Bereich

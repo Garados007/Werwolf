@@ -134,7 +134,10 @@ class Game {
 			'{"tid":18,"var":{"p":'.$player->user.',"key":'.$key.'}}');
 	}
 	
-	public static function 
+	public static function executeSpecialVoting($player, $target) {
+		
+		
+	}
 	
 	public static function killPlayer($player, $byWolf) {
 		$player->kill($byWolf);

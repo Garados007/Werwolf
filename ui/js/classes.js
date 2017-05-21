@@ -332,7 +332,7 @@ WerWolf.PlayGame = function(id, data) {
 				}));
 			}
 		}
-	}
+	};
 	
 	var playerList = {};
 	this.UpdatePlayer = function(player) {

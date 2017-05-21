@@ -59,13 +59,13 @@ else echo '<br/>DB Triggers are not activated and also not created';
 
 include dirname(__FILE__).'/migrate.php';
 
-echo '<br/>Add data to '.DB_PREFIX.'ChatMode table';
+echo '<br/><br/>Add data to '.DB_PREFIX.'ChatMode table';
 if (!execSql(dirname(__FILE__).'/sql/putChatModeData.sql')) return;
 
 echo '<br/>Add data to '.DB_PREFIX.'Phases table';
 if (!execSql(dirname(__FILE__).'/sql/putPhases.sql')) return;
 
-echo '<br/>Try to include DB files for syntax check';
+echo '<br/><br/>Try to include DB files for syntax check';
 importPhp(dirname(__FILE__).'/../db');
 echo '<br/>All Files are okay.';
 
@@ -73,7 +73,7 @@ echo '<br/>Try to include Logic files for syntax check';
 importPhp(dirname(__FILE__).'/../logic');
 echo '<br/>All Files are okay.';
 			
-echo '<br/>Check account manager file';
+echo '<br/><br/>Check account manager file';
 if (!is_file(dirname(__FILE__).'/../account/manager.php')) {
 	echo '<br/>/account/manager.php file does not exists. Please make a copy of /account/manager.raw.template.php';
 	return;
@@ -84,4 +84,9 @@ echo '<br/>setup account manager plugin';
 AccountManager::InitSystem();
 echo '<br/>account manager initialized';
 			
-echo '<br/>Checkup Finished. Everything is okay.';
+echo '<br/><br/>init the import files for the ui';
+include_once dirname(__FILE__).'/../ui/module/ModuleWorker.php';
+ModuleWorker::prepairAllConfigs();
+echo '<br/>all import files initialized';
+			
+echo '<br/><br/>Checkup Finished. Everything is okay.';

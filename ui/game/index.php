@@ -6,7 +6,6 @@ if (MAINTENANCE) {
 	header("Location: /".URI_PATH."ui/maintenance/", true, 302);
 	exit;
 }
-
 include_once dirname(__FILE__).'/../../account/manager.php';
 
 $user = AccountManager::GetCurrentAccountData();
@@ -16,6 +15,7 @@ if (!$user["login"]) {
 }
 
 include_once dirname(__FILE__).'/../../lang/Lang.php';
+include_once dirname(__FILE__).'/../module/ModuleWorker.php';
 
 if (isset($_GET["set-lang"])) {
 	Lang::SetLanguage($_GET["set-lang"]);
@@ -30,7 +30,7 @@ if (isset($_GET["set-lang"])) {
 	<title><?php echo Lang::GetString('ui-game-index', 'header-title'); ?></title>
 	<link href="/<?php echo URI_PATH; ?>ui/css/loadingbox.css" rel="stylesheet" />
 	<link href="/<?php echo URI_PATH; ?>ui/css/game.css" rel="stylesheet" />
-	<script src="/<?php echo URI_PATH; ?>ui/js/language-texts.js.php"></script>
+<?php /*<script src="/<?php echo URI_PATH; ?>ui/js/language-texts.js.php"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/lang.extension.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/const.js.php"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/jquery-3.2.1.min.js"></script>
@@ -38,7 +38,8 @@ if (isset($_GET["set-lang"])) {
 	<script src="/<?php echo URI_PATH; ?>ui/js/toolkit.view.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/ui.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/game.js"></script>
-	<script src="/<?php echo URI_PATH; ?>ui/js/classes.js"></script>
+	<script src="/<?php echo URI_PATH; ?>ui/js/classes.js"></script>*/ ?>
+<?php ModuleWorker::echoScripts('game'); ?>
 	
 	<script type="text/javascript">
 		$WWV = {
