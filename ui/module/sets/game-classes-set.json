@@ -1,0 +1,8 @@
+[
+	{ "file": "ui/module/js/classes-game.js", "compress": "js" },
+	{ "file": "ui/module/js/classes-add-game.js", "compress": "js" },
+	{ "file": "ui/module/js/classes-new-game.js", "compress": "js" },
+	{ "file": "ui/module/js/classes-running-game.js", "compress": "js" },
+	{ "file": "ui/module/js/classes-prepair-game.js", "compress": "js" },
+	{ "file": "ui/module/js/classes-play-game.js", "compress": "js" }
+]
