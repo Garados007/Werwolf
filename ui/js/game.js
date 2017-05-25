@@ -329,7 +329,7 @@ Data = {
 	UserIdNameRef: {},
 	RunningGames: {},
 	ChatRoomGames: {}
-};
+}; 
 
 $(function(){
 	$(".loading-box").addClass("close");
@@ -338,3 +338,4 @@ $(function(){
 	UI.CreateLoadingIndicator().css("font-size", "0.5em").appendTo($(".tab-list"));
 	Logic.Reaction.InitPrepairData();
 });
+

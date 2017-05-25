@@ -99,8 +99,15 @@ class ModuleWorker {
 		// replace all multiple spaces by one space
 		$buffer = preg_replace('!\s+!',' ',$buffer);
 		// replace some unneeded spaces, modify as needed
-		$buffer = str_replace(array(' {',' }','{ ','; '),
-			array('{','}','{',';'),$buffer);
+		$buffer = str_replace(
+			array(' {',' }','{ ','; ', ' =','= ',', ',' |',': ',
+				'} ',' !',' >','> ',' <','< ','] ',' (',' .',
+				') ','/ ',' *','* ',' -','- ',' +','+ ',' ?','? ',
+				' :',' &','& ','| ','( ',' /',' )'),
+			array('{','}','{',';','=','=',',','|',':',
+				'}','!','>','>','<','<',']','(','.',
+				')','/','*','*','-','-','+','+','?','?',
+				':','&','&','|','(','/',')'),$buffer);
 		return $buffer;
 	}
 	

@@ -1,0 +1,6 @@
+[
+	{ "file": "ui/module/js/game-api-handler.js", "compress": "js" },
+	{ "file": "ui/module/js/game-api-access.js", "compress": "js" },
+	{ "file": "ui/module/js/game-api-data.js", "compress": "js" },
+	{ "file": "ui/module/js/game-api-dispatcher.js", "compress": "js" }
+]
