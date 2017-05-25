@@ -7,9 +7,10 @@ class Lang {
 	
 	private static $data = null;
 	
-	public static function SetLanguage($token) {
+	public static function SetLanguage($token, $setCookie = true) {
 		if (!is_dir(dirname(__FILE__)."/{$token}")) return false;
-		setcookie('Language', $token, time()+3600*24*365, '/'.URI_PATH);
+		if ($setCookie)
+			setcookie('Language', $token, time()+3600*24*365, '/'.URI_PATH);
 		self::$current = $token;
 		$data = array();
 	}

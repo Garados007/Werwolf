@@ -28,6 +28,7 @@ if (isset($_GET["set-lang"])) {
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo Lang::GetString('ui-game-index', 'header-title'); ?></title>
+	<link rel="manifest" href="/<?php echo URI_PATH; ?>ui/manifest.json?lang=<?php echo Lang::GetLanguage();?>" />
 	<link href="/<?php echo URI_PATH; ?>ui/css/loadingbox.css" rel="stylesheet" />
 	<link href="/<?php echo URI_PATH; ?>ui/css/game.css" rel="stylesheet" />
 <?php /*<script src="/<?php echo URI_PATH; ?>ui/js/language-texts.js.php"></script>

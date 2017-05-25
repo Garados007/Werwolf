@@ -20,10 +20,10 @@ if (isset($_GET["set-lang"])) {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo Lang::GetString('ui-index', 'header-title'); ?></title>
 	<link href="/<?php echo URI_PATH; ?>ui/css/index.css" rel="stylesheet" />
+	<link rel="manifest" href="/<?php echo URI_PATH; ?>ui/manifest.json?lang=<?php echo Lang::GetLanguage();?>" />
 	<script src="/<?php echo URI_PATH; ?>ui/js/jquery-3.2.1.min.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/language.js"></script>
 	<script src="/<?php echo URI_PATH; ?>ui/js/login-frame.js"></script>
-	
 	
 	<script type="text/javascript">
 		$WWV = {
