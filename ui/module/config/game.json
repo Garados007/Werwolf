@@ -6,6 +6,7 @@
 	{ "file": "ui/js/toolkit.js", "compress": "js" },
 	{ "file": "ui/js/toolkit.view.js", "compress": "js" },
 	{ "file": "ui/js/ui.js", "compress": "js" },
+	{ "set": "ui/module/sets/game-api-set.json" },
 	{ "file": "ui/js/game.js", "compress": "js" },
 	{ "set": "ui/module/sets/game-classes-set.json" }
 ]

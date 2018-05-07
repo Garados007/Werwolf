@@ -1,3 +1,6 @@
+<?php
+ob_implicit_flush(true);
+?>
 <html>
 <head>
 	<meta charset="utf-8" />
