@@ -1,3 +1,6 @@
+# special header for elm reactor on port 8000 (only for debug)
+Header add "Access-Control-Allow-Origin" "http://localhost:8000/"
+
 RewriteEngine on
 RewriteRule ^db/?(.*)$ - [L,R=403]
 RewriteRule ^logic/?(.*)$ - [L,R=403]
