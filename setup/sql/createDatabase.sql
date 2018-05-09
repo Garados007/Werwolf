@@ -1,122 +1,148 @@
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>AIInfo (
+	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	NameKey TEXT NOT NULL,
+	ControlClass TEXT NOT NULL,
+
+	UNIQUE (NameKey)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>UserStats (
+	UserId INT NOT NULL PRIMARY KEY,
+	FirstGame INT UNSIGNED,
+	LastGame INT UNSIGNED,
+	GameCount INT UNSIGNED NOT NULL DEFAULT 0,
+	WinningCount INT UNSIGNED NOT NULL DEFAULT 0,
+	ModeratorCount INT UNSIGNED NOT NULL DEFAULT 0,
+	LastOnline INT UNSIGNED NOT NULL,
+	AIId INT UNSIGNED,
+
+	FOREIGN KEY (AIId) REFERENCES <?php echo DB_PREFIX; ?>AIInfo(Id)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Groups (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	Name TEXT NOT NULL,
-	Created INT NOT NULL,
-	LastGame INT NOT NULL,
-	Leader INT UNSIGNED NOT NULL,
+	Created INT UNSIGNED NOT NULL,
+	LastGame INT UNSIGNED,
+	Creator INT NOT NULL,
+	Leader INT NOT NULL,
 	CurrentGame INT UNSIGNED,
 	EnterKey TEXT(12) NOT NULL,
-	UNIQUE (EnterKey(12))
-) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>User (
-	GroupId INT UNSIGNED NOT NULL,
-	UserId INT UNSIGNED NOT NULL,
-	LastOnline INT UNSIGNED NOT NULL,
-	PRIMARY KEY (GroupId, UserId),
-	FOREIGN KEY (GroupId) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
+	UNIQUE (EnterKey(12)),
+	FOREIGN KEY (Creator) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId),
+	FOREIGN KEY (Leader) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	MainGroup INT UNSIGNED NOT NULL,
-	Started INT NOT NULL,
-	Finished INT,
+	Started INT UNSIGNED NOT NULL,
+	Finished INT UNSIGNED,
 	CurrentPhase VARCHAR(8) NOT NULL,
-	CurrentLevel INT(8) NOT NULL,
-	
+	CurrentDay INT(8) NOT NULL,
+	RuleSet TEXT NOT NULL,
+	Vars TEXT,	
+
 	FOREIGN KEY (MainGroup) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 ALTER TABLE <?php echo DB_PREFIX; ?>Groups ADD CONSTRAINT
-	FOREIGN KEY (CurrentGame) REFERENCES <?php echo DB_PREFIX; ?>Games(Id);
+	FOREIGN KEY (CurrentGame) 
+	REFERENCES <?php echo DB_PREFIX; ?>Games(Id);
 
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Phases (
-	Phase VARCHAR(8) NOT NULL,
-	PhaseLevel INT(8) NOT NULL,
-	NextPhase VARCHAR(8) NOT NULL,
-	NextPhaseLevel INT(8) NOT NULL,
-	PRIMARY KEY (Phase, PhaseLevel)
-) CHARACTER SET latin1 COLLATE latin1_general_cs;
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>User (
+	GroupId INT UNSIGNED NOT NULL,
+	UserId INT NOT NULL,
+	Player INT UNSIGNED,
 
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatModeKeys (
-	ChatMode VARCHAR(8) NOT NULL,
-	PRIMARY KEY (ChatMode(8))
-) CHARACTER SET latin1 COLLATE latin1_general_cs;
-
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>RoleModeKeys (
-	RoleKey VARCHAR(8) NOT NULL,
-	PRIMARY KEY (RoleKey(8))
-) CHARACTER SET latin1 COLLATE latin1_general_cs;
-
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatModes (
-	ChatMode VARCHAR(8) NOT NULL,
-	SupportedRoleKey VARCHAR(8) NOT NULL,
-	EnableWrite BOOLEAN NOT NULL,
-	Visible BOOLEAN NOT NULL,
-	
-	PRIMARY KEY (ChatMode(8), SupportedRoleKey(8)) -- ,
-	-- CONSTRAINT FOREIGN KEY (ChatMode(8)) 
-		-- REFERENCES <?php echo DB_PREFIX; ?>ChatModeKeys(ChatMode)
-		-- ON DELETE CASCADE
-		-- ON UPDATE CASCADE,
-	-- CONSTRAINT FOREIGN KEY (SupportedRoleKey(8)) 
-		-- REFERENCES <?php echo DB_PREFIX; ?>RoleModeKeys(RoleKey)
-		-- ON DELETE CASCADE
-		-- ON UPDATE CASCADE
+	PRIMARY KEY (GroupId, UserId),
+	FOREIGN KEY (GroupId) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id),
+	FOREIGN KEY (UserId) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Player (
+	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	Game INT UNSIGNED NOT NULL,
-	User INT UNSIGNED NOT NULL,
+	User INT NOT NULL,
 	Alive BOOLEAN NOT NULL DEFAULT TRUE,
 	ExtraWolfLive BOOLEAN NOT NULL DEFAULT FALSE,
-	SpecialVoting INT(8) NOT NULL DEFAULT 0,
-	
-	PRIMARY KEY (Game, User)
+	Vars TEXT,
+
+	UNIQUE (Game, User),
+	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id),
+	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>User(UserId)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
+ALTER TABLE <?php echo DB_PREFIX; ?>User ADD CONSTRAINT
+	FOREIGN KEY (Player) 
+	REFERENCES <?php echo DB_PREFIX; ?>Player(Id);
+
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Roles (
-	Game INT UNSIGNED NOT NULL,
-	User INT UNSIGNED NOT NULL,
+	Player INT UNSIGNED NOT NULL,
 	RoleKey VARCHAR(8) NOT NULL,
 	RoleIndex TINYINT UNSIGNED NOT NULL,
-	
-	
-	PRIMARY KEY (Game, User, RoleKey(8)),
-	FOREIGN KEY (Game, User) REFERENCES <?php echo DB_PREFIX; ?>Player(Game, User) -- ,
-	-- FOREIGN KEY (RoleKey(8)) REFERENCES <?php echo DB_PREFIX; ?>RoleModeKeys(RoleKey)
+		
+	PRIMARY KEY (Player, RoleKey(8)),
+	FOREIGN KEY (Player) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VisibleRoles (
+	Player INT UNSIGNED NOT NULL,
+	Target INT UNSIGNED NOT NULL,
+	RoleKey VARCHAR(8) NOT NULL,
+	
+	PRIMARY KEY (Player, Target, RoleKey(8)),
+	FOREIGN KEY (Player) REFERENCES <?php echo DB_PREFIX; ?>Player(Id),
+	FOREIGN KEY (Target, RoleKey(8)) 
+		REFERENCES <?php echo DB_PREFIX; ?>Roles(Player, RoleKey(8))
+);
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Chats (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	Game INT UNSIGNED NOT NULL,
-	ChatMode VARCHAR(8) NOT NULL,
-	Opened BOOLEAN NOT NULL,
-	EnableVoting BOOLEAN NOT NULL,
+	ChatRoom VARCHAR(8) NOT NULL,
 	
 	UNIQUE (Game, ChatMode),
-	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id) -- ,
-	-- FOREIGN KEY (ChatMode(8)) REFERENCES <?php echo DB_PREFIX; ?>ChatModeKeys(ChatMode)
+	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatLog (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	Chat INT UNSIGNED NOT NULL,
-	User INT UNSIGNED NOT NULL,
+	User INT NOT NULL,
 	Message TEXT NOT NULL,
 	SendDate INT UNSIGNED NOT NULL,
 	
-	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
+	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id),
+	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatPermission (
+	Room INT UNSIGNED NOT NULL,
+	RoleKey TEXT NOT NULL,
+	Enable BOOLEAN NOT NULL,
+	Write BOOLEAN NOT NULL,
+	Visible BOOLEAN NOT NULL,
+
+	PRIMARY KEY (Room, RoleKey),
+	FOREIGN KEY (Room) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
-	Chat INT UNSIGNED NOT NULL PRIMARY KEY,
+	VoteKey TEXT NOT NULL,
+	Chat INT UNSIGNED NOT NULL,
+	Created INT UNSIGNED NOT NULL,
 	VoteStart INT NOT NULL,
 	VoteEnd INT,
+	EnabledUser TEXT NOT NULL,
+	EnabledUserCount INT NOT NULL,
 	ResultTarget INT UNSIGNED,
 	
-	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
+	PRIMARY KEY (Chat, VoteKey),
+	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id),
+	FOREIGN KEY (ResultTarget) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
@@ -126,16 +152,8 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
 	VoteDate INT NOT NULL,
 	
 	PRIMARY KEY (Setting, Voter),
-	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat)
+	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat),
+	FOREIGN KEY (Voter) REFERENCES <?php echo DB_PREFIX; ?>Player(Id),
+	FOREIGN KEY (Target) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
-CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VisibleRoles (
-	Game INT UNSIGNED NOT NULL,
-	MainUser INT UNSIGNED NOT NULL,
-	TargetUser INT UNSIGNED NOT NULL,
-	RoleKey VARCHAR(8) NOT NULL,
-	
-	PRIMARY KEY (Game, MainUser, TargetUser, RoleKey(8)),
-	FOREIGN KEY (Game, MainUser) REFERENCES <?php echo DB_PREFIX; ?>Player(Game, User),
-	FOREIGN KEY (Game, TargetUser) REFERENCES <?php echo DB_PREFIX; ?>Player(Game, User)
-);
