@@ -86,9 +86,11 @@ echo '<br/>setup account manager plugin';
 AccountManager::InitSystem();
 echo '<br/>account manager initialized';
 			
+/*
 echo '<br/><br/>init the import files for the ui';
 include_once dirname(__FILE__).'/../ui/module/ModuleWorker.php';
 ModuleWorker::prepairAllConfigs();
 echo '<br/>all import files initialized';
+*/
 			
 echo '<br/><br/>Checkup Finished. Everything is okay.';

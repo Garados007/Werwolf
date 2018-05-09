@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>AIInfo (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	NameKey TEXT NOT NULL,
+	NameKey TEXT(8) NOT NULL,
 	ControlClass TEXT NOT NULL,
 
-	UNIQUE (NameKey)
+	UNIQUE (NameKey(8))
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>UserStats (
@@ -95,16 +95,16 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VisibleRoles (
 	
 	PRIMARY KEY (Player, Target, RoleKey(8)),
 	FOREIGN KEY (Player) REFERENCES <?php echo DB_PREFIX; ?>Player(Id),
-	FOREIGN KEY (Target, RoleKey(8)) 
-		REFERENCES <?php echo DB_PREFIX; ?>Roles(Player, RoleKey(8))
-);
+	FOREIGN KEY (Target, RoleKey) 
+		REFERENCES <?php echo DB_PREFIX; ?>Roles(Player, RoleKey)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Chats (
 	Id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	Game INT UNSIGNED NOT NULL,
 	ChatRoom VARCHAR(8) NOT NULL,
 	
-	UNIQUE (Game, ChatMode),
+	UNIQUE (Game, ChatRoom),
 	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
@@ -121,17 +121,17 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatLog (
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatPermission (
 	Room INT UNSIGNED NOT NULL,
-	RoleKey TEXT NOT NULL,
-	Enable BOOLEAN NOT NULL,
-	Write BOOLEAN NOT NULL,
-	Visible BOOLEAN NOT NULL,
+	RoleKey TEXT(5) NOT NULL,
+	PEnable BOOLEAN NOT NULL,
+	PWrite BOOLEAN NOT NULL,
+	PVisible BOOLEAN NOT NULL,
 
-	PRIMARY KEY (Room, RoleKey),
+	PRIMARY KEY (Room, RoleKey(5)),
 	FOREIGN KEY (Room) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
-	VoteKey TEXT NOT NULL,
+	VoteKey TEXT(5) NOT NULL,
 	Chat INT UNSIGNED NOT NULL,
 	Created INT UNSIGNED NOT NULL,
 	VoteStart INT NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
 	EnabledUserCount INT NOT NULL,
 	ResultTarget INT UNSIGNED,
 	
-	PRIMARY KEY (Chat, VoteKey),
+	PRIMARY KEY (Chat, VoteKey(5)),
 	FOREIGN KEY (Chat) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id),
 	FOREIGN KEY (ResultTarget) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
