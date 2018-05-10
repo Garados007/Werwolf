@@ -1,8 +1,10 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../Role/Role.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
+include_once dirname(__FILE__).'/../Role/Role.php';
+include_once __DIR__ . '/../ChatRoom/ChatRoom.php';
+include_once __DIR__ . '/../ChatPermission/ChatPermission.php';
 
 class Player extends JsonExport {
 	//the id of this player object
@@ -161,4 +163,34 @@ class Player extends JsonExport {
 		)->executeAll();
 	}
 	
+	public function canRead(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable)
+				return true;
+		}
+		return false;
+	}
+
+	public function canWrite(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable && $perm->write)
+				return true;
+		}
+		return false;
+	}
+
+	public function isVisible(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable) {
+				if ($perm->write)
+					return true;
+				elseif ($perm->visible)
+					return true;
+			}
+		}
+		return false;
+	}
 }

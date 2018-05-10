@@ -1,8 +1,9 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
+include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
+include_once __DIR__ . '/../ChatPermission/ChatPermission.php';
 
 class ChatRoom extends JsonExport {
 	//the id of this chatroom
@@ -13,6 +14,8 @@ class ChatRoom extends JsonExport {
 	public $chatRoom;
 	//the connected voting
 	public $voting;
+	//the current ChatPermission array with all permissions
+	public $permission;
 
 	private static $cache = array();
 
@@ -38,6 +41,7 @@ class ChatRoom extends JsonExport {
 			$cur->voting = new VoteSetting($cur->id);
 			if ($cur->voting->chat === null)
 				$cur->voting = null;
+			$cur->permission = ChatPermission::loadPermissions($cur->id);
 		}
 		else {
 			$result->free();
@@ -75,5 +79,22 @@ class ChatRoom extends JsonExport {
 	
 	public function createVoting($end) {
 		$this->voting = VoteSetting::createVoteSetting($this->id, $end);
+	}
+
+	public function getPermission($key) {
+		foreach ($this->permission as $perm)
+			if ($perm->roleKey == $key)
+				return $perm;
+		return null;
+	}
+
+	public function addPermission(ChatPermission $permission) {
+		ChatPermission::addPermissions($permission);
+		$list = array();
+		foreach ($this->permission as &$perm)
+			if ($perm->roleKey !== $permission->roleKey)
+				$list[] = &$perm;
+		$list[] = $permission;
+		$this->permission = $list;
 	}
 }
