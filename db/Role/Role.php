@@ -17,7 +17,7 @@ class Role extends JsonExport {
 		$this->index = $index;
 	}
 	
-	public static function getAllRolesOfPlayer($player) {
+	public static function getAllRolesOfPlayer(Player $player) {
 		$list = array();
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadRoleList.sql',
@@ -33,7 +33,7 @@ class Role extends JsonExport {
 		return $list;
 	}
 	
-	public static function createRole($player, $roleKey) {
+	public static function createRole(Player $player, $roleKey) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addRole.sql',
 			array(

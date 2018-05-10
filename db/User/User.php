@@ -20,7 +20,7 @@ class User extends JsonExport {
 		$this->group = $group;
 		$this->user = $user;
 		$this->player = is_null($player) ? null :
-			is_int($player) ? new Player($player) : $player;
+			is_int($player) ? Player::create($player) : $player;
 		$this->stats = UserStats::create($user);
 	}
 	
@@ -88,7 +88,7 @@ class User extends JsonExport {
 	
 	public function setPlayer($player) {
 		$this->player = is_null($player) ? null :
-			is_int($player) ? new Player($player) : $player;
+			is_int($player) ? Player::create($player) : $player;
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/setPlayer.sql',
 			array(

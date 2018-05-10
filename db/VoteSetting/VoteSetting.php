@@ -75,6 +75,33 @@ class VoteSetting extends JsonExport {
 		$result->free();
 		return self::create($chat, $key);
 	}
+
+	private static $votCache = array();
+	
+	public static function getVotingKeysForChat($chatId) {
+		if (isset(self::$votCache[$chatId]))
+			return self::$votCache[$chatId];
+		$keys = array();
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/getVotingKeys.sql',
+			array(
+				"chat" => $chatId
+			)
+		);
+		$set = $result->getResult();
+		while ($entry = $set->getEntry()) {
+			$keys[] = $entry["VoteKey"];
+		}
+		$result->free();
+		return self::$votCache[$chatId] = $keys;
+	}
+
+	public static function getAllVotings($chatId) {
+		$result = array();
+		foreach (self::getVotingKeysForChat($chatId) as $key)
+			$result[] = self::create($chatId, $key);
+		return $result;
+	}
 	
 	public function startVoting() {
 		$result = DB::executeFormatFile(

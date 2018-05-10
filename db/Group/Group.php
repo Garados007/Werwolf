@@ -54,9 +54,9 @@ class Group extends JsonExport {
 		else $cur = null;
 		$result->flush();
 		if ($cur !== null && $cur->currentGame !== null)
-			$cur->currentGame = new GameGroup($cur->currentGame);
+			$cur->currentGame = GameGroup::create($cur->currentGame);
 
-			return self::$cache[$id] = $cur;
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function getIdFromKey($key) {
