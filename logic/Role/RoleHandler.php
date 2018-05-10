@@ -9,7 +9,7 @@ class RoleHandler {
     private static $configBuffer = array();
     private $group;
 
-    public function RoleHandler($group) {
+    public function __construct($group) {
         if (!is_int($group)) throw new Exception ("group is not a number");
         $this->group = $group;
     }
