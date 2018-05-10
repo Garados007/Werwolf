@@ -21,9 +21,16 @@ class VoteSetting extends JsonExport {
 	public $targetUser;
 	//The result of this voting
 	public $result;
+
+	private static $cache = array();
+	private function __construct() {}
 	
-	public function __construct($chat, $voteKey) {
-		$this->jsonNames = array('chat', 'voteKey', 'created',
+	public static function create($chat, $voteKey) {
+		if (isset(self::$cache[$chat]) && isset(self::$cache[$chat][$voteKey]))
+			return self::$cache[$chat][$voteKey];
+		$cur = new VoteSetting();
+
+		$cur->jsonNames = array('chat', 'voteKey', 'created',
 			'voteStart', 'voteEnd', 'enabledUser', 'targetUser',
 			'result');
 		$result = DB::executeFormatFile(
@@ -34,16 +41,21 @@ class VoteSetting extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->chat = intval($entry["Chat"]);
-			$this->voteKey = $entry["VoteKey"];
-			$this->created = intval($entry["Created"]);
-			$this->voteStart = $entry["VoteStart"];
-			$this->voteEnd = $entry["VoteEnd"];
-			$this->enabledUser = explode(',', $entry["EnabledUser"]);
-			$this->targetUser = explode(',', $entry["TargetUser"]);
-			$this->result = $entry["ResultTarget"];
+			$cur->chat = intval($entry["Chat"]);
+			$cur->voteKey = $entry["VoteKey"];
+			$cur->created = intval($entry["Created"]);
+			$cur->voteStart = $entry["VoteStart"];
+			$cur->voteEnd = $entry["VoteEnd"];
+			$cur->enabledUser = explode(',', $entry["EnabledUser"]);
+			$cur->targetUser = explode(',', $entry["TargetUser"]);
+			$cur->result = $entry["ResultTarget"];
 		}
+		else $cur = null;
 		$result->flush();
+
+		if (!isset(self::$cache[$chat]))
+			self::$cache[$chat] = array();
+		return self::$cache[$chat][$voteKey] = $cur;
 	}
 	
 	public static function createVoteSetting($chat, $key, $start, $end, 
@@ -61,7 +73,7 @@ class VoteSetting extends JsonExport {
 			)
 		);
 		$result->free();
-		return new VoteSetting($chat, $key);
+		return self::create($chat, $key);
 	}
 	
 	public function startVoting() {

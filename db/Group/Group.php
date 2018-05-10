@@ -22,8 +22,16 @@ class Group extends JsonExport {
 	//the key which is needed for enter this group
 	public $enterKey;
 	
-	public function __construct($id) {
-		$this->jsonNames = array(
+	private static $cache = array();
+
+	private function __construct() {}
+
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+		$cur = new Group();
+
+		$cur->jsonNames = array(
 			'id', 'name', 'created', 'lastTime', 'creator',
 			'leader', 'currentGame', 'enterKey'
 		);
@@ -34,18 +42,21 @@ class Group extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = $entry["Id"];
-			$this->name = $entry["Name"];
-			$this->created = $entry["Created"];
-			$this->lastTime = $entry["LastGame"];
-			$this->creator = $entry["Creator"];
-			$this->leader = $entry["Leader"];
-			$this->currentGame = $entry["CurrentGame"];
-			$this->enterKey = $entry["EnterKey"];
+			$cur->id = $entry["Id"];
+			$cur->name = $entry["Name"];
+			$cur->created = $entry["Created"];
+			$cur->lastTime = $entry["LastGame"];
+			$cur->creator = $entry["Creator"];
+			$cur->leader = $entry["Leader"];
+			$cur->currentGame = $entry["CurrentGame"];
+			$cur->enterKey = $entry["EnterKey"];
 		}
+		else $cur = null;
 		$result->flush();
-		if ($this->currentGame !== null)
-			$this->currentGame = new GameGroup($this->currentGame);
+		if ($cur !== null && $cur->currentGame !== null)
+			$cur->currentGame = new GameGroup($cur->currentGame);
+
+			return self::$cache[$id] = $cur;
 	}
 	
 	public static function getIdFromKey($key) {
@@ -90,7 +101,7 @@ class Group extends JsonExport {
 		$entry = $result->getResult();
 		$entry = $entry->getEntry();
 		$result->free();
-		return new Group($entry["Id"]);
+		return self::create($entry["Id"]);
 	}
 	
 	public function setCurrentGame($game) {

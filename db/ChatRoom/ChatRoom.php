@@ -13,9 +13,17 @@ class ChatRoom extends JsonExport {
 	public $chatRoom;
 	//the connected voting
 	public $voting;
+
+	private static $cache = array();
+
+	private function __construct() {}
 	
-	public function __construct($id) {
-		$this->jsonNames = array('id', 'game', 'chatMode', 'voting');
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+
+		$cur = new ChatRoom();
+		$cur->jsonNames = array('id', 'game', 'chatMode', 'voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(
@@ -23,15 +31,19 @@ class ChatRoom extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = $entry["Id"];
-			$this->game = $entry["Game"];
-			$this->chatRoom = $entry["ChatRoom"];
+			$cur->id = $entry["Id"];
+			$cur->game = $entry["Game"];
+			$cur->chatRoom = $entry["ChatRoom"];
 			$result->free();
-			$this->voting = new VoteSetting($this->id);
-			if ($this->voting->chat === null)
-				$this->voting = null;
+			$cur->voting = new VoteSetting($cur->id);
+			if ($cur->voting->chat === null)
+				$cur->voting = null;
 		}
-		else $result->free();
+		else {
+			$result->free();
+			$cur = null;
+		}
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function createChatRoom($game, $mode) {
@@ -46,7 +58,7 @@ class ChatRoom extends JsonExport {
 		echo DB::getError();
 		$entry = $result->getResult()->getEntry();
 		$result->free();
-		return new ChatRoom($entry["Id"]);
+		return self::create($entry["Id"]);
 	}
 	
 	public static function getChatRoomId($game, $room) {

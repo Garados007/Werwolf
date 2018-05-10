@@ -19,9 +19,16 @@ class Player extends JsonExport {
 	public $roles;
 	//a bunch of variables used for the scripts
 	private $vars;
+
+	private static $cache = array();
+	private function __construct(){}
 	
-	public function __construct($id) {
-		$this->jsonNames = array('id', 'game', 'user', 'alive', 
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+		$cur = new Player();
+		
+		$cur->jsonNames = array('id', 'game', 'user', 'alive', 
 			'extraWolfLive', 'roles', 'vars');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPlayer.sql',
@@ -30,16 +37,21 @@ class Player extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = intval($entry["Id"]);
-			$this->game = intval($entry["Game"]);
-			$this->user = intval($entry["User"]);
-			$this->alive = boolval($entry["Alive"]);
-			$this->extraWolfLive = boolval($entry["ExtraWolfLive"]);
-			$this->vars = $entry["Vars"];
+			$cur->id = intval($entry["Id"]);
+			$cur->game = intval($entry["Game"]);
+			$cur->user = intval($entry["User"]);
+			$cur->alive = boolval($entry["Alive"]);
+			$cur->extraWolfLive = boolval($entry["ExtraWolfLive"]);
+			$cur->vars = $entry["Vars"];
 			$result->free();
-			$this->roles = Role::getAllRolesOfPlayer($this);
+			$cur->roles = Role::getAllRolesOfPlayer($cur);
 		}
-		else $result->free();
+		else {
+			$result->free();
+			$cur = null;
+		}
+
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function createNewPlayer($game, $user, $roleKeys) {
@@ -55,7 +67,7 @@ class Player extends JsonExport {
 		if ($set = $result->getResult()) $set->free(); //insert
 		if ($entry = $result->getResult()->getEntry()) { //select id
 			$result->flush();
-			$player = new Player($entry["Id"]);
+			$player = self::create($entry["Id"]);
 			foreach ($roleKeys as $key)
 				$player->roles[] = Role::createRole($player, $key);
 			return $player;
