@@ -3,6 +3,7 @@
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 include_once __DIR__ . '/../Player/Player.php';
+include_once __DIR__ . '/../UserStats/UserStats.php';
 
 class User extends JsonExport {
 	//group id
@@ -11,13 +12,16 @@ class User extends JsonExport {
 	public $user;
 	//current player
 	public $player;
+	//the current UserStats object
+	public $stats;
 	
 	public function __construct($group, $user, $player) {
-		$this->jsonNames = array('group','user','player');
+		$this->jsonNames = array('group','user','player','stats');
 		$this->group = $group;
 		$this->user = $user;
 		$this->player = is_null($player) ? null :
 			is_int($player) ? new Player($player) : $player;
+		$this->stats = UserStats::create($user);
 	}
 	
 	public static function loadAllUserByGroup($group) {
