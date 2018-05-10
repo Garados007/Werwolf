@@ -2,20 +2,22 @@
 
 include_once dirname(__FILE__).'/../db.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
+include_once __DIR__ . '/../Player/Player.php';
 
 class User extends JsonExport {
 	//group id
 	public $group;
 	//user id
 	public $user;
-	//the time when the user was the last time online
-	public $lastOnline;
+	//current player
+	public $player;
 	
-	public function __construct($group, $user, $lastOnline) {
-		$this->jsonNames = array('group','user','lastOnline');
+	public function __construct($group, $user, $player) {
+		$this->jsonNames = array('group','user','player');
 		$this->group = $group;
 		$this->user = $user;
-		$this->lastOnline = $lastOnline;
+		$this->player = is_null($player) ? null :
+			is_int($player) ? new Player($player) : $player;
 	}
 	
 	public static function loadAllUserByGroup($group) {
@@ -29,7 +31,8 @@ class User extends JsonExport {
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
 			$list[] = new User($entry["GroupId"], 
-				intval($entry["UserId"]), intval($entry["LastOnline"]));
+				intval($entry["UserId"]), 
+				$entry["Player"] === null ? null : intval($entry["Player"]));
 		}
 		$result->free();
 		return $list;
@@ -47,7 +50,8 @@ class User extends JsonExport {
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
 			$list[] = new User(intval($entry["GroupId"]), 
-				intval($entry["UserId"]), intval($entry["LastOnline"]));
+				intval($entry["UserId"]), 
+				$entry["Player"] === null ? null : intval($entry["Player"]));
 		}
 		$result->free();
 		return $list;
@@ -64,7 +68,7 @@ class User extends JsonExport {
 			)
 		);
 		if ($result) $result->free();
-		return new User($group, $user, 0);
+		return new User($group, $user, null);
 	}
 	
 	public function remove() {
@@ -78,13 +82,15 @@ class User extends JsonExport {
 		$result->free();
 	}
 	
-	public function setOnline($time) {
+	public function setPlayer($player) {
+		$this->player = is_null($player) ? null :
+			is_int($player) ? new Player($player) : $player;
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/setLastOnline.sql',
+			dirname(__FILE__).'/sql/setPlayer.sql',
 			array(
 				"group" => $this->group,
 				"user" => $this->user,
-				"time" => $this->lastOnline = $time
+				"player" => $this->player == null ? null : $this->player->id
 			)
 		);
 		$result->free();

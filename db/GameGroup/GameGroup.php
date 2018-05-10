@@ -1,7 +1,6 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../Phase/Phase.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
 class GameGroup extends JsonExport { 
@@ -15,10 +14,16 @@ class GameGroup extends JsonExport {
 	public $finished; 
 	//the current phase
 	public $phase;
+	//the current day
+	public $day;
+	//the current ruleset
+	public $ruleset;
+	//the current vars;
+	private $vars;
 	
 	public function __construct($id) {
 		$this->jsonNames = array('id', 'mainGroupId', 'started',
-			'finished', 'phase');
+			'finished', 'phase', 'day', 'ruleset', 'vars');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadGroup.sql',
 			array(
@@ -31,17 +36,24 @@ class GameGroup extends JsonExport {
 			$this->mainGroupId = $entry["MainGroup"];
 			$this->started = intval($entry["Started"]);
 			$this->finished = $entry["Finished"];
-			$this->phase = new Phase($entry["CurrentPhase"], 
-				intval($entry["CurrentLevel"]));
+			$this->phase = $entry["CurrentPhase"];
+			$this->day = $entry["CurrentDay"];
+			$this->ruleset = $entry["Ruleset"];
+			if ($entry["Vars"] !== null)
+				$this->vars = json_decode($entry["Vars"], true);
+			else $this->vars = array();
 		}
 		$result->flush();
 	}
 	
-	public static function createNew($mainGroupId) {
+	public static function createNew($mainGroupId, $phase, $rules, $vars = null) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/createGroup.sql',
 			array(
-				"mainGroup" => $mainGroupId
+				"mainGroup" => $mainGroupId,
+				"phase" => $phase,
+				"rules" => $rules,
+				"vars" => $vars
 			)
 		);
 		echo DB::getError();
@@ -53,16 +65,60 @@ class GameGroup extends JsonExport {
 		else $result->flush();
 	}
 	
-	public function nextPhase() {
+	public function nextPhase($phase, $day) {
+		if (!is_string($phase)) throw new Exception("format exception");
+		if (!is_int($day)) throw new Exception("format exception");
+
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/nextPhase.sql',
 			array(
 				"id" => $this->id,
-				"next" => $this->phase->next,
-				"level" => $this->phase->nextLevel
+				"next" => $phase,
+				"day" => $day
 			)
 		)->executeAll();
-		$this->phase = new Phase($this->phase->next, $this->phase->nextLevel);
+		$this->phase = $phase;
+		$this->day = $day;
+	}
+
+	public function getVar($key) {
+		if (!isset($this->vars[$key])) return null;
+		return $this->vars[$key];
+	}
+
+	public function getAllVars() {
+		return $this->vars;
+	}
+
+	public function setVar($key, $value = null) {
+		if (!is_string($key)) throw new Exception("format exception");
+		if ($value === null)
+			unset($this->vars[$key]);
+		else $this->vars[$key] = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					json_encode($this->vars)
+			)
+		)->executeAll();
+	}
+
+	public function setAllVars($value = null) {
+		if ($value === null)
+			$this->vars = array();
+		else $this->vars = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					json_encode($this->vars)
+			)
+		)->executeAll();
 	}
 	
 	public function finish() {

@@ -13,16 +13,18 @@ class Group extends JsonExport {
 	public $created;
 	//the time when the group played the last game (min. creation time)
 	public $lastTime;
+	//the creator id of this group
+	public $creator;
 	//the leader id of this group
 	public $leader;
 	//the current game of this group
 	public $currentGame;
 	//the key which is needed for enter this group
-	public $entryKey;
+	public $enterKey;
 	
 	public function __construct($id) {
 		$this->jsonNames = array(
-			'id', 'name', 'created', 'lastTime',
+			'id', 'name', 'created', 'lastTime', 'creator',
 			'leader', 'currentGame', 'enterKey'
 		);
 		$result = DB::executeFormatFile(
@@ -36,6 +38,7 @@ class Group extends JsonExport {
 			$this->name = $entry["Name"];
 			$this->created = $entry["Created"];
 			$this->lastTime = $entry["LastGame"];
+			$this->creator = $entry["Creator"];
 			$this->leader = $entry["Leader"];
 			$this->currentGame = $entry["CurrentGame"];
 			$this->enterKey = $entry["EnterKey"];
@@ -99,6 +102,17 @@ class Group extends JsonExport {
 				"oldgame" => $this->currentGame,
 				"game" => $this->currentGame = $id,
 				"time" => $this->lastTime = time(),
+				"id" => $this->id
+			)
+		);
+		$result->free();
+	}
+
+	public function setLeader($leader) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setLeader.sql',
+			array(
+				"leader" => $leader,
 				"id" => $this->id
 			)
 		);

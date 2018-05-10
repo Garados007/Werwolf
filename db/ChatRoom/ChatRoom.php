@@ -10,17 +10,12 @@ class ChatRoom extends JsonExport {
 	//the game of this chatroom
 	public $game;
 	//the chat mode of this chatroom - its the access key for the player
-	public $chatMode;
-	//say if the chatroom is opened - if not, then its readonly
-	public $opened;
-	//say if create voting is enabled
-	public $enableVoting;
+	public $chatRoom;
 	//the connected voting
 	public $voting;
 	
 	public function __construct($id) {
-		$this->jsonNames = array('id', 'game', 'chatMode', 'opened',
-			'enableVoting','voting');
+		$this->jsonNames = array('id', 'game', 'chatMode', 'voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(
@@ -30,9 +25,7 @@ class ChatRoom extends JsonExport {
 		if ($entry = $result->getResult()->getEntry()) {
 			$this->id = $entry["Id"];
 			$this->game = $entry["Game"];
-			$this->chatMode = $entry["ChatMode"];
-			$this->opened = boolval($entry["Opened"]);
-			$this->enableVoting = boolval($entry["EnableVoting"]);
+			$this->chatRoom = $entry["ChatRoom"];
 			$result->free();
 			$this->voting = new VoteSetting($this->id);
 			if ($this->voting->chat === null)
@@ -56,42 +49,18 @@ class ChatRoom extends JsonExport {
 		return new ChatRoom($entry["Id"]);
 	}
 	
-	public static function getChatRoomId($game, $mode) {
+	public static function getChatRoomId($game, $room) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/getChatRoomId.sql',
 			array(
 				"game" => $game,
-				"mode" => $mode
+				"mode" => $room
 			)
 		);
 		if ($entry = $result->getResult()->getEntry())
 			return $entry["Id"];
 	}
 	
-	public function changeOpenedState($opened) {
-		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/changeOpenState.sql',
-			array(
-				"opened" => $this->opened = $opened,
-				"enablev" => $this->enableVoting,
-				"id" => $this->id
-			)
-		);
-		$result->free();
-	}
-	
-	public function changeEnableVotingState($enable) {
-		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/changeOpenState.sql',
-			array(
-				"opened" => $this->opened,
-				"enablev" => $this->enableVoting = $enable,
-				"id" => $this->id
-			)
-		);
-		$result->free();
-	}
-
 	public function createVoting($end) {
 		$this->voting = VoteSetting::createVoteSetting($this->id, $end);
 	}

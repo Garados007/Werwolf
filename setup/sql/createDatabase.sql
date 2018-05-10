@@ -131,13 +131,15 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatPermission (
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
-	VoteKey TEXT(5) NOT NULL,
 	Chat INT UNSIGNED NOT NULL,
+	VoteKey VARCHAR(5) NOT NULL,
 	Created INT UNSIGNED NOT NULL,
 	VoteStart INT NOT NULL,
 	VoteEnd INT,
 	EnabledUser TEXT NOT NULL,
-	EnabledUserCount INT NOT NULL,
+	EnabledUserCount INT UNSIGNED NOT NULL,
+	TargetUser TEXT NOT NULL,
+	TargetUserCount INT UNSIGNED NOT NULL,
 	ResultTarget INT UNSIGNED,
 	
 	PRIMARY KEY (Chat, VoteKey(5)),
@@ -147,12 +149,14 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
 	Setting INT UNSIGNED NOT NULL,
+	VoteKey VARCHAR(5) NOT NULL,
 	Voter INT UNSIGNED NOT NULL,
 	Target INT UNSIGNED NOT NULL,
 	VoteDate INT NOT NULL,
 	
-	PRIMARY KEY (Setting, Voter),
-	FOREIGN KEY (Setting) REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat),
+	PRIMARY KEY (Setting, VoteKey(5), Voter),
+	-- FOREIGN KEY (Setting, VoteKey(5)) 
+	-- 	REFERENCES <?php echo DB_PREFIX; ?>VoteSetting(Chat, VoteKey),
 	FOREIGN KEY (Voter) REFERENCES <?php echo DB_PREFIX; ?>Player(Id),
 	FOREIGN KEY (Target) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;

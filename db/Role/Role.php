@@ -22,8 +22,7 @@ class Role extends JsonExport {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadRoleList.sql',
 			array(
-				"game" => $player->game,
-				"user" => $player->user
+				"player" => $player->id
 			)
 		);
 		$set = $result->getResult();
@@ -39,7 +38,7 @@ class Role extends JsonExport {
 			dirname(__FILE__).'/sql/addRole.sql',
 			array(
 				"game" => $player->game,
-				"user" => $player->user,
+				"player" => $player->id,
 				"role" => $roleKey
 			)
 		);
@@ -57,7 +56,7 @@ class Role extends JsonExport {
 			dirname(__FILE__).'/sql/removeRole.sql',
 			array(
 				"game" => $player->game,
-				"user" => $player->user,
+				"player" => $player->id,
 				"role" => $roleKey
 			)
 		);

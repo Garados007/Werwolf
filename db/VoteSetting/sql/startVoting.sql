@@ -1,4 +1,3 @@
 UPDATE <?php echo DB_PREFIX; ?>VoteSetting
-	SET VoteEnd = <?php echo $end; ?>, 
-		ResultTarget = <?php echo $result == null ? 'NULL' : $result; ?>
+	SET VoteStart = <?php echo $start; ?>
 	WHERE Chat = <?php echo $chat; ?>, VoteKey = <?php echo $key; ?>;
