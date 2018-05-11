@@ -70,8 +70,8 @@ class RoleHandler {
         if ($this->playerBuffer !== null) return $this->playerBuffer;
         $this->playerBuffer = array();
         foreach (User::loadAllUserByGroup($this->group) as $user) {
-            $player = new Player($user->game, $user->user);
-            $this->playerBuffer[] = &$player;
+            if ($user->player !== null)
+                $this->playerBuffer[] = &$user->player;
         }
     }
 

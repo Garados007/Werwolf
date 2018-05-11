@@ -51,7 +51,7 @@ class Role extends JsonExport {
 		return $role;
 	}
 	
-	public static function removeRole($player, $roleKey) {
+	public static function removeRole(Player $player, $roleKey) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/removeRole.sql',
 			array(

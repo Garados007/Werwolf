@@ -104,7 +104,7 @@ class Group extends JsonExport {
 		return self::create($entry["Id"]);
 	}
 	
-	public function setCurrentGame($game) {
+	public function setCurrentGame(GameGroup $game) {
 		$id = $game === null || $game->finished !== null ? null :
 			$game->id;
 		$result = DB::executeFormatFile(

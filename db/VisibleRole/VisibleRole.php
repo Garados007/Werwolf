@@ -6,21 +6,21 @@ include_once dirname(__FILE__).'/../Player/Player.php';
 include_once dirname(__FILE__).'/../Role/Role.php';
 
 class VisibleRole extends JsonExport {
-	//the player id who sees this role
+	//the player who sees this role
 	public $player;
-	//the target id who owns this role
+	//the target who owns this role
 	public $target;
 	//the key of this role
 	public $role;
 	
-	public function __construct($player, $target, $role) {
+	public function __construct(Player $player, Player $target, $role) {
 		$this->jsonNames = array('player', 'target', 'role');
 		$this->player = $player;
 		$this->target = $target;
 		$this->role = $role;
 	}
 	
-	public static function loadVisibleRoles($currentPlayer, $targetPlayer) {
+	public static function loadVisibleRoles(Player $currentPlayer, Player $targetPlayer) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadVisibleRoles.sql',
 			array(
@@ -32,8 +32,8 @@ class VisibleRole extends JsonExport {
 		$list = array();
 		while ($entry = $row->getEntry()) {
 			$list[] = new VisibleRole(
-				intval($entry["Player"]),
-				intval($entry["Target"]),
+				$currentPlayer,
+				$targetPlayer,
 				strval($entry["RoleKey"])
 			);  
 		}
@@ -41,7 +41,7 @@ class VisibleRole extends JsonExport {
 		return $list;
 	}
 	
-	public static function addRoles($currentPlayer, $targetPlayer, $keys) {
+	public static function addRoles(Player $currentPlayer, Player $targetPlayer, array $keys) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addVisibleRole.sql',
 			array(
@@ -51,6 +51,10 @@ class VisibleRole extends JsonExport {
 			)
 		);
 		$result->free();
+		$list = array();
+		foreach ($keys as $k)
+			$list[] = new VisibleRole($currentPlayer, $targetPlayer, $k);
+		return $list;
 	}
 	
 	public static function deleteAllRoles($gameId) {
@@ -63,7 +67,7 @@ class VisibleRole extends JsonExport {
 		$result->free();
 	}
 		
-	public static function filterRoles($currentPlayer, $player) {
+	public static function filterRoles(Player $currentPlayer, Player $player) {
 		$visible = self::loadVisibleRoles($currentPlayer, $player);
 		$keys = array();
 		for ($i = 0; $i<count($visible); ++$i)
@@ -72,6 +76,6 @@ class VisibleRole extends JsonExport {
 		for ($i = 0; $i<count($player->roles); ++$i)
 			if (in_array($player->roles[$i]->roleKey, $keys))
 				$left[] = $player->roles[$i];
-		$player->roles = $left;
+		return $left;
 	}
 }
