@@ -121,12 +121,12 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatLog (
 
 CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>ChatPermission (
 	Room INT UNSIGNED NOT NULL,
-	RoleKey TEXT(5) NOT NULL,
+	RoleKey TEXT(8) NOT NULL,
 	PEnable BOOLEAN NOT NULL,
 	PWrite BOOLEAN NOT NULL,
 	PVisible BOOLEAN NOT NULL,
 
-	PRIMARY KEY (Room, RoleKey(5)),
+	PRIMARY KEY (Room, RoleKey(8)),
 	FOREIGN KEY (Room) REFERENCES <?php echo DB_PREFIX; ?>Chats(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
