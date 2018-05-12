@@ -43,7 +43,7 @@ class UserStats extends JsonExport {
             )
         );
         if ($entry = $result->getResult()->getEntry()) {
-            $cur->userId = intval($entry["UserId");
+            $cur->userId = intval($entry["UserId"]);
             $cur->firstGame = $entry["FirstGame"];
             $cur->lastGame = $entry["LastGame"];
             $cur->gameCount = $entry["GameCount"];
