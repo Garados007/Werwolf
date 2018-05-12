@@ -19,6 +19,11 @@ class RoleBase {
      */
     public $canStartNewRound = false;
     /**
+     * Determines if a player with the current role can start
+     * votings
+     */
+    public $canStartVotings = false;
+    /**
      * Determines if a player with the current role can stop
      * votings
      */
@@ -58,6 +63,13 @@ class RoleBase {
      * A single player is choosen to be killed.
      */
     public function onPlayerKill(PlayerInfo $player) {
+
+    }
+
+    /**
+     * This function is called, when a voting is created.
+     */
+    public function onVotingCreated($room, $name) {
 
     }
 
