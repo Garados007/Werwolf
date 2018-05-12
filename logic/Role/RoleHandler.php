@@ -49,6 +49,18 @@ class RoleHandler {
         return self::$configBuffer[$key] = $json;
     }
 
+    public static function getAllModes() {
+        $modes = array();
+        foreach (new DirectoryIterator(__DIR__) as $finfo) {
+            if ($finfo->isDir() && !$finfo->isDot()) {
+                $name = $finfo->getFilename();
+                if (is_file(__DIR__ ."/${name}/config.json"))
+                    $modes[] = $name;
+            }
+        }
+        return $modes;
+    }
+
     public static function loadAllRoles($key) {
         if (isset(self::$roleBuffer[$key]))
             return true;
