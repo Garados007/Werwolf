@@ -279,6 +279,31 @@ class RoleHandler {
     }
 
     private function checkTermination($force = false) {
+        //check if they are more then one fraction left
+        $nonEmptyFractions = array();
+        foreach ($this->config->fractions as $fraction) {
+            $count = 0;
+            foreach ($fraction->roles as $role)
+                $count += count(getPlayer($role));
+            if ($count > 0)
+                $nonEmptyFractions[] = $fraction;
+        }
+        if (!$force && count($nonEmptyFractions) > 2) return;
+        //finish
+        $this->group->finish();
+        $roles = array();
+        foreach ($nonEmptyFractions as $fraction)
+            foreach ($fraction->roles as $role)
+                $roles[] = $role;
+        $this->group->setWinner($roles);
+        //inform game ends
+        $this->createAllControler();
+        $round = new RoundInfo();
+        $round->round = $this->group->day;
+        $round->phase = $this->group->phase;
+        foreach ($this->controler as $cont)
+            $cont->onGameEnds($round, $roles); //call on game ends
+        //finish
     }
 
     //endregion
