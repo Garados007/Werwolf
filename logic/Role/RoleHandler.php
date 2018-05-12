@@ -219,7 +219,17 @@ class RoleHandler {
     }
 
     private function deleteVotings(ChatRoom $chat = null) {
-
+        //recursive
+        if ($chat == null) {
+            getChats();
+            foreach ($this->chats as $chat)
+                deleteVoting($chat);
+            return;
+        }
+        //delete voting
+        foreach ($chat->voting as $voting)
+            $voting->deleteVoting();
+        $chat->voting = array();
     }
 
     private function checkTermination($force = false) {
