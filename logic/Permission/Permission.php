@@ -54,11 +54,80 @@ class Permission {
     }
 
     public static function validateRoleList($groupId, $mode, array $roleList) {
-
+        $group = Group::create($groupId);
+        if ($group === null) return self::errorId("group id not found");
+        $user = count(User::loadAllUserByGroup($groupId));
+        $count = 0;
+        $roles = RoleHandler::loadConfig($mode);
+        if ($roles === false) return self::errorId("mode does not exist");
+        foreach ($roleList as $role => $c) {
+            if (!in_array($role, $roles->roles))
+                return self::errorId("Role ${role} does not exist in mode");
+            $count += $c;
+        }
+        if ($count + 1 > $user)
+            return self::errorId("they are not enough player in this group");
+        if ($count + 1 < $user)
+            return self::errorId("not enough roles are defined");
+        return true;
     }
 
     public static function validateGameOptions($mode, $options) {
+        if (!is_file(__DIR__ . "/../Roles/${mode}/varinfo.json"))
+            return false;
+        $opts = json_decode(file_get_contents(__DIR__ . "/../Roles/${mode}/varinfo.json"));
+        return self::validateOptionGroup($options, $opts->box);
+    }
 
+    private static function validateOptionGroup($option, $box) {
+        if (is_array($box)) {
+            $keys = array_keys($option);
+            foreach ($box as $b) {
+                if ($b->type == "desc") continue;
+                if (!in_array($b->key, $keys))
+                    return false;
+                if (($key = array_search($b->key, $keys)) !== false) {
+                    unset($keys[$key]);
+                }
+                $value;
+                switch ($b->type) {
+                    case "box": $value = $b->box; break;
+                    default: $value = $b; break;
+                }
+                if (!self::validateOptionGroup($option[$b->key], $value))
+                    return false;
+            }
+            return true;
+        }
+        else {
+            switch ($box->type) {
+                case "num":
+                    $value = intval($option);
+                    if (property_exists($box, "min"))
+                        if ($value < $box->min)
+                            return false;
+                    if (property_exists($box, "max"))
+                        if ($value > $box->max)
+                            return false;
+                    if (property_exists($box, "digits")) {
+                        $val = $value * pow(10, $box->digits);
+                        if (abs(floor($val) - $val) > 1e3)
+                            return false;
+                    }
+                    break;
+                case "text":
+                    $value = strval($option);
+                    if (property_exists($box, "regex"))
+                        if (!preg_match($box->regex, $option))
+                            return false;
+                    break;
+                case "list":
+                    $value = strval($option);
+                    if (!in_array($value, $box->options))
+                        return false;
+            }
+            return true;
+        }
     }
 
     //endregion
