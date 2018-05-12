@@ -41,7 +41,7 @@ class RoleBase {
      * This function is called, whenever a round is finished.
      */
     public function onLeaveRound(RoundInfo $round) {
-        $this->setRoomPermission(null, false, false, false);
+        
     }
 
     /**
@@ -130,7 +130,8 @@ class RoleBase {
      * this role can read all messages. If write is checked everybody with
      * this role is allowed to write here. If visible is not checked this
      * role is invisible to everybody else in this chat.
-     * It's highly recommended to disable write feature after its needed
+     * This Permissions are automaticly removed, when a new round starts
+     * (except the exceptions defined in config.json).
      */
     protected function setRoomPermission($room, $enable, $write, $visible) {
 

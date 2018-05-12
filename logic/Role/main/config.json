@@ -1,6 +1,18 @@
 {
-    "day": [],
-    "night": [],
+    "day": [
+        "skip"
+    ],
+    "night": [
+        "skip"
+    ],
     "roles": [],
-    "start": "night"
+    "start": "night",
+    "chats": [
+        "story",
+        "main"
+    ],
+    "chats_exceptions": [
+        "story",
+        "main"
+    ]
 }
