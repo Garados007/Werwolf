@@ -5,6 +5,7 @@ include_once __DIR__ . "/RoundInfo.php";
 include_once __DIR__ ."/../../db/User/User.php";
 include_once __DIR__ ."/../../db/Player/Player.php";
 include_once __DIR__ ."/../../db/GameGroup/GameGroup.php";
+include_once __DIR__ ."/../../db/Group/Group.php";
 include_once __DIR__ ."/../../db/ChatRoom/ChatRoom.php";
 include_once __DIR__ ."/../../db/ChatPermission/ChatPermission.php";
 include_once __DIR__ ."/../../db/VoteSetting/VoteSetting.php";
@@ -31,7 +32,7 @@ class RoleHandler {
                 array('night', 'day') : array('day', 'night');
             foreach ($order as $phi) {
                 foreach ($this->config->$phi as $ph) {
-                    $this->phases[] = "${phi}:${ph}";
+                    $this->phases[] = substr($phi, 0, 1) . ":${ph}";
                 }
             }
             self::$phaseBuffer[$group->ruleset] = $this->phases;
@@ -167,8 +168,50 @@ class RoleHandler {
         //finish :)
     }
 
-    public function startGame() {
-
+    //roles is a array (rolesetKey => count)
+    public function startGame(array $roles) { //GameGroup is already created!
+        //set phase counter
+        $this->group->nextPhase($this->phases[0], 1);
+        //get vars
+        $user = User::loadAllUserByGroup($this->group->mainGroupId);
+        $mainGroup = Group::create($this->group->mainGroupId);
+        $player = array();
+        $sets = array();
+        //load rolesets
+        foreach ($this->config->rolesets as $set)
+            if (isset($roles[$set->key]))
+                for ($i = 0; $i<$roles[$set->key]; ++$i)
+                    $sets[] = $set->roles;
+        shuffle($sets);
+        $setp = 0;
+        //create players and assign roles
+        foreach ($user as $u) {
+            $player[] = Player::createNewPlayer(
+                $this->group->id,
+                $u->user,
+                $u->user == $mainGroup->leader ?
+                    $this->config->leader_roles :
+                    $sets[$setp++]
+            );
+        }
+        $this->playerBuffer = $player;
+        //create chats
+        $this->chats = array();
+        foreach ($this->config->chats as $chat) {
+            $this->chats[] = ChatRoom::createChatRoom(
+                $this->game->id, $chat
+            );
+        }
+        //inform game created
+        $this->createAllControler();
+        $round = new RoundInfo();
+        $round->round = 1;
+        $round->phase = $this->phases[0];
+        foreach ($this->controler as $cont)
+            $cont->onGameStarts($round); //call on game starts
+        //change phase
+        $this->nextRound();
+        //finish
     }
 
     public function finishVoting(ChatRoom $chat = null) {

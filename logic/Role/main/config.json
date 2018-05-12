@@ -14,5 +14,12 @@
     "chats_exceptions": [
         "story",
         "main"
+    ],
+    "leader_roles": [],
+    "rolesets": [
+        {
+            "key": "villager",
+            "roles": []
+        }
     ]
 }
