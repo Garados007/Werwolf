@@ -9,6 +9,7 @@ include_once __DIR__ ."/../../db/Group/Group.php";
 include_once __DIR__ ."/../../db/ChatRoom/ChatRoom.php";
 include_once __DIR__ ."/../../db/ChatPermission/ChatPermission.php";
 include_once __DIR__ ."/../../db/VoteSetting/VoteSetting.php";
+include_once __DIR__ ."/../../db/VoteEntry/VoteEntry.php";
 
 class RoleHandler {
     private static $roleBuffer = array();
@@ -215,7 +216,52 @@ class RoleHandler {
     }
 
     public function finishVoting(ChatRoom $chat = null) {
+        //recursive
+        if ($chat == null) {
+            getChats();
+            foreach ($this->chats as $chat)
+                finishVoting($chat);
+            return;
+        }
+        //finish each voting
+        foreach (VoteSetting::getAllVotings($chat->id) as $voting)
+            finishSingleVoting($voting);
+    }
 
+    public function finishSingleVoting(VoteSetting $voting) {
+        //fetch votes
+        $votes = VoteEntry::getVotesBySetting($voting);
+        //fetch raw list
+        $rawList = array();
+        foreach ($votes as $vote)
+            if (isset($rawList[$vote->target]))
+                $rawList[$vote->$target]++;
+            else $rawList[$vote->$target] = 1;
+        //sort list
+        arsort($rawList);
+        //transform list
+        $transList = array();
+        foreach ($rawList as $target => $count)
+            $transList = array($target, $count);
+        //winner
+        if (count($transList > 0)) {
+            if (count($transList) == 1 || 
+                $transList[1][1] != $transList[0][1])
+            {
+                $voting->endVoting($transList[0][0]);
+            }
+            else $voting->endVoting(null);
+        }
+        else $voting->endVoting(null);
+        //propagate the winner
+        $this->createAllControler();
+        foreach ($this->controler as $cont)
+            $cont->onVotingStops(
+                ChatRoom::create($voting->chat)->chatRoom,
+                $voting->voteKey,
+                $transList
+            ); //call on voting stops
+        //finish
     }
 
     private function deleteVotings(ChatRoom $chat = null) {

@@ -82,7 +82,7 @@ class RoleBase {
 
     /**
      * This functions is called, when a voting is declared to stop.
-     * The result is a descending sorted list of a Tuple (Name, Count
+     * The result is a descending sorted list of a Tuple (Target Id, Count
      * of votes).
      */
     public function onVotingStops($room, $name, array $result) {
