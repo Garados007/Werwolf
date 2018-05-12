@@ -40,7 +40,7 @@ class RoleHandler {
         }
     }
 
-    private static function loadConfig($key) {
+    public static function loadConfig($key) {
         if (isset(self::$configBuffer[$key]))
             return self::$configBuffer[$key];
         if (!is_file(__DIR__ . "/${key}/config.json")) 
