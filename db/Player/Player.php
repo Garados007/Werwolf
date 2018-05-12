@@ -143,7 +143,7 @@ class Player extends JsonExport {
 			array(
 				"id" => $this->id,
 				"vars" => count($this->vars) == 0 ? null :
-					json_encode($this->vars)
+					DB::escape(json_encode($this->vars))
 			)
 		)->executeAll();
 	}
@@ -158,7 +158,7 @@ class Player extends JsonExport {
 			array(
 				"id" => $this->id,
 				"vars" => count($this->vars) == 0 ? null :
-					json_encode($this->vars)
+					DB::escape(json_encode($this->vars))
 			)
 		)->executeAll();
 	}
