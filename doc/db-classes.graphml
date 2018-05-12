@@ -176,10 +176,10 @@ enterKey : string</y:AttributeLabel>
       <data key="d5"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="326.43749999999994" width="354.68749999999994" x="1124.6197916666667" y="0.0"/>
+          <y:Geometry height="326.43749999999994" width="371.57394688644666" x="1124.6197916666667" y="0.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.92626953125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="43.03173828125" x="155.82788085937497" y="3.0">Player<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.92626953125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="43.03173828125" x="164.27110430259833" y="3.0">Player<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -193,7 +193,7 @@ user : int
 alive : bool
 extraWolfLive : bool</y:AttributeLabel>
             <y:MethodLabel>::create(id : int) : Player
-::createNewPlayer(game : int, user : int, roleKeys : string) : Player
+::createNewPlayer(game : int, user : int, roleKeys : string[ ]) : Player
 -&gt;kill(byWolf : bool)
 -&gt;getRole(key : string) : Role
 -&gt;hasRole(key : string) : bool
@@ -407,7 +407,7 @@ result : int?</y:AttributeLabel>
           <y:Path sx="-49.53564244750146" sy="95.29275673898019" tx="-49.53564244750146" ty="-88.02310840201494"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.0" textColor="#000000" verticalTextPosition="bottom" visible="true" width="78.6953125" x="-105.93305896577363" y="-190.6421148838141">$permission[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="78.6953125" x="-80.69526391327508" y="44.76307985634162">$permission[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
       </data>
@@ -433,7 +433,7 @@ result : int?</y:AttributeLabel>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="46.685546875" x="75.51810709635424" y="-2.150342041990143">$roles[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="46.685546875" x="67.1119653052026" y="-3.9404554816033226">$roles[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
       </data>
@@ -445,7 +445,7 @@ result : int?</y:AttributeLabel>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="50.03125" x="142.4563835619134" y="-50.652562744582355">$player?<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="50.03125" x="142.4530876634759" y="-50.27300278209424">$player?<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
       </data>
@@ -481,7 +481,7 @@ result : int?</y:AttributeLabel>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="43.357421875" x="-106.46773274739576" y="-25.444116566073035">$player
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="43.357421875" x="-98.0585669213599" y="-26.62710953449593">$player
 $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
@@ -511,7 +511,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="-139.8271959931658" sy="20.65687979490872" tx="177.34722042511862" ty="83.99060527565271"/>
+          <y:Path sx="-139.8271959931658" sy="20.65687979490872" tx="185.79060909308046" ty="83.99060527565271"/>
           <y:LineStyle color="#000000" type="dashed" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
         </y:QuadCurveEdge>
@@ -521,7 +521,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="73.24083295550122" sy="163.18671974489197" tx="50.47249505222749" ty="-95.3184271857765"/>
+          <y:Path sx="76.72778255373115" sy="163.18671974489197" tx="50.47249505222749" ty="-95.3184271857765"/>
           <y:LineStyle color="#000000" type="dashed" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
         </y:QuadCurveEdge>
@@ -571,17 +571,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e15" source="n7" target="n3">
-      <data key="d9"/>
-      <data key="d10">
-        <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
-          <y:LineStyle color="#000000" type="dotted" width="2.0"/>
-          <y:Arrows source="none" target="standard"/>
-        </y:QuadCurveEdge>
-      </data>
-    </edge>
-    <edge id="e16" source="n11" target="n5">
+    <edge id="e15" source="n11" target="n5">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -594,7 +584,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e17" source="n11" target="n2">
+    <edge id="e16" source="n11" target="n2">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -604,7 +594,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e18" source="n2" target="n3">
+    <edge id="e17" source="n2" target="n3">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -614,7 +604,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e19" source="n2" target="n5">
+    <edge id="e18" source="n2" target="n5">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -624,7 +614,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e20" source="n0" target="n2">
+    <edge id="e19" source="n0" target="n2">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -634,7 +624,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e21" source="n0" target="n5">
+    <edge id="e20" source="n0" target="n5">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -644,7 +634,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e22" source="n1" target="n2">
+    <edge id="e21" source="n1" target="n2">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -654,7 +644,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e23" source="n9" target="n9">
+    <edge id="e22" source="n9" target="n9">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
@@ -666,12 +656,34 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
         </y:QuadCurveEdge>
       </data>
     </edge>
-    <edge id="e24" source="n5" target="n5">
+    <edge id="e23" source="n5" target="n5">
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+        </y:QuadCurveEdge>
+      </data>
+    </edge>
+    <edge id="e24" source="n7" target="n4">
+      <data key="d9"/>
+      <data key="d10">
+        <y:QuadCurveEdge straightness="0.1">
+          <y:Path sx="-146.3911692301433" sy="0.0" tx="131.22449660872553" ty="85.54609546453699"/>
+          <y:LineStyle color="#000000" type="dotted" width="2.0"/>
+          <y:Arrows source="none" target="standard"/>
+        </y:QuadCurveEdge>
+      </data>
+    </edge>
+    <edge id="e25" source="n5" target="n3">
+      <data key="d9"/>
+      <data key="d10">
+        <y:QuadCurveEdge straightness="0.1">
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="722.8717948717901" y="348.6318681318684"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="dotted" width="2.0"/>
           <y:Arrows source="none" target="standard"/>
         </y:QuadCurveEdge>
       </data>
