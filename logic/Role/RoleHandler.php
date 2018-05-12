@@ -64,7 +64,7 @@ class RoleHandler {
     public static function loadAllRoles($key) {
         if (isset(self::$roleBuffer[$key]))
             return true;
-        $config = self::$loadConfig($key);
+        $config = self::loadConfig($key);
         if ($config === false) {
             $this->roleBuffer[$key] = array();
             return false;
