@@ -74,6 +74,21 @@ class ChatRoom extends JsonExport {
 		if ($entry = $result->getResult()->getEntry())
 			return $entry["Id"];
 	}
+
+	public static function getAllChatRoomIds($game) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/getAllChatRoomIds.sql',
+			array(
+				"game" => $game
+			)
+		);
+		$set = $result->getResult();
+		$res = array();
+		while ($entry = $set->getEntry())
+			$res[] = intval($entry["Id"]);
+		$result->free();
+		return $res;
+	}
 	
 	public function createVoting($key, $start, $end, array $enabled, 
 		array $target) 
