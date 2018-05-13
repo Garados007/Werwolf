@@ -29,8 +29,8 @@ class UserStats extends JsonExport {
     private function __construct(){}
 
     public static function create($userId) {
-		if (isset(self::$cache[$id]))
-			return self::$cache[$id];
+		if (isset(self::$cache[$userId]))
+			return self::$cache[$userId];
         $cur = new UserStats();
         
         $cur->jsonNames = array('userId', 'firstGame', 'lastGame',
@@ -39,7 +39,7 @@ class UserStats extends JsonExport {
         $result = DB::executeFormatFile(
             __DIR__ . '/sql/loadStats.sql',
             array(
-                "id" => $userID
+                "id" => $userId
             )
         );
         if ($entry = $result->getResult()->getEntry()) {
@@ -48,7 +48,7 @@ class UserStats extends JsonExport {
             $cur->lastGame = $entry["LastGame"];
             $cur->gameCount = $entry["GameCount"];
             $cur->winningCount = $entry["WinningCount"];
-            $cur->moderatedCount = $entry["ModeratedCount"];
+            $cur->moderatedCount = $entry["ModeratorCount"];
             $cur->lastOnline = $entry["LastOnline"];
             $cur->aiId = $entry["AiId"];
             $cur->aiNameKey = $entry["AiNameKey"];
@@ -59,7 +59,7 @@ class UserStats extends JsonExport {
 			$cur = null;
 		}
 
-		return self::$cache[$id] = $cur;
+		return self::$cache[$userId] = $cur;
     }
 
     public static function createNewUserStats($userId) {
