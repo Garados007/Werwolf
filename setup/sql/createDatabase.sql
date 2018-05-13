@@ -48,6 +48,14 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Games (
 	FOREIGN KEY (MainGroup) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>WinningGame (
+	Game INT UNSIGNED NOT NULL,
+	Role VARCHAR(8) NOT NULL,	
+
+	PRIMARY KEY (Game, Role(8)),
+	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
 ALTER TABLE <?php echo DB_PREFIX; ?>Groups ADD CONSTRAINT
 	FOREIGN KEY (CurrentGame) 
 	REFERENCES <?php echo DB_PREFIX; ?>Games(Id);
