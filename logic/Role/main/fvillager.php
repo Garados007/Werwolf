@@ -2,7 +2,7 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class fvillager extends RoleBase {
+class main_fvillager extends RoleBase {
     public function __construct() {
         $this->roleName = 'fvillager';
         $this->canStartNewRound = false;

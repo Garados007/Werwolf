@@ -2,7 +2,7 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class storytel extends RoleBase {
+class main_storytel extends RoleBase {
     public function __construct() {
         $this->roleName = 'storytel';
         $this->canStartNewRound = true;
