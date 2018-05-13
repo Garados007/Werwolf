@@ -2,8 +2,6 @@
 
 if (count(get_included_files()) != 1) return; //test suite
 
-include_once __DIR__ . '/GetApi.php';
-
 if (!isset($_GET["_class"]) || !isset($_GET["_method"])) {
     http_response_code(403);
     return;
@@ -12,7 +10,10 @@ if (!isset($_GET["_class"]) || !isset($_GET["_method"])) {
 $class = null;
 
 switch ($_GET["_class"]) {
-    case "get": $class = new GetApi(); break;
+    case "get": 
+        include_once __DIR__ . '/GetApi.php';
+        $class = new GetApi(); 
+        break;
 }
 
 if ($class === null || !method_exists($class, $_GET["_method"]) || substr($_GET["_method"], 0, 1) == '_') {
