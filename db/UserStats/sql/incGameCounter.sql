@@ -4,5 +4,5 @@ SET FirstGame = <?php echo $first; ?>,
     GameCount = GameCount + 1<?php
 if ($mod) { ?>,
     ModeratorCount = ModeratorCount + 1
-<? } ?>
+<?php } ?>
  WHERE UserId = <?php echo $id; ?>;

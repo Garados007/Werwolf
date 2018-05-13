@@ -19,7 +19,7 @@ class GameGroup extends JsonExport {
 	//the current ruleset
 	public $ruleset;
 	//the current vars;
-	private $vars;
+	protected $vars;
 	//the winning roles
 	public $winningRoles;
 

@@ -57,7 +57,11 @@ class DB {
 	
 	public static function executeFormatFile($path, $data) {
 		// echo ".";
-		if (!file_exists($path)) return false;
+		if (!file_exists($path)) {
+			echo "file not found: $path<br/>".PHP_EOL;
+			debug_print_backtrace();
+			return false;
+		} 
 		// echo ".";
 		extract ($data);
 		ob_start();

@@ -76,7 +76,7 @@ visible : bool</y:AttributeLabel>
       <data key="d5"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="190.64583333333337" width="310.93750000000006" x="1194.5342261904764" y="538.2099358974359"/>
+          <y:Geometry height="205.84363553113553" width="310.93750000000006" x="1194.5342261904764" y="538.2099358974359"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.92626953125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="69.71728515625" x="120.61010742187503" y="3.0">ChatRoom<y:LabelModel>
@@ -93,6 +93,7 @@ chatRoom : string</y:AttributeLabel>
             <y:MethodLabel>::create(id : int)
 ::createChatRoom(game : int, mode : string) : ChatRoom
 ::getChatRoomId(game : int, room : string) : int
+::getAllChatRoomIds(game : int) : int[ ]
 -&gt;createVoting(key : string, start : date?, end : date?,
         enabled : int[ ], target : int[ ])
 -&gt;getPermission(key : string) : ChatPermission?
@@ -404,10 +405,10 @@ result : int?</y:AttributeLabel>
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="-49.53564244750146" sy="95.29275673898019" tx="-49.53564244750146" ty="-88.02310840201494"/>
+          <y:Path sx="-49.53564244750146" sy="102.88925356495665" tx="-49.53564244750146" ty="-88.02310840201494"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="78.6953125" x="-80.69526391327508" y="44.76307985634162">$permission[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="78.6953125" x="-80.69526391327508" y="37.14762548649276">$permission[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
       </data>
@@ -469,7 +470,7 @@ result : int?</y:AttributeLabel>
           <y:Path sx="0.0" sy="0.0" tx="-161.21006567572704" ty="-84.56829428317019"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="52.697265625" x="42.480736142113074" y="-8.572519592843719">$voting[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="side_slider" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="52.697265625" x="42.480736142113074" y="-9.67360414008192">$voting[ ]<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
         </y:QuadCurveEdge>
       </data>
@@ -521,7 +522,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="76.72778255373115" sy="163.18671974489197" tx="50.47249505222749" ty="-95.3184271857765"/>
+          <y:Path sx="76.72778255373115" sy="163.18671974489197" tx="50.47249505222749" ty="-102.91697039465006"/>
           <y:LineStyle color="#000000" type="dashed" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
         </y:QuadCurveEdge>
@@ -588,7 +589,7 @@ $target<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" an
       <data key="d9"/>
       <data key="d10">
         <y:QuadCurveEdge straightness="0.1">
-          <y:Path sx="0.0" sy="0.0" tx="155.47557464413262" ty="88.28006603149265"/>
+          <y:Path sx="0.0" sy="0.0" tx="155.47557464413262" ty="95.31752894425257"/>
           <y:LineStyle color="#000000" type="dotted" width="2.0"/>
           <y:Arrows source="none" target="standard"/>
         </y:QuadCurveEdge>

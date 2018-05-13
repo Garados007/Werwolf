@@ -41,7 +41,7 @@ class ChatPermission extends JsonExport {
 		$list = array();
 		while ($entry = $row->getEntry()) {
 			$list[] = new ChatPermission(
-				intval($entry["room"]),
+				intval($entry["Room"]),
 				strval($entry["RoleKey"]),
 				boolval($entry["PEnable"]),
 				boolval($entry["PWrite"]),
@@ -54,10 +54,10 @@ class ChatPermission extends JsonExport {
 	
 	public static function addPermissions(ChatPermission $permissions) {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/addPermissions.sql',
+			dirname(__FILE__).'/sql/addPermission.sql',
 			array(
 				"room" => $permissions->room,
-				"key" => $permissions->roleKey,
+				"role" => $permissions->roleKey,
 				"enable" => $permissions->enable,
 				"write" => $permissions->write,
 				"visible" => $permissions->visible

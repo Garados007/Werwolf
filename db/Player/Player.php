@@ -20,7 +20,7 @@ class Player extends JsonExport {
 	//a list of assigned roles
 	public $roles;
 	//a bunch of variables used for the scripts
-	private $vars;
+	protected $vars;
 
 	private static $cache = array();
 	private function __construct(){}
