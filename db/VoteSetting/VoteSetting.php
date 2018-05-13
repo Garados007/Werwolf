@@ -37,7 +37,7 @@ class VoteSetting extends JsonExport {
 			dirname(__FILE__).'/sql/loadVoteSetting.sql',
 			array(
 				"chat" => $chat,
-				"key" => DB::escape($key)
+				"key" => DB::escape($voteKey)
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
