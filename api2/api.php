@@ -18,6 +18,10 @@ switch ($_GET["_class"]) {
         include_once __DIR__ . '/ConvApi.php';
         $class = new ConvApi();
         break;
+    case "control":
+        include_once __DIR__ . '/ControlApi.php';
+        $class = new ControlApi();
+        break;
 }
 
 if ($class === null || !is_callable([$class, $_GET["_method"]]) || substr($_GET["_method"], 0, 1) == '_') {
