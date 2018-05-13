@@ -181,3 +181,9 @@ class DBResult {
 		$this->hasFreed = true;
 	}
 }
+
+function intvaln($value) {
+	if ($value === null)
+		return null;
+	else return intval($value);
+}
