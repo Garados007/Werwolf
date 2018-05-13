@@ -42,13 +42,14 @@ class Group extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$cur->id = $entry["Id"];
+			$cur->id = intval($entry["Id"]);
 			$cur->name = $entry["Name"];
-			$cur->created = $entry["Created"];
-			$cur->lastTime = $entry["LastGame"];
-			$cur->creator = $entry["Creator"];
-			$cur->leader = $entry["Leader"];
-			$cur->currentGame = $entry["CurrentGame"];
+			$cur->created = intval($entry["Created"]);
+			$cur->lastTime = intval($entry["LastGame"]);
+			$cur->creator = intval($entry["Creator"]);
+			$cur->leader = intval($entry["Leader"]);
+			$cur->currentGame = $entry["CurrentGame"] === null ?
+				null : intval($entry["CurrentGame"]);
 			$cur->enterKey = $entry["EnterKey"];
 		}
 		else $cur = null;
@@ -72,7 +73,7 @@ class Group extends JsonExport {
 	}
 	
 	private static function createKey() {
-		$c = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+		$c = '0123456789ABCDEFGHJKLMNPQRSTUWXYZ';
 		$l = strlen($c);
 		$s;
 		do {
@@ -123,7 +124,7 @@ class Group extends JsonExport {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/setLeader.sql',
 			array(
-				"leader" => $leader,
+				"leader" => $this->leader = $leader,
 				"id" => $this->id
 			)
 		);

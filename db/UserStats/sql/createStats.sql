@@ -6,7 +6,7 @@ INSERT INTO <?php echo DB_PREFIX; ?>AIInfo
 
 SELECT LAST_INSERT_ID() INTO @id;
 
-<? } ?>
+<?php } ?>
 
 INSERT INTO <?php echo DB_PREFIX; ?>UserStats
     (UserId, FirstGame, LastGame, GameCount, WinningCount, ModeratorCount,

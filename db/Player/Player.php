@@ -62,7 +62,8 @@ class Player extends JsonExport {
 			array(
 				"game" => $game,
 				"user" => $user,
-				"extraLive" => in_array('grandpa', $roleKeys)
+				"extraLive" => in_array('grandpa', $roleKeys),
+				"vars" => '{}'
 			)
 		);
 		echo DB::getError();

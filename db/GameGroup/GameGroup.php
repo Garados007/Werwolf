@@ -42,13 +42,13 @@ class GameGroup extends JsonExport {
 		);
 		echo DB::getError();
 		if ($entry = $result->getResult()->getEntry()) {
-			$cur->id = $entry["Id"];
-			$cur->mainGroupId = $entry["MainGroup"];
+			$cur->id = intval($entry["Id"]);
+			$cur->mainGroupId = intval($entry["MainGroup"]);
 			$cur->started = intval($entry["Started"]);
-			$cur->finished = $entry["Finished"];
+			$cur->finished = intvaln($entry["Finished"]);
 			$cur->phase = $entry["CurrentPhase"];
-			$cur->day = $entry["CurrentDay"];
-			$cur->ruleset = $entry["Ruleset"];
+			$cur->day = intval($entry["CurrentDay"]);
+			$cur->ruleset = $entry["RuleSet"];
 			if ($entry["Vars"] !== null)
 				$cur->vars = json_decode($entry["Vars"], true);
 			else $cur->vars = array();
@@ -83,7 +83,7 @@ class GameGroup extends JsonExport {
 				"mainGroup" => $mainGroupId,
 				"phase" => $phase,
 				"rules" => $rules,
-				"vars" => $vars
+				"vars" => DB::escape(json_encode($vars))
 			)
 		);
 		echo DB::getError();
