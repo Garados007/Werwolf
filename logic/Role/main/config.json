@@ -1,31 +1,48 @@
 {
     "day": [
-        "skip"
+        "skip",
+        "vote"
     ],
     "night": [
-        "skip"
+        "skip",
+        "wolfvo"
     ],
-    "roles": [],
+    "roles": [ 
+        "villager", 
+        "fvillager", 
+        "wolf",
+        "storytel"
+    ],
     "start": "night",
     "chats": [
         "story",
-        "main"
+        "main",
+        "village",
+        "wolfkill"
     ],
     "chats_exceptions": [
         "story",
         "main"
     ],
-    "leader_roles": [],
+    "leader_roles": [ "storytel" ],
     "rolesets": [
         {
             "key": "villager",
-            "roles": []
+            "roles": [ "villager", "fvillager" ]
+        },
+        {
+            "key": "wolf",
+            "roles": [ "villager", "wolf" ]
         }
     ],
     "fraction": [
         {
             "key": "villager",
-            "roles": []
+            "roles": [ "fvillager" ]
+        },
+        {
+            "key": "wolf",
+            "roles": [ "wolf" ]
         }
     ]
 }
