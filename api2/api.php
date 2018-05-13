@@ -14,6 +14,10 @@ switch ($_GET["_class"]) {
         include_once __DIR__ . '/GetApi.php';
         $class = new GetApi(); 
         break;
+    case "conv":
+        include_once __DIR__ . '/ConvApi.php';
+        $class = new ConvApi();
+        break;
 }
 
 if ($class === null || !method_exists($class, $_GET["_method"]) || substr($_GET["_method"], 0, 1) == '_') {

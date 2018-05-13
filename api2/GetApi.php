@@ -78,7 +78,7 @@ class GetApi extends ApiBase {
         return $this->wrapResult($result);
     }
 
-    public function getAllChatEntrys() {
+    public function getChatEntrys() {
         if (($result = $this->getData(array(
             'chat' => 'int'
         ))) !== true)
@@ -87,20 +87,6 @@ class GetApi extends ApiBase {
         $result = ChatEntry::loadAllEntrys(
             $this->formated['chat'], 
             0
-        );
-        return $this->wrapResult($result);
-    }
-
-    public function getChatEntrys() {
-        if (($result = $this->getData(array(
-            'chat' => 'int',
-            'after' => 'int'
-        ))) !== true)
-            return $this->wrapError($result);
-        $this->inclDb('ChatEntry');
-        $result = ChatEntry::loadAllEntrys(
-            $this->formated['chat'], 
-            $this->formated['after']
         );
         return $this->wrapResult($result);
     }

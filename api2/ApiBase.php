@@ -17,7 +17,12 @@ class ApiBase {
     protected function getData(array $format) {
         $result = array();
         foreach ($format as $key => $type) {
-            if (!isset($this->data[$key]))
+            if (substr($key, 0, 1) == '?') {
+                $key = substr($key, 1, strlen($key)-1);
+                if (!isset($this->data[$key]))
+                    continue;
+            }
+            elseif (!isset($this->data[$key]))
                 return $this->errorFormat("Key $key not given");
             switch ($type) {
                 case "int":
