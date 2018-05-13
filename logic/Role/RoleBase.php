@@ -155,8 +155,10 @@ class RoleBase {
      * The system checks with canVote() for all player who can vote
      * in this voting.
      */
-    protected function informVoting($room, $name, array $targets) {
-        
+    protected function informVoting($room, $name, array $targets, $start = null, $end = null) {
+        $this->roleHandler->createVoting(
+            $room, $name, $targets, $start, $end
+        );
     }
     //endregion
 }

@@ -6,8 +6,8 @@ class main_wolf extends RoleBase {
     public function __construct() {
         $this->roleName = 'wolf';
         $this->canStartNewRound = false;
-        $this->canStartVoting = false;
-        $this->canStopVoting = false;
+        $this->canStartVotings = false;
+        $this->canStopVotings = false;
         $this->isFractionRole = false;
     }
 
@@ -15,7 +15,7 @@ class main_wolf extends RoleBase {
         if ($round->phase == 'n:wolfvo') {
             $this->setRoomPermission('wolfkill', true, true, true);
             $this->informVoting('wolfkill', 'kill', 
-                $this->getPlayer('fvillager', true));
+                $this->getPlayer('fvillage', true));
         }
     }
 
@@ -56,7 +56,7 @@ class main_wolf extends RoleBase {
             }
             else {
                 $player = Player::create($result[0][0]);
-                $player->kill(false);
+                $player->kill(true);
             }
         }
     }

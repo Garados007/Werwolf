@@ -237,6 +237,14 @@ class RoleHandler {
         //finish
     }
 
+    public function startVoting(VoteSetting $voting) {
+        $this->createAllControler();
+        $voting->startVoting();
+        $chat = ChatRoom::create($voting->chat);
+        foreach ($this->controler as $cont)
+            $cont->onVotingStarts($chat->chatRoom, $voting->voteKey);
+    }
+
     public function finishVoting(ChatRoom $chat = null) {
         //recursive
         if ($chat == null) {
@@ -247,7 +255,7 @@ class RoleHandler {
         }
         //finish each voting
         foreach (VoteSetting::getAllVotings($chat->id) as $voting)
-            finishSingleVoting($voting);
+            $this->finishSingleVoting($voting);
     }
 
     public function finishSingleVoting(VoteSetting $voting) {
@@ -257,16 +265,16 @@ class RoleHandler {
         $rawList = array();
         foreach ($votes as $vote)
             if (isset($rawList[$vote->target]))
-                $rawList[$vote->$target]++;
-            else $rawList[$vote->$target] = 1;
+                $rawList[$vote->target]++;
+            else $rawList[$vote->target] = 1;
         //sort list
         arsort($rawList);
         //transform list
         $transList = array();
         foreach ($rawList as $target => $count)
-            $transList = array($target, $count);
+            $transList[] = array($target, $count);
         //winner
-        if (count($transList > 0)) {
+        if (count($transList) > 0) {
             if (count($transList) == 1 || 
                 $transList[1][1] != $transList[0][1])
             {
@@ -283,6 +291,8 @@ class RoleHandler {
                 $voting->voteKey,
                 $transList
             ); //call on voting stops
+        //check for finish game
+        $this->checkTermination();
         //finish
     }
 
@@ -296,7 +306,7 @@ class RoleHandler {
         }
         //delete voting
         foreach ($chat->voting as $voting)
-            $voting->deleteVotings();
+            $voting->deleteVoting();
         $chat->voting = array();
     }
 
@@ -376,8 +386,6 @@ class RoleHandler {
         return $result;
     }
 
-    //endregion
-
     public function setRoomPermission($role, $room, $enable, $write, $visible) {
         if ($role === null) 
             $role = $this->config->roles;
@@ -400,4 +408,31 @@ class RoleHandler {
                 return;
             }
     }
+
+    public function createVoting($room, $name, array $targets, $start = null, $end = null) {
+        $this->getChats();
+        foreach ($this->chats as $chat)
+            if ($chat->chatRoom == $room) {
+                $enabled = array();
+                foreach ($this->controler as $cont)
+                    if ($cont->canVote($room, $name))
+                        foreach ($this->getPlayer($cont->roleName, true) as $player) {
+                            if (!in_array($player->id, $enabled))
+                                $enabled[] = $player->id;
+                        }
+                $targ = array();
+                foreach ($targets as $t)
+                    if (is_int($t))
+                        $targ[] = $t;
+                    elseif ($t instanceof Player)
+                        $targ[] = $t->id;
+                $voting = $chat->createVoting($name, $start, $end, $enabled, $targ);
+                foreach ($this->controler as $cont)
+                    $cont->onVotingCreated($room, $name);
+                return;
+            }
+
+    }
+
+    //endregion
 }

@@ -6,8 +6,8 @@ class main_villager extends RoleBase {
     public function __construct() {
         $this->roleName = 'villager';
         $this->canStartNewRound = false;
-        $this->canStartVoting = false;
-        $this->canStopVoting = false;
+        $this->canStartVotings = false;
+        $this->canStopVotings = false;
         $this->isFractionRole = false;
     }
 
