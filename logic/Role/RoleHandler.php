@@ -94,9 +94,11 @@ class RoleHandler {
                 $proles[] = $r->roleKey;
             }
         }
-        return array_filter($roles, function ($role) {
-            return in_array($role, $proles);
-        });
+        return array_filter($roles, 
+            function ($role) use ($proles) {
+                return in_array($role, $proles);
+            }
+        );
     }
 
     public function createAllControler() {
@@ -109,7 +111,7 @@ class RoleHandler {
             $control->roleHandler = $this;
             $controler[$role] = $control;
         }
-        return $this->coontroler = $controler;
+        return $this->controler = $controler;
     }
 
     private function getChats() {
@@ -117,7 +119,7 @@ class RoleHandler {
         $chats = array();
         foreach ($this->config->chats as $key) {
             $chats[] = ChatRoom::create(
-                ChatRoom::getChatRoomId($this->game->id, $key));
+                ChatRoom::getChatRoomId($this->group->id, $key));
         }
         $this->chats = $chats;
     }
@@ -143,10 +145,13 @@ class RoleHandler {
         $this->deleteVotings();
         //check if the game could be ended
         $this->checkTermination();
-        if ($this->group->finished !== null) return;
+        if ($this->group->finished !== null) {
+            $this->nextRoundActive = false;
+            return;
+        }
         
         //determine next round
-        $start = array_search($this->group->ruleset, $this->phases);
+        $start = array_search($this->group->phase, $this->phases);
         $nind = $start;
         $day = $this->group->day;
         $valid = false;
@@ -169,6 +174,7 @@ class RoleHandler {
         //no valid next round found -> termination
         if (!$valid) {
             $this->checkTermination(true);
+            $this->nextRoundActive = false;
             return;
         }
         //set next round
@@ -178,6 +184,7 @@ class RoleHandler {
 
         //create votings and update permissions is done in call start round
 
+        $this->nextRoundActive = false;
         //finish :)
     }
 
@@ -199,20 +206,23 @@ class RoleHandler {
         $setp = 0;
         //create players and assign roles
         foreach ($user as $u) {
-            $player[] = Player::createNewPlayer(
+            $p = Player::createNewPlayer(
                 $this->group->id,
                 $u->user,
                 $u->user == $mainGroup->leader ?
                     $this->config->leader_roles :
                     $sets[$setp++]
             );
+            $player[] = $p;
+            $u->setPlayer($p);
+            $u->stats->incGameCounter($u->user == $mainGroup->leader);
         }
         $this->playerBuffer = $player;
         //create chats
         $this->chats = array();
         foreach ($this->config->chats as $chat) {
             $this->chats[] = ChatRoom::createChatRoom(
-                $this->game->id, $chat
+                $this->group->id, $chat
             );
         }
         //inform game created
@@ -230,9 +240,9 @@ class RoleHandler {
     public function finishVoting(ChatRoom $chat = null) {
         //recursive
         if ($chat == null) {
-            getChats();
+            $this->getChats();
             foreach ($this->chats as $chat)
-                finishVoting($chat);
+                $this->finishVoting($chat);
             return;
         }
         //finish each voting
@@ -279,28 +289,28 @@ class RoleHandler {
     private function deleteVotings(ChatRoom $chat = null) {
         //recursive
         if ($chat == null) {
-            getChats();
+            $this->getChats();
             foreach ($this->chats as $chat)
-                deleteVoting($chat);
+                $this->deleteVotings($chat);
             return;
         }
         //delete voting
         foreach ($chat->voting as $voting)
-            $voting->deleteVoting();
+            $voting->deleteVotings();
         $chat->voting = array();
     }
 
     private function checkTermination($force = false) {
         //check if they are more then one fraction left
         $nonEmptyFractions = array();
-        foreach ($this->config->fractions as $fraction) {
+        foreach ($this->config->fraction as $fraction) {
             $count = 0;
             foreach ($fraction->roles as $role)
-                $count += count(getPlayer($role));
+                $count += count($this->getPlayer($role));
             if ($count > 0)
                 $nonEmptyFractions[] = $fraction;
         }
-        if (!$force && count($nonEmptyFractions) > 2) return;
+        if (!$force && count($nonEmptyFractions) >= 2) return;
         //finish
         $this->group->finish();
         $roles = array();
@@ -308,6 +318,11 @@ class RoleHandler {
             foreach ($fraction->roles as $role)
                 $roles[] = $role;
         $this->group->setWinner($roles);
+        //increase win counter
+        foreach ($this->getPlayer($roles) as $player) {
+            $user = UserStats::create($player->user);
+            $user->incWinCounter();
+        }
         //inform game ends
         $this->createAllControler();
         $round = new RoundInfo();
@@ -327,10 +342,11 @@ class RoleHandler {
     private function refreshPlayers() {
         if ($this->playerBuffer !== null) return $this->playerBuffer;
         $this->playerBuffer = array();
-        foreach (User::loadAllUserByGroup($this->group) as $user) {
+        foreach (User::loadAllUserByGroup($this->group->mainGroupId) as $user) {
             if ($user->player !== null)
                 $this->playerBuffer[] = &$user->player;
         }
+        return $this->playerBuffer;
     }
 
     public function getPlayer($role = null, $onlyAlive = true) {
@@ -351,13 +367,37 @@ class RoleHandler {
                     if (!$found) continue;
                 }
                 if (is_string($role)) {
-                    if (!$player->haseRole($role))
+                    if (!$player->hasRole($role))
                         continue;
                 }
             }
             $result[] = &$player;
         }
+        return $result;
     }
 
     //endregion
+
+    public function setRoomPermission($role, $room, $enable, $write, $visible) {
+        if ($role === null) 
+            $role = $this->config->roles;
+        if (is_array($role)) {
+            foreach ($role as $r)
+                if ($r !== null)
+                    $this->setRoomPermission($r, $room, $enable, $write, $visible);
+            return;
+        }
+        $this->getChats();
+        foreach ($this->chats as $chat)
+            if ($chat->chatRoom == $room) {
+                $perm = new ChatPermission(
+                    $chat->id,
+                    $role,
+                    $enable,
+                    $enable && $write,
+                    $enable && $visible);
+                $chat->addPermission($perm);
+                return;
+            }
+    }
 }

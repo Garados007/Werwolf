@@ -50,6 +50,8 @@ class Permission {
             return self::errorId("group id not found");
         if ($group->leader != $userid)
             return self::errorStatus("user is not the group leader");
+        if ($group->currentGame !== null && $group->currentGame->finished === null)
+            return self::errorStatus("unfinished game exists");
         return true;
     }
 
@@ -73,9 +75,9 @@ class Permission {
     }
 
     public static function validateGameOptions($mode, $options) {
-        if (!is_file(__DIR__ . "/../Roles/${mode}/varinfo.json"))
+        if (!is_file(__DIR__ . "/../Role/${mode}/varinfo.json"))
             return false;
-        $opts = json_decode(file_get_contents(__DIR__ . "/../Roles/${mode}/varinfo.json"));
+        $opts = json_decode(file_get_contents(__DIR__ . "/../Role/${mode}/varinfo.json"));
         return self::validateOptionGroup($options, $opts->box);
     }
 
@@ -190,7 +192,7 @@ class Permission {
                 if ($user->player === null)
                     return self::errorStatus("user is not an active player");
                 foreach ($user->player->roles as $role)
-                    if (in_array($role->roleKey, $role))
+                    if (in_array($role->roleKey, $roles))
                         return true;
                 return self::errorStatus("no write permission granted");
             }

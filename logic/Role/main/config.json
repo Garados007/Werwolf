@@ -9,7 +9,7 @@
     ],
     "roles": [ 
         "villager", 
-        "fvillager", 
+        "fvillage", 
         "wolf",
         "storytel"
     ],
@@ -28,7 +28,7 @@
     "rolesets": [
         {
             "key": "villager",
-            "roles": [ "villager", "fvillager" ]
+            "roles": [ "villager", "fvillage" ]
         },
         {
             "key": "wolf",
@@ -38,7 +38,7 @@
     "fraction": [
         {
             "key": "villager",
-            "roles": [ "fvillager" ]
+            "roles": [ "fvillage" ]
         },
         {
             "key": "wolf",

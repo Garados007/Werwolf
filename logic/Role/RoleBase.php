@@ -134,7 +134,7 @@ class RoleBase {
      * is checked then only living players are returned.
      */
     protected function getPlayer($role, $onlyAlive) {
-        $this->roleHandler->getPlayer($role, $onlyAlive);
+        return $this->roleHandler->getPlayer($role, $onlyAlive);
     }
 
     /**
@@ -146,7 +146,8 @@ class RoleBase {
      * (except the exceptions defined in config.json).
      */
     protected function setRoomPermission($room, $enable, $write, $visible) {
-
+        $this->roleHandler->setRoomPermission(
+            $this->roleName, $room, $enable, $write, $visible);
     }
 
     /**
