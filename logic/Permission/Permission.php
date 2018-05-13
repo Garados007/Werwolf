@@ -204,14 +204,14 @@ class Permission {
     //region voting
 
     public static function canStartVoting($userid, $chatId, $voteKey) {
-        $voting = VoteSetting::create($votingId, $voteKey);
+        $voting = VoteSetting::create($chatId, $voteKey);
         if ($voting === null)
             return self::errorId("voting not found");
         if ($voting->voteEnd !== null)
             return self::errorStatus("voting is finished");
         if ($voting->voteStart !== null)
             return self::errorStatus("voting is already started");
-        $chat = ChatRoom::create($chatid);
+        $chat = ChatRoom::create($chatId);
         $game = GameGroup::create($chat->game);
         $handler = new RoleHandler($game);
         $roles = $handler->createAllControler();
@@ -228,14 +228,14 @@ class Permission {
     }
 
     public static function canFinishVoting($userid, $chatId, $voteKey) {
-        $voting = VoteSetting::create($votingId, $voteKey);
+        $voting = VoteSetting::create($chatId, $voteKey);
         if ($voting === null)
             return self::errorId("voting not found");
         if ($voting->voteEnd !== null)
             return self::errorStatus("voting is finished");
         if ($voting->voteStart === null)
             return self::errorStatus("voting is never started");
-        $chat = ChatRoom::create($chatid);
+        $chat = ChatRoom::create($chatId);
         $game = GameGroup::create($chat->game);
         $handler = new RoleHandler($game);
         $roles = $handler->createAllControler();
@@ -251,15 +251,15 @@ class Permission {
         return self::errorStatus("user is not a member of group");
     }
 
-    public static function canVote($userid, $chatId, $voteKey, $targetId) {
-        $voting = VoteSetting::create($votingId, $voteKey);
+    public static function canVote($playerid, $chatId, $voteKey, $targetId) {
+        $voting = VoteSetting::create($chatId, $voteKey);
         if ($voting === null)
             return self::errorId("voting not found");
         if ($voting->voteStart === null)
             return self::errorStatus("voting is not started");
         if ($voting->voteEnd !== null)
             return self::errorStatus("voting is already finished");
-        if (!in_array($userid, $voting->enabledUser))
+        if (!in_array($playerid, $voting->enabledUser))
             return self::errorStatus("user is not allowed to vote");
         if (!in_array($targetId, $voting->targetUser))
             return self::errorStatus("target is not selectable");
