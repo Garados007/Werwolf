@@ -3,7 +3,7 @@
 class ApiBase {
     public $data = array();
     public $formated = null;
-    private $account = null;
+    protected $account = null;
 
     public function __construct() {
         global $_GET, $_POST;
@@ -106,11 +106,26 @@ class ApiBase {
             include_once __DIR__ . "/../db/$n/$n.php";
     }
 
+    protected function inclPerm() {
+        include_once __DIR__ . '/../logic/Permission/Permission.php';
+    }
+
+    protected function inclRolH() {
+        include_once __DIR__ . '/../logic/Role/RoleHandler.php';
+    }
+
     protected function getAccount() {
         if ($this->account !== null) return;
         include_once __DIR__ . '/../account/manager.php';
-        $account = AccountManager::GetCurrentAccountData();
-        if ($account['login']) return true;
+        $this->account = AccountManager::GetCurrentAccountData();
+        if ($this->account['login']) {
+            $this->inclDb('UserStats');
+            $user = UserStats::create($this->account['id']);
+            if ($user === null)
+                $user = UserStats::createNewUserStats($this->account['id']);
+            $user->setOnline();
+            return true;
+        }
         else return $this->error('account', 'login required');
     }
 }
