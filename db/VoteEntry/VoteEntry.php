@@ -32,7 +32,7 @@ class VoteEntry extends JsonExport {
 			dirname(__FILE__).'/sql/loadVotesOfSetting.sql',
 			array(
 				"setting" => $setting->chat,
-				"key" => $setting->voteEnd
+				"key" => $setting->voteKey
 			)
 		);
 		$list = array();

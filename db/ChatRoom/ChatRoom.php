@@ -38,7 +38,9 @@ class ChatRoom extends JsonExport {
 			$cur->game = $entry["Game"];
 			$cur->chatRoom = $entry["ChatRoom"];
 			$result->free();
-			$cur->voting = VoteSetting::getVotingKeysForChat($cur->id);
+			$cur->voting = array();
+			foreach (VoteSetting::getVotingKeysForChat($cur->id) as $key)
+				$cur->voting[] = VoteSetting::create($cur->id, $key);
 			$cur->permission = ChatPermission::loadPermissions($cur->id);
 		}
 		else {
@@ -93,8 +95,19 @@ class ChatRoom extends JsonExport {
 	public function createVoting($key, $start, $end, array $enabled, 
 		array $target) 
 	{
-		$this->voting = VoteSetting::createVoteSetting($this->id, $key, $start,
+		$voting = VoteSetting::createVoteSetting($this->id, $key, $start,
 			$end, $enabled, $target);
+		$this->voting[] = $voting;
+		return $voting;
+	}
+
+	public function deleteVoting($key) {
+		$voting = array();
+		foreach ($this->voting as &$v)
+			if ($v->voteKey == $key)
+				$v->deleteVoting();
+			else $voting[] = $v;
+		$this->voting = $voting;
 	}
 
 	public function getPermission($key) {
