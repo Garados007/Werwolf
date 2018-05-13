@@ -44,7 +44,8 @@ class Player extends JsonExport {
 			$cur->user = intval($entry["User"]);
 			$cur->alive = boolval($entry["Alive"]);
 			$cur->extraWolfLive = boolval($entry["ExtraWolfLive"]);
-			$cur->vars = $entry["Vars"];
+			$cur->vars = $entry["Vars"] === null ? array() :
+				json_decode($entry["Vars"], true);
 			$result->free();
 			$cur->roles = Role::getAllRolesOfPlayer($cur);
 		}

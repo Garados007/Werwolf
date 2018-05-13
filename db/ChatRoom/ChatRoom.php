@@ -26,7 +26,7 @@ class ChatRoom extends JsonExport {
 			return self::$cache[$id];
 
 		$cur = new ChatRoom();
-		$cur->jsonNames = array('id', 'game', 'chatMode', 'voting');
+		$cur->jsonNames = array('id', 'game', 'chatRoom', 'voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(
