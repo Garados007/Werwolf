@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>VoteSetting (
 	Chat INT UNSIGNED NOT NULL,
 	VoteKey VARCHAR(5) NOT NULL,
 	Created INT UNSIGNED NOT NULL,
-	VoteStart INT NOT NULL,
+	VoteStart INT,
 	VoteEnd INT,
 	EnabledUser TEXT NOT NULL,
 	EnabledUserCount INT UNSIGNED NOT NULL,
