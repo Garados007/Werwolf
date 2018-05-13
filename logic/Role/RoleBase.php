@@ -28,6 +28,11 @@ class RoleBase {
      * votings
      */
     public $canStopVotings = false;
+    /**
+     * Determines if this role is only used to associate the player
+     * to a single fraction. This role contains no logic.
+     */
+    public $isFractionRole = false;
 
     //endregion
 
@@ -54,16 +59,21 @@ class RoleBase {
     /**
      * Determines of a player with the current role could also be a winner, 
      * if the given team wins. This function is called for each player.
+     * Normaly the end game is detected with the fractions defined in
+     * config.json. This function is only called, when someone calls
+     * the function endGame() for specific endGame.
+     * $winnerRole has always the same value as the role who calls
+     * endGame().
      */
-    public function isWinner($winnerRole, PlayerInfo $player) {
+    public function isWinner($winnerRole) {
         return false;
     }
 
     /**
-     * A single player is choosen to be killed.
+     * Determine if a player with this specific role can vote in this room
      */
-    public function onPlayerKill(PlayerInfo $player) {
-
+    public function canVote($room, $name) {
+        return false;
     }
 
     /**
@@ -111,6 +121,8 @@ class RoleBase {
      * Start the end game sequence. Everybody with the current role is
      * declared as winner. Other player can be winner to, but this is
      * determined in isWinner().
+     * Normaly a end game situation is detected with the fractions
+     * defined in config.json, so this call is not necessary.
      */
     protected function endGame() {
         $winner = $this->roleName;
@@ -138,11 +150,11 @@ class RoleBase {
     }
 
     /**
-     * Inform the system to create a new voting when possible. The creator
-     * is able to vote here. Other people in this room can only see the
-     * results.
+     * Inform the system to create a new voting when possible.
+     * The system checks with canVote() for all player who can vote
+     * in this voting.
      */
-    protected function informVoting($room, $name) {
+    protected function informVoting($room, $name, array $targets) {
         
     }
     //endregion
