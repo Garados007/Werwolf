@@ -3,6 +3,7 @@
 class ApiBase {
     public $data = array();
     public $formated = null;
+    private $account = null;
 
     public function __construct() {
         global $_GET, $_POST;
@@ -103,5 +104,13 @@ class ApiBase {
     protected function inclDb(...$name) {
         foreach ($name as $n)
             include_once __DIR__ . "/../db/$n/$n.php";
+    }
+
+    protected function getAccount() {
+        if ($this->account !== null) return;
+        include_once __DIR__ . '/../account/manager.php';
+        $account = AccountManager::GetCurrentAccountData();
+        if ($account['login']) return true;
+        else return $this->error('account', 'login required');
     }
 }

@@ -20,7 +20,7 @@ switch ($_GET["_class"]) {
         break;
 }
 
-if ($class === null || !method_exists($class, $_GET["_method"]) || substr($_GET["_method"], 0, 1) == '_') {
+if ($class === null || !is_callable([$class, $_GET["_method"]]) || substr($_GET["_method"], 0, 1) == '_') {
     http_response_code(403); 
     return;
 }
