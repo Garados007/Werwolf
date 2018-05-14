@@ -5,6 +5,7 @@ include_once dirname(__FILE__).'/../config.php';
 class DB {
 	private static $connection = null;
 	private static $lastResult = false;
+	private static $logKey = null;
 	
 	public static function connect() {
 		if (self::$connection !== null) return;
@@ -31,14 +32,16 @@ class DB {
 		if (!is_bool(self::$lastResult) && !self::$lastResult->hasFreed)
 			self::$lastResult->free();
 		self::clearStoredResults();
+		self::log('singleResult', $sql);
 		return new DBResult(self::$connection, self::$connection->query($sql));
 	}
 	
-	public static function getMultiResult($sql) { //DBMultiResult
+	public static function getMultiResult($sql, $source=null) { //DBMultiResult
 		if (self::$connection === null) self::connect();
 		if (!is_bool(self::$lastResult) && !self::$lastResult->hasFreed)
 			self::$lastResult->free();
 		self::clearStoredResults();
+		self::log($source == null ? 'multiResult' : $source, $sql);
 		$result = self::$connection->multi_query($sql);
 		if ($error = self::getError()) {
 			echo $error;
@@ -52,7 +55,7 @@ class DB {
 	
 	public static function executeFile($path) { //DBMultiResult
 		if (!file_exists($path)) return false;
-		else return self::getMultiResult(file_get_contents($path));
+		else return self::getMultiResult(file_get_contents($path), $path);
 	}
 	
 	public static function executeFormatFile($path, $data) {
@@ -70,7 +73,7 @@ class DB {
 		$sql = ob_get_contents();
 		ob_end_clean();
 		if ($success === false) return false;
-		return self::getMultiResult($sql);
+		return self::getMultiResult($sql, $path);
 	}
 	
 	public static function getError() {
@@ -85,6 +88,27 @@ class DB {
 			array('\%','\_'),
 			self::$connection->real_escape_string($text)
 		);
+	}
+
+	private static function log($source, $sql) {
+		if (!DB_LOG_QUERYS) return;
+		if (self::$logKey === null)
+			self::$logKey = time();
+		$content = '-- '.str_repeat('-', 60).PHP_EOL;
+		$content .= '-- Call at: '.date('Y-m-d H:i:s', time()).PHP_EOL;
+		$content .= '-- Source: '.$source.PHP_EOL;
+		$content .= '-- '.str_repeat('-', 60).PHP_EOL;
+		$content .= PHP_EOL;
+		$content .= $sql;
+		$content .= PHP_EOL.PHP_EOL;
+		if (!is_dir(__DIR__ . '/../logs/'))
+			mkdir(__DIR__ . '/../logs/');
+			if (!is_dir(__DIR__ . '/../logs/db/'))
+				mkdir(__DIR__ . '/../logs/db/');
+		file_put_contents(
+			__DIR__ . '/../logs/db/'.self::$logKey.'.sql',
+			$content,
+			FILE_APPEND | LOCK_EX);
 	}
 }
 

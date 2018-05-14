@@ -2,3 +2,4 @@ config.php
 account/manager.php
 setup/version.txt
 ui/module/cache/
+logs/
