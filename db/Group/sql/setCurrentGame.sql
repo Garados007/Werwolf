@@ -25,7 +25,14 @@ CREATE TEMPORARY TABLE _delPlayerIds_<?php echo $oldgame; ?> (
 ) ENGINE=MEMORY AS (
 	SELECT Id
 	FROM <?php echo DB_PREFIX; ?>Player
-	WHERE Game = <?php echo DB_PREFIX; ?>
+	WHERE Game = <?php echo $oldgame; ?>
+);
+
+UPDATE <?php echo DB_PREFIX; ?>User
+SET Player = NULL
+WHERE Player IN (
+	SELECT Id
+	FROM _delPlayerIds_<?php echo $oldgame; ?>
 );
 
 DELETE FROM <?php echo DB_PREFIX; ?>VisibleRoles
@@ -67,7 +74,7 @@ WHERE Chat IN (
 DELETE FROM <?php echo DB_PREFIX; ?>ChatPermission
 WHERE Room IN (
 	SELECT Id
-	FROM _delChatIds_<?php echo DB_PREFIX; ?>
+	FROM _delChatIds_<?php echo $oldgame; ?>
 );
 
 DELETE FROM <?php echo DB_PREFIX; ?>Chats
