@@ -62,7 +62,7 @@ class main_wolf extends RoleBase {
     }
 
     public function onGameStarts(RoundInfo $round) {
-
+        parent::onGameStarts($round);
     }
 
     public function onGameEnds(RoundInfo $round, array $teams) {

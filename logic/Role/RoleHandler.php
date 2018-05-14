@@ -10,6 +10,7 @@ include_once __DIR__ ."/../../db/ChatRoom/ChatRoom.php";
 include_once __DIR__ ."/../../db/ChatPermission/ChatPermission.php";
 include_once __DIR__ ."/../../db/VoteSetting/VoteSetting.php";
 include_once __DIR__ ."/../../db/VoteEntry/VoteEntry.php";
+include_once __DIR__ ."/../../db/VisibleRole/VisibleRole.php";
 
 class RoleHandler {
     private static $roleBuffer = array();
@@ -395,6 +396,13 @@ class RoleHandler {
                     $this->setRoomPermission($r, $room, $enable, $write, $visible);
             return;
         }
+        if ($room == null)
+            $room = $this->config->chats;
+        if (is_array($room)) {
+            foreach ($room as $r)
+                if ($r !== null)
+                    $this->setRoomPermission($role, $r, $enable, $write, $visible);
+        }
         $this->getChats();
         foreach ($this->chats as $chat)
             if ($chat->chatRoom == $room) {
@@ -432,6 +440,32 @@ class RoleHandler {
                 return;
             }
 
+    }
+
+    public function addRoleVisibility($user, $targets, $roles) {
+        if ($user == null) $user = $this->getPlayer();
+        if (is_array($user)) {
+            foreach ($user as $u)
+                $this->addRoleVisibility($u, $targets, $roles);
+            return;
+        }
+        if ($targets == null) $targets = $this->getPlayer();
+        if (is_array($targets)) {
+            foreach ($targets as $t)
+                $this->addRoleVisibility($user, $t, $roles);
+            return;
+        }
+        if (!($user instanceof Player))
+            $user = Player::create($user);
+        if (!($targets instanceof Player))
+            $targets = Player::create($targets);
+        if ($roles === null) {
+            $roles = array();
+            foreach ($targets->roles as $role)
+                $roles[] = $role->roleKey;
+        }
+        if (!is_array($roles)) $roles = array($roles);
+        VisibleRole::addRoles($user, $targets, $roles);
     }
 
     //endregion

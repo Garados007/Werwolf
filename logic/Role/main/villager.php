@@ -62,7 +62,13 @@ class main_villager extends RoleBase {
     }
 
     public function onGameStarts(RoundInfo $round) {
-
+        parent::onGameStarts($round);
+        $this->setRoomPermission(array(
+            "main"
+        ), true, true, true);
+        $this->setRoomPermission(array(
+            "story"
+        ), true, false, true);
     }
 
     public function onGameEnds(RoundInfo $round, array $teams) {

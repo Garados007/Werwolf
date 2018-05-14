@@ -104,7 +104,11 @@ class RoleBase {
      * to initialize some variables.
      */
     public function onGameStarts(RoundInfo $round) {
-
+        $this->addRoleVisibility(
+            $this->getPlayer($this->roleName),
+            $this->getPlayer($this->roleName),
+            $this->roleName
+        );
     }
 
     /**
@@ -133,7 +137,7 @@ class RoleBase {
      * Returns a list of Player objects with this given roles. If onlyAlive
      * is checked then only living players are returned.
      */
-    protected function getPlayer($role, $onlyAlive) {
+    protected function getPlayer($role, $onlyAlive = true) {
         return $this->roleHandler->getPlayer($role, $onlyAlive);
     }
 
@@ -159,6 +163,17 @@ class RoleBase {
         $this->roleHandler->createVoting(
             $room, $name, $targets, $start, $end
         );
+    }
+
+    /**
+     * Adds for each user (null means every user) (Player-object or id)
+     * the visibility of roles from each target (null means every target with
+     * this role) (Player-object or id). $roles can be a single role, an array
+     * of roles or null for each role of the specified target.
+     * The visibility is only added for current existing roles.
+     */
+    protected function addRoleVisibility($user, $targets, $roles) {
+        $this->roleHandler->addRoleVisibility($user, $targets, $roles);
     }
     //endregion
 }
