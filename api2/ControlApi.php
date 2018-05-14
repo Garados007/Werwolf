@@ -102,6 +102,7 @@ class ControlApi extends ApiBase {
             $this->formated['ruleset'],
             $this->formated['config']
         );
+        $group->setCurrentGame(null);
         $group->setCurrentGame($game);
         $roleH = new RoleHandler($game);
         $roleH->startGame(

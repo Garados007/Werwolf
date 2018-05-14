@@ -4,10 +4,18 @@ include_once __DIR__ . '/ApiBase.php';
 
 class ConvApi extends ApiBase {
     public function lastOnline() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
         if (($result = $this->getData(array(
             'group' => 'int'
         ))) !== true)
             return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canGetGroupData(
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+            
         $this->inclDb('User', 'UserStats');
         $result = array();
         foreach (User::loadAllUserByGroup(
@@ -21,6 +29,8 @@ class ConvApi extends ApiBase {
     }
 
     public function getUpdatedGroup() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
         if (($result = $this->getData(array(
             'group' => 'int',
             'lastChange' => 'int',
@@ -29,6 +39,12 @@ class ConvApi extends ApiBase {
             '?day' => 'int'
         ))) !== true)
             return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canGetGroupData(
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+
         if (isset($this->formated['phase']) ^ isset($this->formated['day']))
             return $this->wrapError($this->errorFormat('key phase and day need to be defined together'));
         $this->inclDb('Group', 'GameGroup');
@@ -57,16 +73,25 @@ class ConvApi extends ApiBase {
     }
 
     public function getChangedVotings() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
         if (($result = $this->getData(array(
             'game' => 'int',
             'lastChange' => 'int'
         ))) !== true)
             return $this->wrapError($result);
         $this->inclDb('GameGroup', 'ChatRoom', 'VoteEntry', 'VoteSetting');
-        $result = array();
         $game = GameGroup::create($this->formated['game']);
         if ($game === null)
             return $this->wrapError($this->errorId('game not found'));
+        
+        $this->inclPerm();
+        if (($result = Permission::canGetGroupData(
+            $this->account['id'],
+            $game->mainGroupId
+        )) !== true) return $this->wrapError($result);
+               
+        $result = array();
         $change = $this->formated['lastChange'];
         foreach (ChatRoom::getAllChatRoomIds($game->id) as $id) {
             $chat = ChatRoom::create($id);
@@ -80,11 +105,19 @@ class ConvApi extends ApiBase {
     }
 
     public function getNewChatEntrys() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
         if (($result = $this->getData(array(
             'chat' => 'int',
             'after' => 'int'
         ))) !== true)
             return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canGetChatData(
+            $this->account['id'],
+            $this->formated['chat']
+        )) !== true) return $this->wrapError($result);
+
         $this->inclDb('ChatEntry');
         $result = ChatEntry::loadAllEntrys(
             $this->formated['chat'], 
@@ -94,12 +127,20 @@ class ConvApi extends ApiBase {
     }
 
     public function getNewVotes() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
         if (($result = $this->getData(array(
             'chat' => 'int',
             'voteKey' => [ 'regex', '/^.{1,5}$/'],
             'lastChange' => 'int'
         ))) !== true)
             return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canGetChatData(
+            $this->account['id'],
+            $this->formated['chat']
+        )) !== true) return $this->wrapError($result);
+        
         $this->inclDb('VoteEntry', 'VoteSetting');
         $voting = VoteSetting::create(
             $this->formated['chat'],
