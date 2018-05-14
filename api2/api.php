@@ -22,6 +22,14 @@ switch ($_GET["_class"]) {
         include_once __DIR__ . '/ControlApi.php';
         $class = new ControlApi();
         break;
+    case "info":
+        include_once __DIR__ . '/InfoApi.php';
+        $class = new InfoApi();
+        break;
+    case "multi":
+        include_once __DIR__ . '/MultiApi.php';
+        $class = new MultiApi();
+        break;
 }
 
 if ($class === null || !is_callable([$class, $_GET["_method"]]) || substr($_GET["_method"], 0, 1) == '_') {
