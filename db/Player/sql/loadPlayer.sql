@@ -1,4 +1,3 @@
-SELECT Game, User, Alive, ExtraWolfLive, SpecialVoting
+SELECT Id, Game, User, Alive, ExtraWolfLive, Vars
 FROM <?php echo DB_PREFIX; ?>Player
-WHERE Game = <?php echo $game; ?> AND
-	User = <?php echo $user; ?>;
+WHERE Id = <?php echo $id; ?>;

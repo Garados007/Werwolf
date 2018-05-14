@@ -1,5 +1,4 @@
-SELECT Game, MainUser, TargetUser, RoleKey
+SELECT Player, Target, RoleKey
 FROM <?php echo DB_PREFIX; ?>VisibleRoles
-WHERE Game = <?php echo $game; ?> AND
-	MainUser = <?php echo $main; ?> AND
-	TargetUser = <?php echo $target; ?>;
+WHERE Player = <?php echo $player; ?> AND
+	Target = <?php echo $target; ?>;

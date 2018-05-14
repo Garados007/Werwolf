@@ -10,6 +10,7 @@ define('DB_PW', '');
 define('DB_NAME', 'werwolf');
 define('DB_PREFIX', 'werwolf_'); //The prefix for the tables. leave it blank for no prefix.
 define('DB_USE_TRIGGER', true); //Use sql trigger to clear the tables
+define('DB_LOG_QUERYS', false);  //for debug mode - logs all querys to a log file
 
 
 //Runtime Setting

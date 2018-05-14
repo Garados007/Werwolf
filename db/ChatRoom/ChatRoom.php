@@ -1,8 +1,9 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
+include_once dirname(__FILE__).'/../VoteSetting/VoteSetting.php';
+include_once __DIR__ . '/../ChatPermission/ChatPermission.php';
 
 class ChatRoom extends JsonExport {
 	//the id of this chatroom
@@ -10,17 +11,22 @@ class ChatRoom extends JsonExport {
 	//the game of this chatroom
 	public $game;
 	//the chat mode of this chatroom - its the access key for the player
-	public $chatMode;
-	//say if the chatroom is opened - if not, then its readonly
-	public $opened;
-	//say if create voting is enabled
-	public $enableVoting;
+	public $chatRoom;
 	//the connected voting
 	public $voting;
+	//the current ChatPermission array with all permissions
+	public $permission;
+
+	private static $cache = array();
+
+	private function __construct() {}
 	
-	public function __construct($id) {
-		$this->jsonNames = array('id', 'game', 'chatMode', 'opened',
-			'enableVoting','voting');
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+
+		$cur = new ChatRoom();
+		$cur->jsonNames = array('id', 'game', 'chatRoom', 'voting');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadChatRoom.sql',
 			array(
@@ -28,17 +34,20 @@ class ChatRoom extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = $entry["Id"];
-			$this->game = $entry["Game"];
-			$this->chatMode = $entry["ChatMode"];
-			$this->opened = boolval($entry["Opened"]);
-			$this->enableVoting = boolval($entry["EnableVoting"]);
+			$cur->id = $entry["Id"];
+			$cur->game = $entry["Game"];
+			$cur->chatRoom = $entry["ChatRoom"];
 			$result->free();
-			$this->voting = new VoteSetting($this->id);
-			if ($this->voting->chat === null)
-				$this->voting = null;
+			$cur->voting = array();
+			foreach (VoteSetting::getVotingKeysForChat($cur->id) as $key)
+				$cur->voting[] = VoteSetting::create($cur->id, $key);
+			$cur->permission = ChatPermission::loadPermissions($cur->id);
 		}
-		else $result->free();
+		else {
+			$result->free();
+			$cur = null;
+		}
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function createChatRoom($game, $mode) {
@@ -53,46 +62,68 @@ class ChatRoom extends JsonExport {
 		echo DB::getError();
 		$entry = $result->getResult()->getEntry();
 		$result->free();
-		return new ChatRoom($entry["Id"]);
+		return self::create($entry["Id"]);
 	}
 	
-	public static function getChatRoomId($game, $mode) {
+	public static function getChatRoomId($game, $room) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/getChatRoomId.sql',
 			array(
 				"game" => $game,
-				"mode" => $mode
+				"mode" => $room
 			)
 		);
 		if ($entry = $result->getResult()->getEntry())
 			return $entry["Id"];
 	}
-	
-	public function changeOpenedState($opened) {
+
+	public static function getAllChatRoomIds($game) {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/changeOpenState.sql',
+			dirname(__FILE__).'/sql/getAllChatRoomIds.sql',
 			array(
-				"opened" => $this->opened = $opened,
-				"enablev" => $this->enableVoting,
-				"id" => $this->id
+				"game" => $game
 			)
 		);
+		$set = $result->getResult();
+		$res = array();
+		while ($entry = $set->getEntry())
+			$res[] = intval($entry["Id"]);
 		$result->free();
+		return $res;
 	}
 	
-	public function changeEnableVotingState($enable) {
-		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/changeOpenState.sql',
-			array(
-				"opened" => $this->opened,
-				"enablev" => $this->enableVoting = $enable,
-				"id" => $this->id
-			)
-		);
-		$result->free();
+	public function createVoting($key, $start, $end, array $enabled, 
+		array $target) 
+	{
+		$voting = VoteSetting::createVoteSetting($this->id, $key, $start,
+			$end, $enabled, $target);
+		$this->voting[] = $voting;
+		return $voting;
 	}
 
-	public function createVoting($end) {
-		$this->voting = VoteSetting::createVoteSetting($this->id, $end);
+	public function deleteVoting($key) {
+		$voting = array();
+		foreach ($this->voting as &$v)
+			if ($v->voteKey == $key)
+				$v->deleteVoting();
+			else $voting[] = $v;
+		$this->voting = $voting;
+	}
+
+	public function getPermission($key) {
+		foreach ($this->permission as $perm)
+			if ($perm->roleKey == $key)
+				return $perm;
+		return null;
+	}
+
+	public function addPermission(ChatPermission $permission) {
+		ChatPermission::addPermissions($permission);
+		$list = array();
+		foreach ($this->permission as &$perm)
+			if ($perm->roleKey !== $permission->roleKey)
+				$list[] = &$perm;
+		$list[] = $permission;
+		$this->permission = $list;
 	}
 }

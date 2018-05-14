@@ -1,0 +1,2 @@
+DELETE FROM <?php echo DB_PREFIX; ?>ChatPermission
+WHERE Room = <?php echo $room; ?>;

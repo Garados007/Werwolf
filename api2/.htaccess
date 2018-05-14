@@ -1,0 +1,4 @@
+RewriteEngine on
+RewriteRule ^(get|conv|control|info|multi)/([a-zA-Z0-9]+)/$ api.php?_class=$1&_method=$2 [QSA,L]
+RewriteRule ^api.php$ api.php [QSA,L]
+RewriteRule ^(.*)$ - [L,R=403]

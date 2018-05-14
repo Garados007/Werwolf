@@ -13,16 +13,26 @@ class Group extends JsonExport {
 	public $created;
 	//the time when the group played the last game (min. creation time)
 	public $lastTime;
+	//the creator id of this group
+	public $creator;
 	//the leader id of this group
 	public $leader;
 	//the current game of this group
 	public $currentGame;
 	//the key which is needed for enter this group
-	public $entryKey;
+	public $enterKey;
 	
-	public function __construct($id) {
-		$this->jsonNames = array(
-			'id', 'name', 'created', 'lastTime',
+	private static $cache = array();
+
+	private function __construct() {}
+
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+		$cur = new Group();
+
+		$cur->jsonNames = array(
+			'id', 'name', 'created', 'lastTime', 'creator',
 			'leader', 'currentGame', 'enterKey'
 		);
 		$result = DB::executeFormatFile(
@@ -32,17 +42,22 @@ class Group extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = $entry["Id"];
-			$this->name = $entry["Name"];
-			$this->created = $entry["Created"];
-			$this->lastTime = $entry["LastGame"];
-			$this->leader = $entry["Leader"];
-			$this->currentGame = $entry["CurrentGame"];
-			$this->enterKey = $entry["EnterKey"];
+			$cur->id = intval($entry["Id"]);
+			$cur->name = $entry["Name"];
+			$cur->created = intval($entry["Created"]);
+			$cur->lastTime = intval($entry["LastGame"]);
+			$cur->creator = intval($entry["Creator"]);
+			$cur->leader = intval($entry["Leader"]);
+			$cur->currentGame = $entry["CurrentGame"] === null ?
+				null : intval($entry["CurrentGame"]);
+			$cur->enterKey = $entry["EnterKey"];
 		}
+		else $cur = null;
 		$result->flush();
-		if ($this->currentGame !== null)
-			$this->currentGame = new GameGroup($this->currentGame);
+		if ($cur !== null && $cur->currentGame !== null)
+			$cur->currentGame = GameGroup::create($cur->currentGame);
+
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function getIdFromKey($key) {
@@ -58,7 +73,7 @@ class Group extends JsonExport {
 	}
 	
 	private static function createKey() {
-		$c = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+		$c = '0123456789ABCDEFGHJKLMNPQRSTUWXYZ';
 		$l = strlen($c);
 		$s;
 		do {
@@ -87,18 +102,31 @@ class Group extends JsonExport {
 		$entry = $result->getResult();
 		$entry = $entry->getEntry();
 		$result->free();
-		return new Group($entry["Id"]);
+		return self::create($entry["Id"]);
 	}
 	
-	public function setCurrentGame($game) {
+	public function setCurrentGame(GameGroup $game = null) {
 		$id = $game === null || $game->finished !== null ? null :
 			$game->id;
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/setCurrentGame.sql',
 			array(
-				"oldgame" => $this->currentGame,
-				"game" => $this->currentGame = $id,
+				"oldgame" => $this->currentGame === null ?
+					null : $this->currentGame->id,
+				"game" => $id,
 				"time" => $this->lastTime = time(),
+				"id" => $this->id
+			)
+		);
+		$this->currentGame = $game;
+		$result->free();
+	}
+
+	public function setLeader($leader) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setLeader.sql',
+			array(
+				"leader" => $this->leader = $leader,
 				"id" => $this->id
 			)
 		);

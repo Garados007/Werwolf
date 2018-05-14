@@ -1,10 +1,14 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../Role/Role.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
+include_once dirname(__FILE__).'/../Role/Role.php';
+include_once __DIR__ . '/../ChatRoom/ChatRoom.php';
+include_once __DIR__ . '/../ChatPermission/ChatPermission.php';
 
 class Player extends JsonExport {
+	//the id of this player object
+	public $id;
 	//the id of the current game
 	public $game;
 	//the id of the user
@@ -15,31 +19,42 @@ class Player extends JsonExport {
 	public $extraWolfLive;
 	//a list of assigned roles
 	public $roles;
-	//a key, if a special voting for this player is activated
-	//Hint: Special voting is not a real voting. if a target is selected, 
-	//      the effect will taken automaticly and the voting is reseted.
-	public $specialVoting;
+	//a bunch of variables used for the scripts
+	protected $vars;
+
+	private static $cache = array();
+	private function __construct(){}
 	
-	public function __construct($game, $user) {
-		$this->jsonNames = array('game', 'user', 'alive', 'extraWolfLive',
-			'roles', 'specialVoting');
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+		$cur = new Player();
+		
+		$cur->jsonNames = array('id', 'game', 'user', 'alive', 
+			'extraWolfLive', 'roles', 'vars');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadPlayer.sql',
 			array(
-				"game" => $game,
-				"user" => $user
+				"id" => $id
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->game = intval($entry["Game"]);
-			$this->user = intval($entry["User"]);
-			$this->alive = boolval($entry["Alive"]);
-			$this->extraWolfLive = boolval($entry["ExtraWolfLive"]);
-			$this->specialVoting = intval($entry["SpecialVoting"]);
+			$cur->id = intval($entry["Id"]);
+			$cur->game = intval($entry["Game"]);
+			$cur->user = intval($entry["User"]);
+			$cur->alive = boolval($entry["Alive"]);
+			$cur->extraWolfLive = boolval($entry["ExtraWolfLive"]);
+			$cur->vars = $entry["Vars"] === null ? array() :
+				json_decode($entry["Vars"], true);
 			$result->free();
-			$this->roles = Role::getAllRolesOfPlayer($this);
+			$cur->roles = Role::getAllRolesOfPlayer($cur);
 		}
-		else $result->free();
+		else {
+			$result->free();
+			$cur = null;
+		}
+
+		return self::$cache[$id] = $cur;
 	}
 	
 	public static function createNewPlayer($game, $user, $roleKeys) {
@@ -48,14 +63,21 @@ class Player extends JsonExport {
 			array(
 				"game" => $game,
 				"user" => $user,
-				"extraLive" => in_array('grandpa', $roleKeys)
+				"extraLive" => in_array('grandpa', $roleKeys),
+				"vars" => '{}'
 			)
 		);
+		echo DB::getError();
+		if ($set = $result->getResult()) $set->free(); //insert
+		if ($entry = $result->getResult()->getEntry()) { //select id
+			$result->flush();
+			$player = self::create($entry["Id"]);
+			foreach ($roleKeys as $key)
+				$player->roles[] = Role::createRole($player, $key);
+			return $player;
+		}
+		else $result->flush();
 		$result->free();
-		$player = new Player($game, $user);
-		foreach ($roleKeys as $key)
-			$player->roles[] = Role::createRole($player, $key);
-		return $player;
 	}
 
 	public function kill($byWolf) {
@@ -66,27 +88,14 @@ class Player extends JsonExport {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/killPlayer.sql',
 			array(
-				"game" => $this->game,
-				"user" => $this->user,
+				"id" => $this->id,
 				"alive" => $this->alive,
 				"wolf" => $this->extraWolfLive
 			)
 		);
 		$result->free();
 	}
-	
-	public function setSpecialVoting($key) {
-		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/setSpecialVoting.sql',
-			array(
-				"game" => $this->game,
-				"user" => $this->user,
-				"key" => $this->specialVoting = $key
-			)
-		);
-		$result->free();
-	}
-	
+		
 	public function getRole($key) {
 		for ($i = 0; $i<count($this->roles); $i++)
 			if ($this->roles[$i]->roleKey == $key)
@@ -114,5 +123,76 @@ class Player extends JsonExport {
 				unset($this->roles[$i]);
 			}
 		Role::removeRole($this, $key);
+	}
+
+	public function getVar($key) {
+		if (!isset($this->vars[$key])) return null;
+		return $this->vars[$key];
+	}
+
+	public function getAllVars() {
+		return $this->vars;
+	}
+
+	public function setVar($key, $value = null) {
+		if (!is_string($key)) throw new Exception("format exception");
+		if ($value === null)
+			unset($this->vars[$key]);
+		else $this->vars[$key] = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					DB::escape(json_encode($this->vars))
+			)
+		)->executeAll();
+	}
+
+	public function setAllVars($value = null) {
+		if ($value === null)
+			$this->vars = array();
+		else $this->vars = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					DB::escape(json_encode($this->vars))
+			)
+		)->executeAll();
+	}
+	
+	public function canRead(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable)
+				return true;
+		}
+		return false;
+	}
+
+	public function canWrite(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable && $perm->write)
+				return true;
+		}
+		return false;
+	}
+
+	public function isVisible(ChatRoom $chat) {
+		foreach ($this->roles as $role) {
+			$perm = $chat->getPermission($role->roleKey);
+			if ($perm !== null && $perm->enable) {
+				if ($perm->write)
+					return true;
+				elseif ($perm->visible)
+					return true;
+			}
+		}
+		return false;
 	}
 }

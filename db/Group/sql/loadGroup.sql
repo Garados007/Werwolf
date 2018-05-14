@@ -1,3 +1,3 @@
-SELECT Id, Name, Created, LastGame, Leader, CurrentGame, EnterKey
+SELECT Id, Name, Created, LastGame, Creator, Leader, CurrentGame, EnterKey
 FROM <?php echo DB_PREFIX; ?>Groups
 WHERE Id = <?php echo $id; ?>;

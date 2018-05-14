@@ -3,3 +3,4 @@ account/manager.php
 setup/version.txt
 ui/module/cache/
 elm-stuff
+logs/

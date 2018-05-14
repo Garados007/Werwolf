@@ -1,7 +1,6 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
-include_once dirname(__FILE__).'/../Phase/Phase.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
 class GameGroup extends JsonExport { 
@@ -15,10 +14,26 @@ class GameGroup extends JsonExport {
 	public $finished; 
 	//the current phase
 	public $phase;
+	//the current day
+	public $day;
+	//the current ruleset
+	public $ruleset;
+	//the current vars;
+	protected $vars;
+	//the winning roles
+	public $winningRoles;
+
+	private static $cache = array();
+
+	private function __construct() {}
 	
-	public function __construct($id) {
-		$this->jsonNames = array('id', 'mainGroupId', 'started',
-			'finished', 'phase');
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+		$cur = new GameGroup();
+
+		$cur->jsonNames = array('id', 'mainGroupId', 'started',
+			'finished', 'phase', 'day', 'ruleset', 'vars', 'winningRoles');
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/loadGroup.sql',
 			array(
@@ -27,42 +42,113 @@ class GameGroup extends JsonExport {
 		);
 		echo DB::getError();
 		if ($entry = $result->getResult()->getEntry()) {
-			$this->id = $entry["Id"];
-			$this->mainGroupId = $entry["MainGroup"];
-			$this->started = intval($entry["Started"]);
-			$this->finished = $entry["Finished"];
-			$this->phase = new Phase($entry["CurrentPhase"], 
-				intval($entry["CurrentLevel"]));
+			$cur->id = intval($entry["Id"]);
+			$cur->mainGroupId = intval($entry["MainGroup"]);
+			$cur->started = intval($entry["Started"]);
+			$cur->finished = intvaln($entry["Finished"]);
+			$cur->phase = $entry["CurrentPhase"];
+			$cur->day = intval($entry["CurrentDay"]);
+			$cur->ruleset = $entry["RuleSet"];
+			if ($entry["Vars"] !== null)
+				$cur->vars = json_decode($entry["Vars"], true);
+			else $cur->vars = array();
 		}
+		else $cur = null;
 		$result->flush();
+
+		if ($cur != null) {
+			if ($cur->finished !== null) {
+				$cur->winningRoles = array();
+				$result = DB::executeFormatFile(
+					__DIR__ . '/sql/getWinningGame.sql',
+					array(
+						"game" => $id
+					)
+				);
+				echo DB::getError();
+				$set = $result->getResult();
+				while ($entry = $set->getEntry()) {
+					$cur->winningRoles[] = $entry["Role"];
+				}
+			}
+			else $cur->winningRoles = null;
+		}
+		return self::$cache[$id] = $cur;
 	}
 	
-	public static function createNew($mainGroupId) {
+	public static function createNew($mainGroupId, $phase, $rules, $vars = null) {
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/createGroup.sql',
 			array(
-				"mainGroup" => $mainGroupId
+				"mainGroup" => $mainGroupId,
+				"phase" => $phase,
+				"rules" => $rules,
+				"vars" => DB::escape(json_encode($vars))
 			)
 		);
 		echo DB::getError();
 		if ($set = $result->getResult()) $set->free(); //insert
 		if ($entry = $result->getResult()->getEntry()) { //select id
 			$result->flush();
-			return new GameGroup($entry["Id"]);
+			return self::create($entry["Id"]);
 		}
 		else $result->flush();
 	}
 	
-	public function nextPhase() {
+	public function nextPhase($phase, $day) {
+		if (!is_string($phase)) throw new Exception("format exception");
+		if (!is_int($day)) throw new Exception("format exception");
+
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/nextPhase.sql',
 			array(
 				"id" => $this->id,
-				"next" => $this->phase->next,
-				"level" => $this->phase->nextLevel
+				"next" => $phase,
+				"day" => $day
 			)
 		)->executeAll();
-		$this->phase = new Phase($this->phase->next, $this->phase->nextLevel);
+		$this->phase = $phase;
+		$this->day = $day;
+	}
+
+	public function getVar($key) {
+		if (!isset($this->vars[$key])) return null;
+		return $this->vars[$key];
+	}
+
+	public function getAllVars() {
+		return $this->vars;
+	}
+
+	public function setVar($key, $value = null) {
+		if (!is_string($key)) throw new Exception("format exception");
+		if ($value === null)
+			unset($this->vars[$key]);
+		else $this->vars[$key] = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					DB::escape(json_encode($this->vars))
+			)
+		)->executeAll();
+	}
+
+	public function setAllVars($value = null) {
+		if ($value === null)
+			$this->vars = array();
+		else $this->vars = $value;
+
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/setVars.sql',
+			array(
+				"id" => $this->id,
+				"vars" => count($this->vars) == 0 ? null :
+					DB::escape(json_encode($this->vars))
+			)
+		)->executeAll();
 	}
 	
 	public function finish() {
@@ -72,6 +158,17 @@ class GameGroup extends JsonExport {
 			array(
 				"id" => $this->id,
 				"finished" => $this->finished
+			)
+		)->executeAll();
+	}
+
+	public function setWinner(array $roles) {
+		var_dump($roles);
+		$result = DB::executeFormatFile(
+			__DIR__ . '/sql/setWinningGame.sql',
+			array(
+				"game" => $this->id,
+				"roles" => $this->winningRoles = $roles
 			)
 		)->executeAll();
 	}

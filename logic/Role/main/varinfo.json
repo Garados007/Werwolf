@@ -1,0 +1,11 @@
+{
+    "chapter": "Additional Settings",
+    "box": [
+        {
+            "key": "hiddenKillInfo",
+            "type": "check",
+            "title": "hides the role of killed ones",
+            "default": true
+        }
+    ]
+}
