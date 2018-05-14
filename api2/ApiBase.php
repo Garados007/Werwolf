@@ -4,6 +4,7 @@ class ApiBase {
     public $data = array();
     public $formated = null;
     protected $account = null;
+    private $class, $method;
 
     public function __construct() {
         global $_GET, $_POST;
@@ -12,7 +13,18 @@ class ApiBase {
                 $this->data[$key] = $value;
         foreach ($_POST as $key => $value)
             $this->data[$key] = $value;
+        $this->class = $_GET['_class'];
+        $this->method = $_GET['_method'];
         header("Content-Type: text/json", true);
+    }
+
+    protected function replaceData($data) {
+        $this->data = array();
+        foreach ($data as $key => $value)
+            if (substr($key, 0, 1) != '_')
+                $this->data[$key] = $value;
+        $this->class = $data['_class'];
+        $this->method = $data['_method'];
     }
 
     protected function getData(array $format) {
@@ -66,8 +78,8 @@ class ApiBase {
     protected function wrapResult($result) {
         global $_GET, $_POST;
         return array(
-            "class" => $_GET["_class"],
-            "method" => $_GET["_method"],
+            "class" => $this->class,
+            "method" => $this->method,
             "request" => $this->formated == null ?
                 $this->data : $this->formated,
             "result" => $result instanceof JsonExport ?
@@ -78,8 +90,8 @@ class ApiBase {
     protected function wrapError($error) {
         global $_GET, $_POST;
         return array(
-            "class" => $_GET["_class"],
-            "method" => $_GET["_method"],
+            "class" => $this->class,
+            "method" => $this->method,
             "request" => $this->formated == null ?
                 $this->data : $this->formated,
             "error" => $error
