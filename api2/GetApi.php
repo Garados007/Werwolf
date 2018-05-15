@@ -118,6 +118,7 @@ class GetApi extends ApiBase {
 
         $this->inclDb('ChatRoom');
         $chat = ChatRoom::create($this->formated['chat']);
+        $chat = $this->filterChatRooms($chat->game, $chat);
         if ($chat === null)
             return $this->wrapError($this->errorId('chat id not found'));
         return $this->wrapResult($chat);
