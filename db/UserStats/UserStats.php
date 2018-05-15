@@ -44,13 +44,13 @@ class UserStats extends JsonExport {
         );
         if ($entry = $result->getResult()->getEntry()) {
             $cur->userId = intval($entry["UserId"]);
-            $cur->firstGame = $entry["FirstGame"];
-            $cur->lastGame = $entry["LastGame"];
-            $cur->gameCount = $entry["GameCount"];
-            $cur->winningCount = $entry["WinningCount"];
-            $cur->moderatedCount = $entry["ModeratorCount"];
-            $cur->lastOnline = $entry["LastOnline"];
-            $cur->aiId = $entry["AiId"];
+            $cur->firstGame = intvaln($entry["FirstGame"]);
+            $cur->lastGame = intvaln($entry["LastGame"]);
+            $cur->gameCount = intval($entry["GameCount"]);
+            $cur->winningCount = intval($entry["WinningCount"]);
+            $cur->moderatedCount = intval($entry["ModeratorCount"]);
+            $cur->lastOnline = intval($entry["LastOnline"]);
+            $cur->aiId = intvaln($entry["AiId"]);
             $cur->aiNameKey = $entry["AiNameKey"];
             $cur->aiControlClass = $entry["AiControlClass"];
         }

@@ -38,8 +38,12 @@ class VoteEntry extends JsonExport {
 		$list = array();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = new VoteEntry($entry["Setting"], $entry["VoteKey"],
-				$entry["Voter"], $entry["Target"], $entry["VoteDate"]);
+			$list[] = new VoteEntry(
+				intval($entry["Setting"]),
+				$entry["VoteKey"],
+				intval($entry["Voter"]), 
+				intval($entry["Target"]), 
+				intval($entry["VoteDate"]));
 		}
 		$result->free();
 		return $list;
@@ -57,8 +61,12 @@ class VoteEntry extends JsonExport {
 		$item = null;
 		$set = $result->getResult();
 		if ($entry = $set->getEntry()) {
-			$item = new VoteEntry($entry["Setting"], $entry["VoteKey"],
-				$entry["Voter"], $entry["Target"], $entry["VoteDate"]);
+			$item = new VoteEntry(
+				intval($entry["Setting"]),
+				$entry["VoteKey"],
+				intval($entry["Voter"]), 
+				intval($entry["Target"]), 
+				intval($entry["VoteDate"]));
 			$set->free();
 		}
 		$result->free();

@@ -34,8 +34,8 @@ class ChatRoom extends JsonExport {
 			)
 		);
 		if ($entry = $result->getResult()->getEntry()) {
-			$cur->id = $entry["Id"];
-			$cur->game = $entry["Game"];
+			$cur->id = intval($entry["Id"]);
+			$cur->game = intval($entry["Game"]);
 			$cur->chatRoom = $entry["ChatRoom"];
 			$result->free();
 			$cur->voting = array();
