@@ -4,3 +4,4 @@ setup/version.txt
 ui/module/cache/
 elm-stuff
 logs/
+ui/elm/config.elm
