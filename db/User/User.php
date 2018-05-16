@@ -34,9 +34,10 @@ class User extends JsonExport {
 		$list = array();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = new User($entry["GroupId"], 
+			$list[] = new User(
+				intval($entry["GroupId"]), 
 				intval($entry["UserId"]), 
-				$entry["Player"] === null ? null : intval($entry["Player"]));
+				intvaln($entry["Player"]));
 		}
 		$result->free();
 		return $list;
@@ -53,9 +54,10 @@ class User extends JsonExport {
 		echo DB::getError();
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = new User(intval($entry["GroupId"]), 
+			$list[] = new User(
+				intval($entry["GroupId"]), 
 				intval($entry["UserId"]), 
-				$entry["Player"] === null ? null : intval($entry["Player"]));
+				intvaln($entry["Player"]));
 		}
 		$result->free();
 		return $list;

@@ -99,8 +99,11 @@ class GetApi extends ApiBase {
 
         $this->inclDb('User');
         $user = User::loadAllGroupsByUser($this->account['id']);
-        $user = $this->filterUser($user->group, $user);
-        return $this->wrapResult($user);
+        $result = array();
+        foreach (User::loadAllGroupsByUser($this->account['id']) as $user)
+            if (($res = $this->filterUser($user->group, $user)) !== null)
+                $result[] = $res;
+        return $this->wrapResult($result);
     }
 
     public function getChatRoom() {
