@@ -151,7 +151,7 @@ decodeMulti method =
         _ -> succeed Nothing
 
 decSingle : (a -> b) -> Decoder a -> Decoder (Maybe b)
-decSingle f d = andThen (succeed << Just << f) d
+decSingle f d = andThen (succeed << Just << f) (field "result" d)
 
 decodeTuple2 : Decoder a -> Decoder (a,a)
 decodeTuple2 decoder=

@@ -22,7 +22,7 @@ type alias Box =
 type BoxContent
     -- the content is again a list of box
     = SubBox 
-        (List Box) -- all child boxes
+        SubBoxContent -- all child boxes
     -- the content is just a description
     -- this value is discarded in the creation
     | Desc 
@@ -47,3 +47,5 @@ type BoxContent
             , String --visible text
             ) 
         )
+
+type SubBoxContent = SubBoxContent (List Box)

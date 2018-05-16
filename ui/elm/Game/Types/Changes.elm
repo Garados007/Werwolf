@@ -9,6 +9,8 @@ import Game.Types.CreateOptions exposing (..)
 import Game.Types.Response exposing (..)
 import Debug exposing (log)
 import List
+import Dict
+import Json.Decode exposing (decodeValue, string)
 
 type Changes
     = CUserStat UserStat
@@ -22,7 +24,7 @@ type Changes
     | CLastOnline (List (Int, Int))
     | CInstalledGameTypes (List String)
     | CCreateOptions CreateOptions
-    | CRolesets (List String)
+    | CRolesets String (List String)
     | CAccountInvalid
     
 type alias ChangeConfig =
@@ -98,7 +100,18 @@ concentrate resp =
                 InstalledRoles v ->
                     ChangeConfig [] False
                 Rolesets v ->
-                    ChangeConfig [ CRolesets v ] False
+                    let
+                        t = Dict.get "type" resp.info.request
+                        dv = Maybe.map (decodeValue string) t
+                    in case dv of
+                        Just ti ->
+                            case ti of
+                                Ok rv ->
+                                    ChangeConfig [ CRolesets rv v ] False
+                                Err _ ->
+                                    ChangeConfig [] False
+                        Nothing ->
+                            ChangeConfig [] False
         RMulti r -> 
             case r of
                 Multi v ->

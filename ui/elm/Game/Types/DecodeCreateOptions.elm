@@ -13,22 +13,24 @@ decodeCreateOptions =
 
 decodeBox : Decoder Box
 decodeBox =
-    map3 Box
-        (field "key" string)
-        (field "title" string)
-        decodeBox2
-
-decodeBox2 : Decoder BoxContent
-decodeBox2 =
-    andThen decodeBoxContent
+    andThen 
+        (map3 Box
+            (field "key" string)
+            (field "title" string)
+            << decodeBoxContent
+        )
         (field "type" string)
 
+lazyDecodeBox : Decoder SubBoxContent
+lazyDecodeBox = 
+    map SubBoxContent (list (lazy (\_ -> decodeBox )))
+
 decodeBoxContent : String -> Decoder BoxContent
-decodeBoxContent type_ =
-    case type_ of
+decodeBoxContent boxType =
+    case boxType of
         "box" ->
             decode SubBox
-                |> required "box" (list decodeBox)
+                |> required "box" lazyDecodeBox
         "desc" ->
             decode Desc
                 |> required "text" string
@@ -50,6 +52,7 @@ decodeBoxContent type_ =
                 |> required "options"
                     (list (decodeTuple2 string))
         _ -> fail "not supported box type"
+        
 
 decodeTuple2 : Decoder a -> Decoder (a,a)
 decodeTuple2 decoder=
