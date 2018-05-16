@@ -108,7 +108,10 @@ concentrate resp =
                         rb = List.foldr (||) False (List.map .reload c)
                     in ChangeConfig rl rb
         RError e ->
-            let
-                d = log "server error" resp
-                r = ChangeConfig [] False
-            in always r d
+            if e.key == "account"
+            then ChangeConfig [ CAccountInvalid ] False
+            else
+                let
+                    d = log "server error" resp
+                    r = ChangeConfig [] False
+                in always r d
