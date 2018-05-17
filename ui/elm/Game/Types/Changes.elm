@@ -23,7 +23,7 @@ type Changes
     | CVoting Voting
     | CLastOnline (List (Int, Int))
     | CInstalledGameTypes (List String)
-    | CCreateOptions CreateOptions
+    | CCreateOptions String CreateOptions
     | CRolesets String (List String)
     | CAccountInvalid
     | CNetworkError
@@ -97,7 +97,15 @@ concentrate resp =
                 InstalledGameTypes v ->
                     ChangeConfig [ CInstalledGameTypes v ] False
                 CreateOptions_ v ->
-                    ChangeConfig [ CCreateOptions v ] False
+                    let
+                        t = Dict.get "type" resp.info.request
+                        dv = Maybe.map (decodeValue string) t
+                    in case dv of
+                        Just ti ->
+                            case ti of
+                                Ok rv -> ChangeConfig [ CCreateOptions rv v ] False
+                                Err _ -> ChangeConfig [] False
+                        Nothing -> ChangeConfig [] False
                 InstalledRoles v ->
                     ChangeConfig [] False
                 Rolesets v ->
