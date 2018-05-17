@@ -26,6 +26,7 @@ type Changes
     | CCreateOptions CreateOptions
     | CRolesets String (List String)
     | CAccountInvalid
+    | CNetworkError
     
 type alias ChangeConfig =
     { changes: List Changes
