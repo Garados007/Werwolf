@@ -8,6 +8,7 @@ decodeUserStat : Decoder UserStat
 decodeUserStat =
     decode UserStat
         |> required "userId" int
+        |> required "name" string
         |> required "firstGame" (nullable int)
         |> required "lastGame" (nullable int)
         |> required "gameCount" int

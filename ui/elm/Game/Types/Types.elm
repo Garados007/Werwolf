@@ -4,6 +4,8 @@ module Game.Types.Types exposing (..)
 type alias UserStat =
     -- The User Id
     { userId : Int 
+    -- The User name
+    , name : String
     -- Unix Time of first game
     , firstGame : Maybe Int
     -- Unix Time of last game

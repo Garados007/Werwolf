@@ -16,7 +16,7 @@ class GetApi extends ApiBase {
         $user = UserStats::create($this->formated['user']);
         if ($user === null)
             return $this->wrapError($this->errorId('user id not found'));
-        return $this->wrapResult($user);
+        return $this->wrapResult($this->setUserName($user));
     }
 
     public function getOwnUserStat() {
@@ -25,7 +25,7 @@ class GetApi extends ApiBase {
         $user = UserStats::create($this->account['id']);
         if ($user === null)
             $user = UserStats::createNewUserStats($this->account['id']);
-        return $this->wrapResult($user);
+        return $this->wrapResult($this->setUserName($user));
     }
 
     public function getGroup() {
@@ -66,7 +66,7 @@ class GetApi extends ApiBase {
         foreach (User::loadAllUserByGroup($this->formated['group']) as $user)
             if ($user->user == $this->formated['user']) {
                 $user = $this->filterUser($this->formated['group'], $user);
-                return $this->wrapResult($user);
+                return $this->wrapResult($this->setUserName($user));
             }
         return $this->wrapError($this->errorId('user not found'));
     }
@@ -87,7 +87,7 @@ class GetApi extends ApiBase {
         $this->inclDb('User');
         $user = User::loadAllUserByGroup($this->formated['group']);
         $user = $this->filterUser($this->formated['group'], $user);
-        return $this->wrapResult($user);
+        return $this->wrapResult($this->setUserName($user));
     }
 
     public function getMyGroupUser() {
@@ -103,7 +103,7 @@ class GetApi extends ApiBase {
         foreach (User::loadAllGroupsByUser($this->account['id']) as $user)
             if (($res = $this->filterUser($user->group, $user)) !== null)
                 $result[] = $res;
-        return $this->wrapResult($result);
+        return $this->wrapResult($this->setUserName($result));
     }
 
     public function getChatRoom() {
@@ -273,5 +273,34 @@ class GetApi extends ApiBase {
             if ($user->player !== null && $user->player->isVisible($room))
                 $result[] = $user->player->id;
         return $result;
+    }
+
+    private static $userNameBuffer = array();
+
+    private function &setUserName(&$userJson) {
+        $this->inclDb('JsonExport');
+        if ($userJson instanceof JsonExport) {
+            $json = $userJson->exportJson();
+            return $this->setUserName($json);
+        }
+        elseif (isset($userJson['stats'])) {
+            $userJson['stats'] = $this->setUserName($userJson['stats']);
+            return $userJson;
+        }
+        elseif (!isset($userJson['userId'])) {
+            foreach ($userJson as &$user)
+                $this->setUserName($user);
+            return $userJson;
+        }
+        else {
+            $id = $userJson['userId'];
+            if (!isset(self::$userNameBuffer[$id])) {
+                $this->getAccount();
+                self::$userNameBuffer[$id] =
+                    AccountManager::GetAccountName($id);
+            }
+            $userJson['name'] = self::$userNameBuffer[$id];
+            return $userJson;
+        }
     }
 }
