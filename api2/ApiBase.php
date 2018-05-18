@@ -127,15 +127,20 @@ class ApiBase {
     }
 
     protected function getAccount() {
-        if ($this->account !== null) return;
-        include_once __DIR__ . '/../account/manager.php';
-        $this->account = AccountManager::GetCurrentAccountData();
+        if ($this->account === null) {
+            include_once __DIR__ . '/../account/manager.php';
+            $this->account = AccountManager::GetCurrentAccountData();
+            $fetch = true;
+        }
+        else $fetch = false;
         if ($this->account['login']) {
-            $this->inclDb('UserStats');
-            $user = UserStats::create($this->account['id']);
-            if ($user === null)
-                $user = UserStats::createNewUserStats($this->account['id']);
-            $user->setOnline();
+            if ($fetch) {
+                $this->inclDb('UserStats');
+                $user = UserStats::create($this->account['id']);
+                if ($user === null)
+                    $user = UserStats::createNewUserStats($this->account['id']);
+                $user->setOnline();
+            }
             return true;
         }
         else return $this->error('account', 'login required');
