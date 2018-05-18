@@ -17,6 +17,7 @@ import Game.Types.Changes exposing (..)
 import Game.Types.CreateOptions exposing (..)
 import Game.Utils.Network exposing (Request)
 import Game.Types.Request exposing (..)
+import Game.UI.UserListBox as UserListBox exposing (UserListBox, UserListBoxMsg (..))
 
 import Html exposing (Html,div)
 import Task exposing (succeed, perform)
@@ -31,7 +32,7 @@ type alias GameViewInfo =
     , lastVotingChange : Int
     , lastChatTime : Int
     , lastVoteTime : Int
-    , chats : List Chat
+    , chats : Dict ChatId Chat
     , user : List User
     , periods : List Request
     , entrys : Dict ChatId (Dict Int ChatEntry)
@@ -39,6 +40,7 @@ type alias GameViewInfo =
     , installedTypes : List String
     , createOptions : Dict String CreateOptions
     , rolesets : Dict String (List String)
+    , userListBox : UserListBox
     }
 
 type GameViewViewType
@@ -57,6 +59,8 @@ type GameViewMsg
     -- public methods
     | Manage (List Changes)
     | Disposing --unregisters all registered requests and other cleanup
+    -- Wrapper methods
+    | WrapUserListBox UserListBoxMsg
 
 type alias ChangeVar a =
     { new : a
@@ -73,14 +77,17 @@ combine a b = ChangeVar b.new
 
 init : Int -> Int -> (GameView, Cmd GameViewMsg)
 init groupId ownUserId =
-    ( GameView
+    let 
+        own = perform SendNetwork <| succeed <| initRequest groupId ownUserId
+        (userListBox, ulbCmd) = UserListBox.init
+    in ( GameView
         { group = Nothing
         , hasPlayer = False
         , ownUserId = ownUserId
         , lastVotingChange = 0
         , lastChatTime = 0
         , lastVoteTime = 0
-        , chats = []
+        , chats = Dict.empty
         , user = []
         , periods = []
         , entrys = Dict.empty
@@ -88,8 +95,9 @@ init groupId ownUserId =
         , installedTypes = []
         , createOptions = Dict.empty
         , rolesets = Dict.empty
+        , userListBox = userListBox
         }
-    , perform SendNetwork <| succeed <| initRequest groupId ownUserId
+    , Cmd.batch [ own, Cmd.map WrapUserListBox ulbCmd ]
     )
 
 initRequest : Int -> Int -> Request
@@ -117,11 +125,18 @@ update msg (GameView model) = case msg of
                 ]
             new = changed.new
             nm = { new | periods = req1 }
-        in (GameView nm, Cmd.batch cmd)
+            cmd_ulb = getChanges_UserListBox model nm
+        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb]))
     Disposing ->
         (GameView model
         , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
         )
+    WrapUserListBox wmsg ->
+        let
+            (nm, wcmd) = UserListBox.update wmsg model.userListBox
+        in  ( GameView { model | userListBox = nm }
+            , Cmd.map WrapUserListBox wcmd
+            )
     _ -> (GameView model, Cmd.none)
 
 performUpdate : (a -> Changes -> ChangeVar a) -> a -> List Changes -> ChangeVar a
@@ -164,7 +179,7 @@ updateGroup info change =
                     ( if group.currentGame == Nothing
                     then { info
                         | group = Just group
-                        , chats = []
+                        , chats = Dict.empty
                         , entrys = Dict.empty
                         , votes = Dict.empty
                         }
@@ -217,7 +232,7 @@ updateGroup info change =
             } [] [] []
         CChat chat -> 
             let 
-                old = find (\c-> c.id == chat.id) info.chats
+                old = Dict.get chat.id info.chats
                 time = max info.lastVotingChange <| 
                     getNewestVotingTime chat
                 dict : Dict VoteKey (Dict UserId Vote)
@@ -226,7 +241,7 @@ updateGroup info change =
                     Nothing -> modifyVotes Dict.empty chat
             in ChangeVar
                 { info
-                | chats = (::) chat <| List.filter ((./=) .id chat) info.chats
+                | chats = Dict.insert chat.id chat info.chats
                 , lastVotingChange = time
                 , entrys = Dict.insert chat.id Dict.empty info.entrys
                 , votes = Dict.insert chat.id dict info.votes
@@ -282,7 +297,7 @@ updateGroup info change =
                                 info.votes
                             } [] [] []
         CVoting voting ->
-            case find (\c -> c.id == voting.chat) info.chats of
+            case Dict.get voting.chat info.chats of
                 Nothing -> ChangeVar info [] [] []
                 Just chat ->
                     let
@@ -293,7 +308,7 @@ updateGroup info change =
                             }
                     in ChangeVar
                         { info
-                        | chats = replace (\c -> c.id == nc.id) nc info.chats
+                        | chats = Dict.insert nc.id nc info.chats
                         } 
                         (if voting.voteEnd == Nothing && voting.voteStart /= Nothing
                         then [ requestNewVotesS voting info.lastVoteTime ]
@@ -308,7 +323,7 @@ updateGroup info change =
             ( if game.finished == Nothing
             then { info
                 | group = Maybe.map (\g -> { g | currentGame = Just game }) info.group
-                , chats = []
+                , chats = Dict.empty
                 , entrys = Dict.empty
                 , votes = Dict.empty
                 }
@@ -335,6 +350,25 @@ updateGroup info change =
         CRolesets key list -> ChangeVar
             { info | rolesets = Dict.insert key list info.rolesets } [] [] []
         _ -> ChangeVar info [] [] []
+
+getChanges_UserListBox : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
+getChanges_UserListBox old new =
+    Cmd.batch <| List.map (Cmd.map WrapUserListBox) <| List.filterMap identity
+        [ if old.user /= new.user
+            then Just <| perform UpdateUser <| succeed new.user
+            else Nothing
+        , if old.chats /= new.chats
+            then Just <| perform UpdateChats <| succeed new.chats
+            else Nothing
+        , if old.group == new.group
+            then Nothing
+            else case new.group of
+                Nothing -> Nothing
+                Just group -> case group.currentGame of
+                    Nothing -> Nothing
+                    Just game ->
+                        Just <| perform UpdateRuleset <| succeed game.ruleset
+        ]
 
 (./=) : (a -> b) -> a -> a -> Bool
 (./=) f a b = (f a) /= (f b)
@@ -439,5 +473,9 @@ modifyVotes dict chat =
     in d2
 
 view : GameView -> Html GameViewMsg
-view (GameView info) = div [] 
-    [ Html.text <| toString info ]
+view (GameView info) = 
+    div [] 
+        [ Html.map WrapUserListBox <| UserListBox.view info.userListBox
+        , Html.text <| toString info
+        , div [] [Html.text <| toString <| getViewType info]
+        ]
