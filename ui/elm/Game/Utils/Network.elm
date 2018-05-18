@@ -10,7 +10,7 @@ module Game.Utils.Network exposing
     , subscriptions
     )
 
-import Game.Types.Request exposing (encodeRequest,EncodedRequest)
+import Game.Types.Request exposing (encodeRequest,EncodedRequest, Response(RespMulti), ResponseMulti(Multi))
 import Game.Types.Response exposing (Response)
 import Game.Types.Changes exposing (ChangeConfig,Changes,concentrate)
 import Game.Types.DecodeResponse exposing (decodeResponse)
@@ -24,6 +24,7 @@ import Result exposing (Result)
 import Task exposing (perform,succeed)
 
 type alias Request = Game.Types.Request.Response
+type alias Response = Game.Types.Response.Response
 
 type Network
     = Network NetworkInfo 
@@ -57,22 +58,27 @@ update msg (Network network) =
     case msg of
         RegSend _ ->
             ( Network network
-            , Cmd.batch <| List.map (send <| Network network) network.regular
+            , send (Network network) <| RespMulti <| Multi network.regular
             )
         Received config -> (Network network, Cmd.none)
         Fetch (Ok resp) ->
             ( Network network
             , perform Received <| succeed <| concentrate resp
             )
-        Fetch (Err _) ->
-            ( Network network
-            , perform Received <| succeed <| 
-                ChangeConfig [ Game.Types.Changes.CNetworkError ] False
-            )
+        Fetch (Err err) ->
+            let
+                debug = Debug.log "Network Error" err
+            in
+                ( Network network
+                , perform Received <| succeed <| 
+                    ChangeConfig [ Game.Types.Changes.CNetworkError ] False
+                )
 
 addRegulary : Network -> Request -> Network
 addRegulary (Network network) request =
-    Network <| NetworkInfo <| request :: network.regular
+    if List.member request network.regular
+    then Network network
+    else Network <| NetworkInfo <| request :: network.regular
 
 removeRegulary : Network -> Request -> Network
 removeRegulary (Network network) request =
@@ -80,7 +86,9 @@ removeRegulary (Network network) request =
 
 subscriptions : Network -> Sub NetworkMsg
 subscriptions (Network network) =
-    Time.every (3 * Time.second) RegSend
+    if network.regular /= []
+    then Time.every (3 * Time.second) RegSend
+    else Sub.none
 
 buildUrl : EncodedRequest -> String
 buildUrl er =
