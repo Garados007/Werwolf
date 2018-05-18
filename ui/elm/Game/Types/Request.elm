@@ -273,7 +273,7 @@ encodeRequest response =
                 ( k
                 , case ev of
                     EInt v -> toString v
-                    EString v -> encodeUri v
+                    EString v -> v
                 )
             )
             req.vars
