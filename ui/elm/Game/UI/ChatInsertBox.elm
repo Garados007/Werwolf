@@ -1,4 +1,4 @@
-module Game.Ui.ChatInsertBox exposing
+module Game.UI.ChatInsertBox exposing
     ( Model
     , Msg (Send)
     , init
