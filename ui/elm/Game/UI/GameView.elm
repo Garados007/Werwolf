@@ -18,6 +18,7 @@ import Game.Types.CreateOptions exposing (..)
 import Game.Utils.Network exposing (Request)
 import Game.Types.Request exposing (..)
 import Game.UI.UserListBox as UserListBox exposing (UserListBox, UserListBoxMsg (..))
+import Game.UI.ChatBox as ChatBox exposing (ChatBox, ChatBoxMsg (..))
 
 import Html exposing (Html,div)
 import Task exposing (succeed, perform)
@@ -41,6 +42,7 @@ type alias GameViewInfo =
     , createOptions : Dict String CreateOptions
     , rolesets : Dict String (List String)
     , userListBox : UserListBox
+    , chatBox : ChatBox
     }
 
 type GameViewViewType
@@ -61,6 +63,7 @@ type GameViewMsg
     | Disposing --unregisters all registered requests and other cleanup
     -- Wrapper methods
     | WrapUserListBox UserListBoxMsg
+    | WrapChatBox ChatBoxMsg
 
 type alias ChangeVar a =
     { new : a
@@ -80,6 +83,7 @@ init groupId ownUserId =
     let 
         own = perform SendNetwork <| succeed <| initRequest groupId ownUserId
         (userListBox, ulbCmd) = UserListBox.init
+        (chatBox, cbCmd) = ChatBox.init groupId
     in ( GameView
         { group = Nothing
         , hasPlayer = False
@@ -96,8 +100,13 @@ init groupId ownUserId =
         , createOptions = Dict.empty
         , rolesets = Dict.empty
         , userListBox = userListBox
+        , chatBox = chatBox
         }
-    , Cmd.batch [ own, Cmd.map WrapUserListBox ulbCmd ]
+    , Cmd.batch 
+        [ own
+        , Cmd.map WrapUserListBox ulbCmd
+        , Cmd.map WrapChatBox cbCmd
+        ]
     )
 
 initRequest : Int -> Int -> Request
@@ -126,7 +135,8 @@ update msg (GameView model) = case msg of
             new = changed.new
             nm = { new | periods = req1 }
             cmd_ulb = getChanges_UserListBox model nm
-        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb]))
+            cmd_cb = getChanges_ChatBox model nm
+        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb, cmd_cb]))
     Disposing ->
         (GameView model
         , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
@@ -137,6 +147,18 @@ update msg (GameView model) = case msg of
         in  ( GameView { model | userListBox = nm }
             , Cmd.map WrapUserListBox wcmd
             )
+    WrapChatBox wmsg -> case wmsg of
+        ChatBox.Send req ->
+            let (nm, wcmd) = ChatBox.update wmsg model.chatBox
+                cmd = Task.perform SendNetwork <| Task.succeed req
+            in  ( GameView { model | chatBox = nm }
+                , Cmd.batch [cmd, Cmd.map WrapChatBox wcmd ]
+                )
+        _ ->
+            let (nm, wcmd) = ChatBox.update wmsg model.chatBox
+            in  ( GameView { model | chatBox = nm }
+                , Cmd.map WrapChatBox wcmd
+                )
     _ -> (GameView model, Cmd.none)
 
 performUpdate : (a -> Changes -> ChangeVar a) -> a -> List Changes -> ChangeVar a
@@ -370,6 +392,21 @@ getChanges_UserListBox old new =
                         Just <| perform UpdateRuleset <| succeed game.ruleset
         ]
 
+getChanges_ChatBox : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
+getChanges_ChatBox old new =
+    Cmd.batch <| List.map (Cmd.map WrapChatBox) <| List.filterMap identity
+        [ if old.entrys /= new.entrys
+            then Just <| perform SetChats <| succeed new.entrys
+            else Nothing
+        , if old.user /= new.user
+            then Just <| perform SetUser <| succeed <| Dict.fromList <|
+                List.map (\user -> (user.user, user.stats.name)) new.user
+            else Nothing
+        , if old.chats /= new.chats
+            then Just <| perform SetRooms <| succeed <| new.chats
+            else Nothing
+        ]
+
 (./=) : (a -> b) -> a -> a -> Bool
 (./=) f a b = (f a) /= (f b)
 
@@ -476,6 +513,7 @@ view : GameView -> Html GameViewMsg
 view (GameView info) = 
     div [] 
         [ Html.map WrapUserListBox <| UserListBox.view info.userListBox
+        , Html.map WrapChatBox <| ChatBox.view info.chatBox
         , Html.text <| toString info
         , div [] [Html.text <| toString <| getViewType info]
         ]

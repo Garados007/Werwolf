@@ -2,7 +2,9 @@ module Game.UI.ChatLog exposing
     ( ChatTile (..)
     , ChatLog
     , view
-    , Msg (Add)
+    , init
+    , update
+    , Msg (Add, Set)
     )
 
 import Dom
@@ -48,6 +50,7 @@ type alias IntChatLog =
 
 type Msg
     = Add ChatTile
+    | Set (List ChatTile)
     | NoOp1 (Result Dom.Error ())
 
 init : String -> ChatLog
@@ -71,4 +74,8 @@ update msg (Internal model) =
                 list = List.append model.items [ tile ]
                 cmd = attempt NoOp1 (toBottom model.id)
             in (Internal { model | items = list }, cmd)
+        Set tiles ->
+            let
+                cmd = attempt NoOp1 (toBottom model.id)
+            in (Internal { model | items = tiles }, cmd)
         NoOp1 _ -> (Internal model, Cmd.none)
