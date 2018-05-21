@@ -396,7 +396,10 @@ getChanges_ChatBox : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
 getChanges_ChatBox old new =
     Cmd.batch <| List.map (Cmd.map WrapChatBox) <| List.filterMap identity
         [ if old.entrys /= new.entrys
-            then Just <| perform SetChats <| succeed new.entrys
+            then Just <| perform AddChats <| Task.succeed <|
+                List.filter (\ce -> ce.sendDate > old.lastChatTime) <|
+                List.concat <| 
+                List.map Dict.values <| Dict.values new.entrys
             else Nothing
         , if old.user /= new.user
             then Just <| perform SetUser <| succeed <| Dict.fromList <|
