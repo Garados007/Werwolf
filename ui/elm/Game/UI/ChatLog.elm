@@ -16,7 +16,6 @@ import List
 import Task exposing (perform,attempt)
 
 import Game.UI.ChatPostTile as ChatPostTile
-import Game.Utils.Dates
 import Game.Types.Request exposing (ChatId,UserId)
 import Game.Utils.Dates exposing (DateTimeFormat)
 

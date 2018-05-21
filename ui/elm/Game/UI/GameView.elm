@@ -23,6 +23,7 @@ import Game.Types.Request exposing (..)
 import Game.UI.UserListBox as UserListBox exposing (UserListBox, UserListBoxMsg (..))
 import Game.UI.ChatBox as ChatBox exposing 
     (ChatBox, ChatBoxMsg (..), ChatBoxDef, ChatBoxEvent, chatBoxModule)
+import Game.UI.Voting as Voting exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
 
 import Html exposing (Html,div,text)
@@ -49,6 +50,7 @@ type alias GameViewInfo =
     , rolesets : Dict String (List String)
     , userListBox : UserListBox
     , chatBox : ChatBoxDef Int EventMsg
+    , voting : VotingDef EventMsg
     , showPlayers : Bool
     , showVotes : Bool
     }
@@ -72,6 +74,7 @@ type GameViewMsg
     -- Wrapper methods
     | WrapUserListBox UserListBoxMsg
     | WrapChatBox ChatBoxMsg
+    | WrapVoting VotingMsg
 
 type alias ChangeVar a =
     { new : a
@@ -85,7 +88,6 @@ type EventMsg
     | ViewUser
     | ViewVotes
 
-
 combine : ChangeVar a -> ChangeVar a -> ChangeVar a
 combine a b = ChangeVar b.new 
     (a.register ++ b.register) 
@@ -98,6 +100,7 @@ init groupId ownUserId =
         own = perform SendNetwork <| succeed <| initRequest groupId ownUserId
         (userListBox, ulbCmd) = UserListBox.init
         (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox groupId
+        (voting, vCmd, vTasks) = votingModule handleVoting ownUserId
         info = 
             { group = Nothing
             , hasPlayer = False
@@ -115,15 +118,17 @@ init groupId ownUserId =
             , rolesets = Dict.empty
             , userListBox = userListBox
             , chatBox = chatBox
+            , voting = voting
             , showPlayers = False
             , showVotes = False
             }
-        (ninfo, eventCmd) = handleEvent info cbTasks
+        (ninfo, eventCmd) = handleEvent info (cbTasks ++ vTasks)
     in  ( GameView ninfo
         , Cmd.batch 
             [ own
             , Cmd.map WrapUserListBox ulbCmd
             , Cmd.map WrapChatBox cbCmd
+            , Cmd.map WrapVoting vCmd
             , Cmd.batch eventCmd
             ]
         )
@@ -140,6 +145,10 @@ handleChatBox event = case event of
     ChatBox.ViewUser -> [ ViewUser ]
     ChatBox.ViewVotes -> [ ViewVotes ]
     ChatBox.Send request -> [ SendMes request ]
+
+handleVoting : VotingEvent -> List EventMsg
+handleVoting event = case event of
+    Voting.Send request -> [ SendMes request ]
 
 handleEvent : GameViewInfo -> List EventMsg -> (GameViewInfo, List (Cmd GameViewMsg))
 handleEvent = changeWithAll2
@@ -178,7 +187,8 @@ update msg (GameView model) = case msg of
             nm = { new | periods = req1 }
             cmd_ulb = getChanges_UserListBox model nm
             cmd_cb = getChanges_ChatBox model nm
-        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb, cmd_cb]))
+            cmd_v = getChanges_Voting model nm
+        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb, cmd_cb, cmd_v]))
     Disposing ->
         (GameView model
         , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
@@ -194,6 +204,12 @@ update msg (GameView model) = case msg of
             (tm, tcmd) = handleEvent { model | chatBox = nm } wtasks
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapChatBox wcmd) :: tcmd
+            )
+    WrapVoting wmsg ->
+        let (nm, wcmd, wtasks) = MC.update model.voting wmsg
+            (tm, tcmd) = handleEvent { model | voting = nm } wtasks
+        in  ( GameView tm
+            , Cmd.batch <| (Cmd.map WrapVoting wcmd) :: tcmd
             )
     _ -> (GameView model, Cmd.none)
 
@@ -438,11 +454,25 @@ getChanges_ChatBox old new =
                 List.map Dict.values <| Dict.values new.entrys
             else Nothing
         , if old.user /= new.user
-            then Just <| perform SetUser <| succeed <| Dict.fromList <|
+            then Just <| perform ChatBox.SetUser <| succeed <| Dict.fromList <|
                 List.map (\user -> (user.user, user.stats.name)) new.user
             else Nothing
         , if old.chats /= new.chats
-            then Just <| perform SetRooms <| succeed <| new.chats
+            then Just <| perform ChatBox.SetRooms <| succeed <| new.chats
+            else Nothing
+        ]
+
+getChanges_Voting : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
+getChanges_Voting old new =
+    Cmd.batch <| List.map (Cmd.map WrapVoting) <| List.filterMap identity
+        [ if old.chats /= new.chats
+            then Just <| perform Voting.SetRooms <| Task.succeed new.chats
+            else Nothing
+        , if old.votes /= new.votes
+            then Just <| perform SetVotes <| Task.succeed new.votes
+            else Nothing
+        , if old.user /= new.user
+            then Just <| perform Voting.SetUser <| Task.succeed new.user
             else Nothing
         ]
 
@@ -511,7 +541,7 @@ requestNewVotes : Chat -> Int -> List Request
 requestNewVotes chat lastChange = List.map
     (flip requestNewVotesS lastChange) chat.voting
 
-requestNewVotesS : Voting -> Int -> Request
+requestNewVotesS : Game.Types.Types.Voting -> Int -> Request
 requestNewVotesS voting lastChange =
     RespConv <| GetNewVotes voting.chat voting.voteKey (lastChange - 1)
 
@@ -572,13 +602,19 @@ view (GameView info) = case getViewType info of
         ]
     ViewNormalGame -> div [] 
         [ div 
-            [ class <| (++) "w-box-panel w-box-player " <| 
-                if info.showPlayers then "visible" else ""
+            [ class <| (++) "w-box-panel w-box-player" <| 
+                if info.showPlayers then " visible" else ""
             ]
             [ Html.map WrapUserListBox <| 
                 UserListBox.view info.userListBox 
             ]
         , Html.map WrapChatBox <| MC.view info.chatBox
+        ,div 
+            [ class <| (++) "w-box-panel w-box-voting" <| 
+                if info.showVotes then " visible" else ""
+            ]
+            [ Html.map WrapVoting <| MC.view info.voting
+            ]
         , Html.text <| toString info
         ]
     ViewGuest -> div [] 
