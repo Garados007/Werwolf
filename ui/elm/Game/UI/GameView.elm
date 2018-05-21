@@ -615,7 +615,7 @@ view (GameView info) = case getViewType info of
             ]
             [ Html.map WrapVoting <| MC.view info.voting
             ]
-        , Html.text <| toString info
+        --, Html.text <| toString info
         ]
     ViewGuest -> div [] 
         [ div 
