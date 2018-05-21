@@ -12,6 +12,8 @@ module Game.UI.ChatBox exposing
     , view
     )
 
+import ModuleConfig as MC exposing (..)
+
 import Game.UI.ChatLog as ChatLog exposing (..)
 import Game.UI.ChatPostTile as ChatPostTile exposing (..)
 import Game.UI.ChatInsertBox as ChatInsertBox exposing (..)
@@ -33,7 +35,7 @@ type ChatBox = ChatBox ChatBoxInfo
 
 type alias ChatBoxInfo =
     { chatLog : ChatLog
-    , insertBox : ChatInsertBox.Model
+    , insertBox : ChatInsertBoxDef EventMsg
     , chats : Dict ChatId (Dict Int ChatEntry)
     , user : Dict UserId String
     , rooms : Dict ChatId Chat
@@ -59,12 +61,16 @@ type ChatBoxMsg
     | ChangeFilter String
     | ChangeVisible String
 
+type EventMsg
+    = SendText String
+
 init : a -> (ChatBox, Cmd ChatBoxMsg)
 init token =
     let
         cl = ChatLog.init <| 
             (++) "chat-log-" <| toString token
-        (cb, cbCmd) = ChatInsertBox.init
+        (cb, cbCmd, cbList) = chatInsertBoxModule handleChatInsertBox
+        moreCmd = handleOwn Nothing cbList
     in
         ( ChatBox <| ChatBoxInfo 
             cl 
@@ -72,7 +78,10 @@ init token =
             Dict.empty Dict.empty Dict.empty
             DD_MM_YYYY_H24_M_S
             Nothing Nothing
-        , Cmd.map WrapChatInsertBox cbCmd
+        , Cmd.batch
+            [ Cmd.map WrapChatInsertBox cbCmd
+            , moreCmd
+            ]
         )
 
 update : ChatBoxMsg -> ChatBox -> (ChatBox, Cmd ChatBoxMsg)
@@ -83,22 +92,15 @@ update msg (ChatBox model) =
                     wmsg model.chatLog
             in (ChatBox { model | chatLog = wm},
                 Cmd.map WrapChatLog wcmd)
-        WrapChatInsertBox wmsg -> case wmsg of
-            ChatInsertBox.Send text ->
-                let (wm, wcmd) = ChatInsertBox.update
-                        wmsg model.insertBox
-                    task = Task.perform Send <| Task.succeed <|
-                        RespControl <| PostChat (getSendChatId model) text
-                in  (ChatBox { model | insertBox = wm }
-                    , Cmd.batch
-                        [ task
-                        , Cmd.map WrapChatInsertBox wcmd
-                        ]
-                    )
-            _ -> let (wm, wcmd) = ChatInsertBox.update
-                        wmsg model.insertBox
-                in (ChatBox { model | insertBox = wm },
-                    Cmd.map WrapChatInsertBox wcmd)
+        WrapChatInsertBox wmsg -> 
+            let (wm, wcmd, wt) = MC.update model.insertBox wmsg
+                task = handleOwn (Just model) wt
+            in  ( ChatBox { model | insertBox = wm }
+                , Cmd.batch
+                    [ task
+                    , Cmd.map WrapChatInsertBox wcmd
+                    ]
+                )
         SetChats chats ->
             let nm = { model | chats = chats }
                 (wm, wcmd) = ChatLog.update
@@ -205,7 +207,7 @@ view (ChatBox model) =
             ]
         , if canViewChatInsertBox model
             then Html.map WrapChatInsertBox <|
-                ChatInsertBox.view model.insertBox
+                MC.view model.insertBox
             else div [] []
         ]
 
@@ -280,3 +282,19 @@ getSingleChats format user rooms dict =
             )
         )
         <| Dict.toList dict
+
+handleChatInsertBox : ChatInsertBox.EventMsg -> List EventMsg
+handleChatInsertBox msg =
+    case msg of
+        SendEvent text -> [ SendText text ]
+
+handleOwn : Maybe ChatBoxInfo -> List EventMsg -> Cmd ChatBoxMsg
+handleOwn info = Cmd.batch << List.map
+    (\msg -> case msg of
+        SendText text -> case info of
+            Nothing -> Cmd.none
+            Just model -> Task.perform Send <| 
+                Task.succeed <| RespControl <| 
+                PostChat (getSendChatId model) text
+                
+    )
