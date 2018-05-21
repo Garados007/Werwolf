@@ -158,7 +158,8 @@ update def msg (ChatBox model) =
                     ) |>
                     List.map (\r -> UpdateChat r.id r.chatRoom)
                 (nr, wcmd) = updateAll ChatLog.update model.chatLog cr
-            in  (ChatBox { model | rooms = rooms, chatLog = nr }
+                newModel = { model | rooms = rooms, chatLog = nr }
+            in  (ChatBox { newModel | targetChat = getBestChatId newModel }
                 , Cmd.batch <| List.map (Cmd.map WrapChatLog) wcmd
                 , []
                 )
@@ -277,9 +278,6 @@ canViewChatInsertBox info =
                 Nothing -> False
                 Just c -> c.permission.write
         Nothing -> False
-        -- Nothing -> Dict.values info.rooms
-        --     |> List.any (.permission >> .write)
-
 
 getSendChatId : ChatBoxInfo -> Int
 getSendChatId info =
@@ -287,6 +285,23 @@ getSendChatId info =
         Just id -> id
         Nothing -> Debug.log "ChatBox:getSendChatId:no-chat-found" 0
 
+getBestChatId : ChatBoxInfo -> Maybe ChatId
+getBestChatId info =
+    let
+        (isOldGood,bid) = case info.targetChat of
+            Nothing -> (False,0)
+            Just id -> case Dict.get id info.rooms of
+                Nothing -> (False,id)
+                Just chat -> (chat.permission.write,id)
+    in if isOldGood
+        then Just bid
+        else
+            let chats = Dict.values info.rooms |>
+                    List.filter (.permission >> .write)
+            in case chats of
+                [] -> Nothing
+                c :: cs -> Just c.id
+        
 expand : (a -> b) -> c -> a -> b
 expand f a b = f b
 
