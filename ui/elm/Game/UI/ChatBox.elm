@@ -26,6 +26,7 @@ import Game.Types.Request exposing (..)
 import Html exposing (Html,div,select,option,node,text)
 import Html.Attributes exposing (class,title,value,attribute)
 import Html.Events exposing (on,onClick)
+import Html.Lazy exposing (lazy)
 import Dict exposing (Dict)
 import Time exposing (second)
 import Json.Decode as Json
@@ -157,8 +158,7 @@ update msg (ChatBox model) =
 view : ChatBox -> Html ChatBoxMsg
 view (ChatBox model) =
     div [ class "w-chat-box" ]
-        [ Html.map WrapChatLog <|
-            ChatLog.view model.chatLog
+        [ Html.map WrapChatLog <| lazy ChatLog.view model.chatLog
         , div [ class "w-chat-selector" ]
             [ select
                 [ class "w-chat-filter"
