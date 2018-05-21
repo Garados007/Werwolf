@@ -10,6 +10,7 @@ module Game.UI.GameView exposing
     , init
     , update
     , view
+    , subscriptions
     )
 
 import ModuleConfig as MC exposing (..)
@@ -601,3 +602,7 @@ view (GameView info) = case getViewType info of
             ]
         , text "finished"
         ]
+
+subscriptions : GameView -> Sub GameViewMsg
+subscriptions (GameView info) =
+    Sub.map WrapUserListBox <| UserListBox.subscriptions info.userListBox

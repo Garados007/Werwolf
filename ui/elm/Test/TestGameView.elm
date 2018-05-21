@@ -81,5 +81,7 @@ update msg model =
                     in ({ model | gameView = ng }, Cmd.map MGameView gcmd) 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.map MNetwork <| Network.subscriptions model.network         
+subscriptions model = Sub.batch
+    [ Sub.map MNetwork <| Network.subscriptions model.network 
+    , Sub.map MGameView <| GameView.subscriptions model.gameView
+    ]        

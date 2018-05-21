@@ -8,10 +8,12 @@ module Game.UI.UserListBox exposing
     , init
     , view
     , update
+    , subscriptions
     )
 
 import Game.Types.Types exposing (..)
 import Game.Types.Request exposing (ChatId)
+import Game.Utils.Dates exposing (DateTimeFormat (..), convert)
 
 import Html exposing (Html,div,text,node,img)
 import Html.Attributes exposing (class,value,src,title)
@@ -19,6 +21,7 @@ import Html.Events exposing (on)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Config exposing (..)
+import Time exposing (Time)
 
 type UserListBox = UserListBox UserListBoxInfo
 
@@ -27,6 +30,9 @@ type alias UserListBoxInfo =
     , chats : Dict ChatId Chat
     , filter: Maybe String
     , ruleset : Maybe String
+    , time : Time
+    , timeFormat : DateTimeFormat
+    , dateFormat : DateTimeFormat
     }
 
 type UserListBoxMsg
@@ -36,12 +42,15 @@ type UserListBoxMsg
     | UpdateRuleset String
     -- private methods
     | ChangeFilter String
+    | NewTime Time
 
 init : (UserListBox, Cmd UserListBoxMsg)
 init = 
     (UserListBox <| 
         UserListBoxInfo [] Dict.empty Nothing
-        Nothing
+        Nothing 0
+        H24_M 
+        DD_MM_YYYY
     , Cmd.none)
 
 view : UserListBox -> Html UserListBoxMsg
@@ -51,7 +60,7 @@ view (UserListBox model) =
             [ text "Nutzer" ]
         , viewChatSelector model
         , div []
-            (List.map (viewUser model.ruleset) <| filterUser model)
+            (List.map (viewUser model model.ruleset) <| filterUser model)
         ]
 
 filterUser : UserListBoxInfo -> List User
@@ -97,15 +106,15 @@ viewChatSelector info =
 
         ]
 
-viewUser : Maybe String -> User -> Html UserListBoxMsg
-viewUser ruleset user =
+viewUser : UserListBoxInfo -> Maybe String -> User -> Html UserListBoxMsg
+viewUser info ruleset user =
     div [ class "w-user-box" ]
         [ div [ class "w-user-icon-area" ]
             [ div [ class "w-user-icon" ]
                 [ text "icon"
                 ]
             , div [ class "w-user-last-online" ]
-                [ text <| toString <| user.stats.lastOnline ]
+                [ text <| getTime info user.stats.lastOnline ]
             ]
         , div [ class "w-user-info-area" ]
             [ div [ class "w-user-name" ]
@@ -135,6 +144,18 @@ viewUser ruleset user =
             ]
         ]
 
+getTime : UserListBoxInfo -> Int -> String
+getTime info time =
+    let dif = info.time - (toFloat time * 1000)
+    in
+        if dif < Time.second * 30
+        then "online"
+        else if dif < Time.minute * 45
+        then "-" ++ (toString <| round <| Time.inMinutes dif) ++ "min"
+        else if dif < Time.hour * 16
+        then convert info.timeFormat (toFloat time * 1000)
+        else convert info.dateFormat (toFloat time * 1000)
+
 update : UserListBoxMsg -> UserListBox -> (UserListBox, Cmd UserListBoxMsg)
 update msg (UserListBox model) =
     case msg of
@@ -146,4 +167,9 @@ update msg (UserListBox model) =
             (UserListBox { model | ruleset = Just ruleset }, Cmd.none)
         ChangeFilter filter ->
             (UserListBox { model | filter = Just filter }, Cmd.none)
+        NewTime time ->
+            (UserListBox { model | time = time }, Cmd.none)
         
+subscriptions : UserListBox -> Sub UserListBoxMsg
+subscriptions (UserListBox model) =
+    Time.every Time.second NewTime
