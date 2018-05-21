@@ -22,8 +22,9 @@ import Game.Types.Request exposing (..)
 import Game.UI.UserListBox as UserListBox exposing (UserListBox, UserListBoxMsg (..))
 import Game.UI.ChatBox as ChatBox exposing 
     (ChatBox, ChatBoxMsg (..), ChatBoxDef, ChatBoxEvent, chatBoxModule)
+import Game.UI.Loading as Loading exposing (loading)
 
-import Html exposing (Html,div)
+import Html exposing (Html,div,text)
 import Html.Attributes exposing (class)
 import Task exposing (succeed, perform)
 import Dict exposing (Dict)
@@ -547,8 +548,28 @@ modifyVotes dict chat =
     in d2
 
 view : GameView -> Html GameViewMsg
-view (GameView info) = 
-    div [] 
+view (GameView info) = case getViewType info of
+    ViewLoading -> loading
+    ViewInitGame -> div [] 
+        [ div 
+            [ class <| (++) "w-box-panel w-box-player " <| 
+                if info.showPlayers then "visible" else ""
+            ]
+            [ Html.map WrapUserListBox <| 
+                UserListBox.view info.userListBox 
+            ]
+        ]
+    ViewWaitGame -> div [] 
+        [ div 
+            [ class <| (++) "w-box-panel w-box-player " <| 
+                if info.showPlayers then "visible" else ""
+            ]
+            [ Html.map WrapUserListBox <| 
+                UserListBox.view info.userListBox 
+            ]
+        , text "wait a moment"
+        ]
+    ViewNormalGame -> div [] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -558,5 +579,25 @@ view (GameView info) =
             ]
         , Html.map WrapChatBox <| MC.view info.chatBox
         , Html.text <| toString info
-        , div [] [Html.text <| toString <| getViewType info]
+        ]
+    ViewGuest -> div [] 
+        [ div 
+            [ class <| (++) "w-box-panel w-box-player " <| 
+                if info.showPlayers then "visible" else ""
+            ]
+            [ Html.map WrapUserListBox <| 
+                UserListBox.view info.userListBox 
+            ]
+        , Html.map WrapChatBox <| MC.view info.chatBox
+        , text "finished"
+        ]
+    ViewFinished -> div [] 
+        [ div 
+            [ class <| (++) "w-box-panel w-box-player " <| 
+                if info.showPlayers then "visible" else ""
+            ]
+            [ Html.map WrapUserListBox <| 
+                UserListBox.view info.userListBox 
+            ]
+        , text "finished"
         ]
