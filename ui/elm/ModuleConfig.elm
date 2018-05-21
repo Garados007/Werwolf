@@ -26,7 +26,7 @@ type alias ModuleConfigCreateOption model msg createOptions eventMethod event =
     }
 
 type alias Local model msg createOptions eventMethod event =
-    { config : ModuleConfigCreateOption model msg createOptions eventMethod event
+    { config : () -> ModuleConfigCreateOption model msg createOptions eventMethod event
     , model : model
     , events : eventMethod -> List event
     }
@@ -38,7 +38,7 @@ createModule config events options =
     let
         (m, c, l) = config.init options
     in (ModuleConfig <|
-        { config = config
+        { config = \() -> config
         , model = m
         , events = events
         }
@@ -48,19 +48,19 @@ createModule config events options =
 
 view : ModuleConfig model msg createOptions eventMethod event -> Html msg
 view (ModuleConfig module_) =
-    lazy module_.config.view <| module_.model
+    lazy (module_.config () |> .view) <| module_.model
 
 update : ModuleConfig model msg createOptions eventMethod event -> 
     msg -> (ModuleConfig model msg createOptions eventMethod event, Cmd msg, List event)
 update (ModuleConfig module_) msg =
     let
-        (nm, cmd, el) = module_.config.update (ModuleConfig module_) msg module_.model
+        (nm, cmd, el) = (module_.config () |> .update) (ModuleConfig module_) msg module_.model
         mod = { module_ | model = nm }
     in (ModuleConfig mod, cmd, el)
 
 subscriptions : ModuleConfig model msg createOptions eventMethod event -> Sub msg
 subscriptions (ModuleConfig module_) =
-    module_.config.subscriptions module_.model
+    (module_.config () |> .subscriptions) module_.model
 
 event : ModuleConfig model msg createOptions eventMethod event -> 
     eventMethod -> List event
@@ -79,7 +79,7 @@ programUpdate func msg model =
         (m, c, e) = func 
             ( ModuleConfig <|
                 Local
-                    ( ModuleConfigCreateOption
+                    (\() -> ModuleConfigCreateOption
                         (\c -> (model, Cmd.none, []))
                         (\m -> Html.div [] [])
                         func
