@@ -5,8 +5,10 @@ module Game.UI.ChatBox exposing
         , SetDateFormat
         , SetUser
         , SetRooms
-        , Send
         )
+    , ChatBoxEvent (..)
+    , ChatBoxDef
+    , chatBoxModule
     , init
     , update
     , view
@@ -50,67 +52,87 @@ type ChatBoxMsg
     | SetDateFormat DateTimeFormat
     | SetUser (Dict UserId String)
     | SetRooms (Dict ChatId Chat)
-    -- public events
-    | OnViewUser
-    | OnViewVotes
-    | Send Request
     -- Wrapped
     | WrapChatLog ChatLog.Msg
     | WrapChatInsertBox ChatInsertBox.Msg
     -- private
     | ChangeFilter String
     | ChangeVisible String
+    | OnViewUser
+    | OnViewVotes
 
 type EventMsg
     = SendText String
 
-init : a -> (ChatBox, Cmd ChatBoxMsg)
+type ChatBoxEvent
+    = ViewUser
+    | ViewVotes
+    | Send Request
+
+type alias ChatBoxDef a b = ModuleConfig ChatBox ChatBoxMsg a ChatBoxEvent b
+
+chatBoxModule : (ChatBoxEvent -> List b) -> a  -> (ChatBoxDef a b, Cmd ChatBoxMsg, List b)
+chatBoxModule = createModule
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = \_ -> Sub.none
+    }
+
+init : a -> (ChatBox, Cmd ChatBoxMsg, List b)
 init token =
     let
         cl = ChatLog.init <| 
             (++) "chat-log-" <| toString token
         (cb, cbCmd, cbList) = chatInsertBoxModule handleChatInsertBox
-        moreCmd = handleOwn Nothing cbList
-    in
-        ( ChatBox <| ChatBoxInfo 
+        info = ChatBoxInfo 
             cl 
             cb
             Dict.empty Dict.empty
             DD_MM_YYYY_H24_M_S
             Nothing Nothing
+        (ninfo, moreCmd, pt) = handleOwn Nothing info cbList
+    in
+        ( ChatBox ninfo
         , Cmd.batch
             [ Cmd.map WrapChatInsertBox cbCmd
             , moreCmd
             ]
+        , pt
         )
 
-update : ChatBoxMsg -> ChatBox -> (ChatBox, Cmd ChatBoxMsg)
-update msg (ChatBox model) =
+update : ChatBoxDef a b -> ChatBoxMsg -> ChatBox -> (ChatBox, Cmd ChatBoxMsg, List b)
+update def msg (ChatBox model) =
     case msg of
         WrapChatLog wmsg ->
             let (wm, wcmd) = ChatLog.update 
                     wmsg model.chatLog
-            in (ChatBox { model | chatLog = wm},
-                Cmd.map WrapChatLog wcmd)
+            in  ( ChatBox { model | chatLog = wm}
+                , Cmd.map WrapChatLog wcmd
+                , []
+                )
         WrapChatInsertBox wmsg -> 
             let (wm, wcmd, wt) = MC.update model.insertBox wmsg
-                task = handleOwn (Just model) wt
-            in  ( ChatBox { model | insertBox = wm }
+                (tm, task, tpm) = handleOwn (Just def) 
+                    { model | insertBox = wm } wt
+            in  ( ChatBox tm
                 , Cmd.batch
                     [ task
                     , Cmd.map WrapChatInsertBox wcmd
                     ]
+                , tpm
                 )
         AddChats chats ->
             let
                 (nm, cmds) = addAllChats model model.chatLog chats
-            in (ChatBox {model | chatLog = nm}, Cmd.batch cmds)
+            in (ChatBox {model | chatLog = nm}, Cmd.batch cmds, [])
         SetDateFormat format ->
             let
                 (wm, wcmd) = ChatLog.update (UpdateFormat format) 
                     model.chatLog
             in  ( ChatBox { model | dateFormat = format, chatLog = wm }
                 , Cmd.map WrapChatLog wcmd
+                , []
                 )
         SetUser user ->
             let cu = Dict.toList user |> List.filterMap
@@ -125,6 +147,7 @@ update msg (ChatBox model) =
                 (nu, wcmd) = updateAll ChatLog.update model.chatLog cu
             in  (ChatBox { model | user = user, chatLog = nu}
                 , Cmd.batch <| List.map (Cmd.map WrapChatLog) wcmd
+                , []
                 )
         SetRooms rooms ->
             let cr = Dict.values rooms |> List.filter 
@@ -137,6 +160,7 @@ update msg (ChatBox model) =
                 (nr, wcmd) = updateAll ChatLog.update model.chatLog cr
             in  (ChatBox { model | rooms = rooms, chatLog = nr }
                 , Cmd.batch <| List.map (Cmd.map WrapChatLog) wcmd
+                , []
                 )
         ChangeFilter filter ->
             let
@@ -144,16 +168,16 @@ update msg (ChatBox model) =
                 (wm, wcmd) = ChatLog.update (UpdateFilter filt) model.chatLog
             in  ( ChatBox { model | selected = filt, chatLog = wm }
                 , Cmd.map WrapChatLog wcmd
+                , []
                 )
         ChangeVisible filter ->
             case String.toInt filter of
                 Ok id ->
-                    ( ChatBox { model | targetChat = Just id}, Cmd.none)
+                    ( ChatBox { model | targetChat = Just id}, Cmd.none, [])
                 Err _ ->
-                    ( ChatBox { model | targetChat = Nothing }, Cmd.none)
-        OnViewUser -> ( ChatBox model, Cmd.none )
-        OnViewVotes -> ( ChatBox model, Cmd.none )
-        Send _ -> (ChatBox model, Cmd.none)
+                    ( ChatBox { model | targetChat = Nothing }, Cmd.none, [])
+        OnViewUser -> ( ChatBox model, Cmd.none, MC.event def ViewUser)
+        OnViewVotes -> ( ChatBox model, Cmd.none, MC.event def ViewVotes)
 
 view : ChatBox -> Html ChatBoxMsg
 view (ChatBox model) =
@@ -259,18 +283,9 @@ canViewChatInsertBox info =
 
 getSendChatId : ChatBoxInfo -> Int
 getSendChatId info =
-    case info.selected of
+    case info.targetChat of
         Just id -> id
         Nothing -> Debug.log "ChatBox:getSendChatId:no-chat-found" 0
-            -- let
-            --     chats : List Chat
-            --     chats = Dict.values info.rooms
-            --         |> List.filter (.permission >> .write)
-            --         |> List.filter (.permission >> .player >> List.isEmpty >> not)
-            --         |> List.sortBy (.permission >> .player >> List.length)
-            -- in case chats of
-            --     [] -> Debug.log "ChatBox:getSendChatId:no-chat-found" 0
-            --     c :: cs -> c.id
 
 expand : (a -> b) -> c -> a -> b
 expand f a b = f b
@@ -280,13 +295,19 @@ handleChatInsertBox msg =
     case msg of
         SendEvent text -> [ SendText text ]
 
-handleOwn : Maybe ChatBoxInfo -> List EventMsg -> Cmd ChatBoxMsg
-handleOwn info = Cmd.batch << List.map
-    (\msg -> case msg of
-        SendText text -> case info of
-            Nothing -> Cmd.none
-            Just model -> Task.perform Send <| 
-                Task.succeed <| RespControl <| 
-                PostChat (getSendChatId model) text
-                
-    )
+handleOwn : Maybe (ChatBoxDef a b) -> ChatBoxInfo -> List EventMsg -> (ChatBoxInfo, Cmd ChatBoxMsg, List b)
+handleOwn mdef info list = 
+    let (ninfo, ncmd, npr) = changeWithAll3
+            (\info msg -> case msg of
+                SendText text -> case mdef of
+                    Nothing -> ( info, Cmd.none, [])
+                    Just def ->
+                        ( info
+                        , Cmd.none
+                        , MC.event def <| Send <| RespControl <|
+                            PostChat (getSendChatId info) text
+                        )
+            )
+            info
+            list
+    in (ninfo, Cmd.batch ncmd, List.concat npr)

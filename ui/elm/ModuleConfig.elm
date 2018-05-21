@@ -4,6 +4,9 @@ module ModuleConfig exposing
     , createModule
     , view
     , update
+    , updateAll
+    , changeWithAll2
+    , changeWithAll3
     , subscriptions
     , event
     -- convient functions for tests
@@ -57,6 +60,30 @@ update (ModuleConfig module_) msg =
         (nm, cmd, el) = (module_.config () |> .update) (ModuleConfig module_) msg module_.model
         mod = { module_ | model = nm }
     in (ModuleConfig mod, cmd, el)
+
+updateAll : ModuleConfig model msg createOptions eventMethod event -> 
+    List msg -> (ModuleConfig model msg createOptions eventMethod event, Cmd msg, List event)
+updateAll module_ msg = 
+    let (m, c, e) = changeWithAll3 update module_ msg
+    in (m, Cmd.batch c, List.concat e)
+
+changeWithAll2 : (a -> b -> (a, c)) -> a -> List b -> (a, List c)
+changeWithAll2 f model tasks = case tasks of
+    [] -> (model, [])
+    t :: ts ->
+        let
+            (nm, ncmd) = f model t
+            (tm, tcmd) = changeWithAll2 f nm ts
+        in (tm, ncmd :: tcmd)
+
+changeWithAll3 : (a -> b -> (a, c, d)) -> a -> List b -> (a, List c, List d)
+changeWithAll3 f model tasks = case tasks of
+    [] -> (model, [], [])
+    t :: ts ->
+        let
+            (nm, ncmd, nl) = f model t
+            (tm, tcmd, tl) = changeWithAll3 f nm ts
+        in (tm, ncmd :: tcmd, nl :: tl)
 
 subscriptions : ModuleConfig model msg createOptions eventMethod event -> Sub msg
 subscriptions (ModuleConfig module_) =
