@@ -4,6 +4,7 @@ import Game.UI.GameView as GameView exposing (..)
 import Game.Utils.Network as Network exposing (..)
 
 import Html exposing (program, Html, div)
+import Html.Attributes exposing (style)
 import Task exposing (succeed, perform)
 
 type alias Model =
@@ -30,7 +31,8 @@ init =
     in (Model network gameView, Cmd.map MGameView gcmd)
 
 view : Model -> Html Msg
-view model = Html.map MGameView <| GameView.view model.gameView
+view model = div [ style [("margin-bottom","50px")]] 
+    [ Html.map MGameView <| GameView.view model.gameView ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
