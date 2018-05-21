@@ -44,13 +44,13 @@ class VoteSetting extends JsonExport {
 			$cur->chat = intval($entry["Chat"]);
 			$cur->voteKey = $entry["VoteKey"];
 			$cur->created = intval($entry["Created"]);
-			$cur->voteStart = $entry["VoteStart"];
-			$cur->voteEnd = $entry["VoteEnd"];
+			$cur->voteStart = intvaln($entry["VoteStart"]);
+			$cur->voteEnd = intvaln($entry["VoteEnd"]);
 			$cur->enabledUser = array_map('intval',
 				explode(',', $entry["EnabledUser"]));
 			$cur->targetUser = array_map('intval',
 				explode(',', $entry["TargetUser"]));
-			$cur->result = $entry["ResultTarget"];
+			$cur->result = intvaln($entry["ResultTarget"]);
 		}
 		else $cur = null;
 		$result->flush();
