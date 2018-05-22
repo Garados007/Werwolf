@@ -178,10 +178,6 @@ update msg (GameView model) = case msg of
                 | register = removeDoubles rr
                 , unregister = removeDoubles changed_.unregister
                 }
-            d_1 = if List.isEmpty changed.register then []
-                else Debug.log "GameView:update:register" changed.register
-            d_2 = if List.isEmpty changed.unregister then []
-                else Debug.log "GameView:update:unregister" changed.unregister
             req1 = flip List.filter model.periods 
                 <| not << flip List.member changed.unregister
             req2 = List.append req1 changed.register
