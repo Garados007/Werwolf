@@ -61,9 +61,9 @@ view model =
             , onKeyUp KeyUp
             , value model.text
             ]
-            [ --text model.text
+            [ text model.text
             ]
-        , button [ class "chat-insert-box-button", onClick Send ]
+        , div [ class "chat-insert-box-button", onClick Send ]
             [ text "Send"
 
             ]
@@ -86,8 +86,11 @@ update def msg model =
                     if isSend
                     then event def (SendEvent model.text)
                     else []
-            in
-                ({ model | modDetector = md, text = "" }, Cmd.none, events)
+            in  ({ model 
+                | modDetector = md
+                , text = if isSend then "" else model.text 
+                }
+                , Cmd.none, events)
         KeyUp key -> ({ model | modDetector = setUp model.modDetector key }, Cmd.none, [])
 
 subscriptions : Model -> Sub Msg
