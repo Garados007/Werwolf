@@ -1,0 +1,41 @@
+.w-chat-box {
+    position: relative;
+    padding: 0.3em;
+  }
+  .w-chat-selector {
+    display: table;
+    width: 100%;
+  }
+  .w-chat-selector > div {
+    display: table-cell;
+    width: 25%;
+  }
+  .w-chat-selector > div > select {
+    width: 100%;
+    border: 1px solid lightgray;
+    margin: 0;
+    padding: 0;
+  }
+  .w-chat-view-user, .w-chat-view-votes {
+    cursor: pointer;
+    text-align: center;
+    border: 1px solid lightgray;
+  }
+
+.w-chat-box > div {
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+.w-chat-log-box, .w-chat-selector-box, .w-chat-insert-box {
+  display: table-row;
+}
+.w-chat-log-box > div, .w-chat-selector-box > div, .w-chat-insert-box > div{
+  display: table-cell;
+  position: relative;
+}
+.w-chat-log-box {
+  height: 100%;
+}
+
+

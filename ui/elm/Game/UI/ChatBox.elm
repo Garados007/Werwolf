@@ -180,12 +180,21 @@ update def msg (ChatBox model) =
         OnViewUser -> ( ChatBox model, Cmd.none, MC.event def ViewUser)
         OnViewVotes -> ( ChatBox model, Cmd.none, MC.event def ViewVotes)
 
+divk : Html msg -> Html msg
+divk = div [] << List.singleton
+
+divc : String -> Html msg -> Html msg
+divc cl = div [ class cl ] << List.singleton
+
 view : ChatBox -> Html ChatBoxMsg
-view (ChatBox model) =
-    div [ class "w-chat-box" ]
-        [ Html.map WrapChatLog <| lazy ChatLog.view model.chatLog
-        , div [ class "w-chat-selector" ]
-            [ select
+view (ChatBox model) = divc "w-chat-box" <|
+    div []
+        [ divc "w-chat-log-box" <| divk <|
+            Html.map WrapChatLog <| 
+            lazy ChatLog.view model.chatLog
+        , divc "w-chat-selector-box" <| divk <|
+            div [ class "w-chat-selector" ]
+            [ div [] <| List.singleton <| select
                 [ class "w-chat-filter"
                 , title "chat filter" 
                 , on "change" <| 
@@ -197,7 +206,7 @@ view (ChatBox model) =
                             node "option" [ value <| toString id ] [ text key ]
                         )
                         <| Dict.toList <| Dict.map (expand .chatRoom) model.rooms
-            ,  select
+            , div [] <| List.singleton <| select
                 [ class "w-chat-target"
                 , title "target chat" 
                 , on "change" <| 
@@ -231,7 +240,8 @@ view (ChatBox model) =
                 ]
                 [ text "view-votes"]
             ]
-        , if canViewChatInsertBox model
+        , divc "w-chat-insert-box" <| divk <|
+            if canViewChatInsertBox model
             then Html.map WrapChatInsertBox <|
                 MC.view model.insertBox
             else div [] []

@@ -581,7 +581,7 @@ modifyVotes dict chat =
 view : GameView -> Html GameViewMsg
 view (GameView info) = case getViewType info of
     ViewLoading -> loading
-    ViewInitGame -> div [] 
+    ViewInitGame -> div [ class "w-box-game-view" ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -590,7 +590,7 @@ view (GameView info) = case getViewType info of
                 UserListBox.view info.userListBox 
             ]
         ]
-    ViewWaitGame -> div [] 
+    ViewWaitGame -> div [ class "w-box-game-view" ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -600,7 +600,7 @@ view (GameView info) = case getViewType info of
             ]
         , text "wait a moment"
         ]
-    ViewNormalGame -> div [] 
+    ViewNormalGame -> div [ class "w-box-game-view" ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player" <| 
                 if info.showPlayers then " visible" else ""
@@ -617,7 +617,7 @@ view (GameView info) = case getViewType info of
             ]
         --, Html.text <| toString info
         ]
-    ViewGuest -> div [] 
+    ViewGuest -> div [ class "w-box-game-view" ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -628,7 +628,7 @@ view (GameView info) = case getViewType info of
         , Html.map WrapChatBox <| MC.view info.chatBox
         , text "finished"
         ]
-    ViewFinished -> div [] 
+    ViewFinished -> div [ class "w-box-game-view" ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""

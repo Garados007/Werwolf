@@ -3,8 +3,8 @@ module Test.TestGameView exposing (main)
 import Game.UI.GameView as GameView exposing (..)
 import Game.Utils.Network as Network exposing (..)
 
-import Html exposing (Html, div)
-import Html.Attributes exposing (style)
+import Html exposing (Html, div, node)
+import Html.Attributes exposing (style, attribute)
 import Task exposing (succeed, perform)
 import Navigation exposing (program,Location)
 import String exposing (slice)
@@ -39,8 +39,25 @@ init loc =
     in (Model network gameView, Cmd.map MGameView gcmd)
 
 view : Model -> Html Msg
-view model = div [ style [("margin-bottom","50px")]] 
-    [ Html.map MGameView <| GameView.view model.gameView ]
+view model = div 
+    [ style 
+        [ ("margin-bottom","50px")
+        , ("height", "100%")
+        , ("width", "100%")
+        ]
+    ] 
+    [ node "link"
+        [ attribute "rel" "stylesheet"
+        , attribute "property" "stylesheet"
+        , attribute "href" "/ui/css/test-game.css"
+        ] []
+    , node "link"
+        [ attribute "rel" "stylesheet"
+        , attribute "property" "stylesheet"
+        , attribute "href" "https://fonts.googleapis.com/css?family=Kavivanar&amp;subset=latin-ext"
+        ] []
+    , Html.map MGameView <| GameView.view model.gameView
+    ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

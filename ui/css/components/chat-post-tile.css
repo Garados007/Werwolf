@@ -1,0 +1,24 @@
+.chat-post-tile {
+    margin: 0.4em 0;
+    border: 1px solid lightgray;
+    position: relative;
+  }
+  .chat-post-tile-header {
+    display: table;
+    width: 100%;
+    font-size: 0.75em;
+  }
+  .chat-post-tile-header > div {
+    display: table-cell;
+    width: 33%;
+    padding: 0 0.3em;
+  }
+  .chat-post-tile-chat {
+    text-align: center;
+  }
+  .chat-post-tile-time {
+    text-align: right;
+  }
+  .chat-post-tile-text {
+    padding: 0.15em;
+  }
