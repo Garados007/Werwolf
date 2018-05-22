@@ -88,7 +88,7 @@ update msg model =
                     in (Model nm ng, Cmd.map MGameView gcmd)
                 UnregisterNetwork req ->
                     let
-                        nm = addRegulary model.network req
+                        nm = removeRegulary model.network req
                         (ng, gcmd) = GameView.update gmsg model.gameView
                     in (Model nm ng, Cmd.map MGameView gcmd) 
                 SendNetwork req ->

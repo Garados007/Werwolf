@@ -38,9 +38,9 @@ type alias GameViewInfo =
     , hasPlayer : Bool
     , ownUserId : Int
     , lastVotingChange : Int
-    , lastChatTime : Int
     , lastVoteTime : Int
     , chats : Dict ChatId Chat
+    , lastChat : Dict ChatId Int
     , user : List User
     , periods : List Request
     , entrys : Dict ChatId (Dict Int ChatEntry)
@@ -106,9 +106,9 @@ init groupId ownUserId =
             , hasPlayer = False
             , ownUserId = ownUserId
             , lastVotingChange = 0
-            , lastChatTime = 0
             , lastVoteTime = 0
             , chats = Dict.empty
+            , lastChat = Dict.empty
             , user = []
             , periods = []
             , entrys = Dict.empty
@@ -171,7 +171,17 @@ update : GameViewMsg -> GameView -> (GameView, Cmd GameViewMsg)
 update msg (GameView model) = case msg of
     Manage changes ->
         let
-            changed = performUpdate updateGroup model changes
+            changed_ = performUpdate updateGroup model changes
+            r2 = Tuple.first <| removeDuplicates changed_.register model.periods
+            (rr, ru) = removeDuplicates r2 changed_.unregister
+            changed = { changed_ 
+                | register = removeDoubles rr
+                , unregister = removeDoubles changed_.unregister
+                }
+            d_1 = if List.isEmpty changed.register then []
+                else Debug.log "GameView:update:register" changed.register
+            d_2 = if List.isEmpty changed.unregister then []
+                else Debug.log "GameView:update:unregister" changed.unregister
             req1 = flip List.filter model.periods 
                 <| not << flip List.member changed.unregister
             req2 = List.append req1 changed.register
@@ -184,7 +194,7 @@ update msg (GameView model) = case msg of
                     changed.send
                 ]
             new = changed.new
-            nm = { new | periods = req1 }
+            nm = { new | periods = req2 }
             cmd_ulb = getChanges_UserListBox model nm
             cmd_cb = getChanges_ChatBox model nm
             cmd_v = getChanges_Voting model nm
@@ -212,6 +222,23 @@ update msg (GameView model) = case msg of
             , Cmd.batch <| (Cmd.map WrapVoting wcmd) :: tcmd
             )
     _ -> (GameView model, Cmd.none)
+
+removeDuplicates : List a -> List a -> (List a, List a)
+removeDuplicates a b =
+    let filter : List a -> a -> Bool
+        filter = \c v -> not <| List.member v c
+        ra = List.filter (filter b) a
+        rb = List.filter (filter a) b
+    in (ra, rb)
+
+removeDoubles : List a -> List a
+removeDoubles list =
+    case list of
+        [] -> []
+        c :: cs ->
+            if List.member c cs
+            then removeDoubles cs
+            else c :: (removeDoubles cs)
 
 performUpdate : (a -> Changes -> ChangeVar a) -> a -> List Changes -> ChangeVar a
 performUpdate updater info changes =
@@ -307,6 +334,8 @@ updateGroup info change =
         CChat chat -> 
             let 
                 old = Dict.get chat.id info.chats
+                oldTime = Maybe.withDefault 0 <| 
+                    Dict.get chat.id info.lastChat
                 time = max info.lastVotingChange <| 
                     getNewestVotingTime chat
                 dict : Dict VoteKey (Dict UserId Vote)
@@ -316,19 +345,20 @@ updateGroup info change =
             in ChangeVar
                 { info
                 | chats = Dict.insert chat.id chat info.chats
+                , lastChat = Dict.insert chat.id oldTime info.lastChat
                 , lastVotingChange = time
                 , entrys = Dict.insert chat.id Dict.empty info.entrys
                 , votes = Dict.insert chat.id dict info.votes
                 } 
                 (List.append
-                    [ requestChatEntrys chat.id info.lastChatTime ]
+                    [ requestChatEntrys chat.id oldTime ]
                     <| requestNewVotes chat info.lastVoteTime
                 )
                 ( List.append
                     ( Maybe.withDefault []
                         <| Maybe.map 
                             (List.singleton << 
-                                flip requestChatEntrys info.lastChatTime
+                                flip requestChatEntrys oldTime
                                 << .id) 
                             old
                     )
@@ -339,18 +369,22 @@ updateGroup info change =
         CChatEntry entry -> case Dict.get entry.chat info.entrys of
             Just dict ->
                 let
-                    time = max info.lastChatTime entry.sendDate
+                    oldTime = Dict.get entry.chat info.lastChat
+                    time = max entry.sendDate <| Maybe.withDefault 1 oldTime
                     nd = Dict.insert entry.id entry dict
-
                 in ChangeVar
                     { info
-                    | lastChatTime = time
+                    | lastChat = Dict.insert entry.chat time info.lastChat
                     , entrys = Dict.insert entry.chat nd info.entrys
                     }
-                    [ requestChatEntrys entry.chat time
-                    ] 
-                    [ requestChatEntrys entry.chat info.lastChatTime
-                    ] 
+                    (if oldTime /= Just time
+                     then [ requestChatEntrys entry.chat time ]
+                     else []
+                    )
+                    (if oldTime /= Just time
+                     then [ requestChatEntrys entry.chat <| Maybe.withDefault 0 oldTime ]
+                     else []
+                    )
                     []
             Nothing -> ChangeVar info [] [] []
         CVote vote ->
@@ -449,7 +483,11 @@ getChanges_ChatBox old new =
     Cmd.batch <| List.map (Cmd.map WrapChatBox) <| List.filterMap identity
         [ if old.entrys /= new.entrys
             then Just <| perform AddChats <| Task.succeed <|
-                List.filter (\ce -> ce.sendDate > old.lastChatTime) <|
+                List.filter (\ce ->
+                    let time = Maybe.withDefault -1 <| 
+                            Dict.get ce.chat old.lastChat
+                    in ce.sendDate > time
+                ) <|
                 List.concat <| 
                 List.map Dict.values <| Dict.values new.entrys
             else Nothing
