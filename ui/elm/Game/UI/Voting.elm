@@ -127,7 +127,7 @@ canShowVoteSelection info voting =
 
 viewVoteSelection : VotingInfo -> TVoting -> Html VotingMsg
 viewVoteSelection info voting = 
-    div [ class "w-voting-box" ] <| List.map
+    div [ class "w-voting-voting" ] <| List.map
         (\user ->
             div [ class "w-voting-select-user"
                 , onClick <| OnVote voting.chat 
