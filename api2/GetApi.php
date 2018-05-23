@@ -106,6 +106,18 @@ class GetApi extends ApiBase {
         return $this->wrapResult($this->setUserName($result));
     }
 
+    public function getConfig() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+        ))) !== true)
+            return $this->wrapError($result);
+
+        $this->inclDb('UserConfig');
+        $conf = UserConfig::create($this->account['id']);
+            return $this->wrapResult($conf);
+    }
+
     public function getChatRoom() {
         if (($result = $this->getAccount()) !== true)
             return $this->wrapError($result);

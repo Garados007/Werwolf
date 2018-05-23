@@ -169,3 +169,8 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Votes (
 	FOREIGN KEY (Target) REFERENCES <?php echo DB_PREFIX; ?>Player(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>UserConfig (
+	User INT NOT NULL PRIMARY KEY,
+	Config TEXT NOT NULL,
+	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;

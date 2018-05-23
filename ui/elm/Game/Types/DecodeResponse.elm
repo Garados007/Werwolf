@@ -90,6 +90,8 @@ decodeGet method =
             decSingle GetChatEntrys (list decodeChatEntry)
         "getVotes" ->
             decSingle GetVotes (list decodeVote)
+        "getConfig" ->
+            decSingle GetConfig (maybe string)
         _ -> succeed Nothing
 
 decodeConv : String -> Decoder (Maybe ResultConv)
@@ -128,6 +130,8 @@ decodeControl method =
             succeed (Just FinishVoting)
         "vote" ->
             decSingle Vote_ decodeVote
+        "setConfig" ->
+            decSingle SetConfig string
         _ -> succeed Nothing
 
 decodeInfo : String -> Decoder (Maybe ResultInfo)

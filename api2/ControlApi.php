@@ -252,4 +252,20 @@ class ControlApi extends ApiBase {
         );
         return $this->wrapResult($vote);
     }
+
+    public function setConfig() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'config' => ['regex', '/^.{1,1000}$/']
+        ))) !== true)
+            return $this->wrapError($result);
+
+        $this->inclDb('UserConfig');
+        $conf = UserConfig::createNewConfig(
+            $this->account['id'],
+            $this->formated['config']
+        );
+        return $this->wrapResult($conf);
+    }
 }

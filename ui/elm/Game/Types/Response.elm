@@ -35,6 +35,7 @@ type ResultGet
     | GetChatRooms (List Chat)
     | GetChatEntrys (List ChatEntry)
     | GetVotes (List Vote)
+    | GetConfig (Maybe String)
 
 type ResultConv
     = LastOnline (List (Int, Int))
@@ -53,6 +54,7 @@ type ResultControl
     | StartVoting Voting
     | FinishVoting
     | Vote_ Vote
+    | SetConfig String
 
 type ResultInfo
     = InstalledGameTypes (List String)

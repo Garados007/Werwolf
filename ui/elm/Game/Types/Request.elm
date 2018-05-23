@@ -55,6 +55,7 @@ type ResponseGet
     | GetChatRooms GameId
     | GetChatEntrys ChatId
     | GetVotes ChatId VoteKey
+    | GetConfig
 
 type ResponseConv
     = LastOnline GroupId
@@ -73,6 +74,7 @@ type ResponseControl
     | StartVoting ChatId VoteKey
     | FinishVoting ChatId VoteKey
     | Vote ChatId VoteKey PlayerId
+    | SetConfig String
 
 type ResponseInfo
     = InstalledGameTypes
@@ -143,6 +145,9 @@ encodeRequestInternal response =
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
                         ]
+                GetConfig ->
+                    EncodedRequestInternal "get" "getConfig"
+                        []
         RespConv resp ->
             case resp of
                 LastOnline groupId ->
@@ -225,6 +230,10 @@ encodeRequestInternal response =
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
                         , ("target", EInt playerId)
+                        ]
+                SetConfig config ->
+                    EncodedRequestInternal "control" "setConfig"
+                        [ ("config", EString config)
                         ]
         RespInfo resp ->
             case resp of
