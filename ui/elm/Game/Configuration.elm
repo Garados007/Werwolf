@@ -31,7 +31,7 @@ type alias LanguageConfiguration_ a =
     }
 
 decodeConfig : String -> Configuration
-decodeConfig = case JD.decodeString decoder of
+decodeConfig code = case JD.decodeString decoder code of
     Ok conf -> conf
     Err err ->
         let d = Debug.log "Configuration:decodeConfig" err
