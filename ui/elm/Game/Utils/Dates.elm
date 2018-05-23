@@ -3,6 +3,7 @@ module Game.Utils.Dates exposing (DateTimeFormat (..), convert)
 import Date exposing (fromTime,day,month,year,Month(..))
 import Time exposing (Time,inHours,inMinutes,inSeconds)
 import String exposing (repeat,length)
+import Dict exposing (Dict)
 
 type DateTimeFormat
     = DD_MM_YYYY
@@ -10,6 +11,15 @@ type DateTimeFormat
     | DD_MM_YYYY_H24_M
     | H24_M_S
     | H24_M
+
+all : Dict String DateTimeFormat
+all = Dict.fromList
+    [ ("DD_MM_YYYY", DD_MM_YYYY)
+    , ("DD_MM_YYYY_H24_M_S", DD_MM_YYYY_H24_M_S)
+    , ("DD_MM_YYYY_H24_M", DD_MM_YYYY_H24_M)
+    , ("H24_M_S", H24_M_S)
+    , ("H24_M", H24_M)
+    ]
 
 ex : Int -> Int -> String
 ex decimals num =
