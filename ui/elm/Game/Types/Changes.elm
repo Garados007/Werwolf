@@ -25,6 +25,7 @@ type Changes
     | CInstalledGameTypes (List String)
     | CCreateOptions String CreateOptions
     | CRolesets String (List String)
+    | CConfig (Maybe String)
     | CAccountInvalid
     | CNetworkError
     
@@ -58,6 +59,8 @@ concentrate resp =
                     ChangeConfig (List.map CChatEntry v) False
                 GetVotes v ->
                     ChangeConfig (List.map CVote v) False
+                GetConfig c ->
+                    ChangeConfig [ CConfig c ] False
         RConv r -> 
             case r of
                 LastOnline v ->
@@ -92,6 +95,8 @@ concentrate resp =
                     ChangeConfig [] False
                 Vote_ v ->
                     ChangeConfig [ CVote v ] False
+                SetConfig c ->
+                    ChangeConfig [ CConfig <| Just c ] False
         RInfo r ->  
             case r of
                 InstalledGameTypes v ->
