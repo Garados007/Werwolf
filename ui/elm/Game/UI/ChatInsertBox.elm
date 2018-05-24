@@ -1,6 +1,6 @@
 module Game.UI.ChatInsertBox exposing
     ( Model
-    , Msg
+    , Msg (UpdateConfig)
     , EventMsg (..)
     , ChatInsertBoxDef
     , chatInsertBoxModule
@@ -11,31 +11,25 @@ import ModuleConfig exposing (..)
 import Html exposing (Html,program,div,textarea,text,button)
 import Html.Attributes exposing (class,value)
 import Html.Events exposing (onInput,onClick)
-import Html.Lazy exposing (lazy)
 
 import Game.Utils.Keys exposing (onKeyUp,onKeyDown,keyEnter)
 import Game.Utils.Keys.ModDetector exposing (ModDetector,newModDetector,setDown,setUp,isCtrl,isPressed)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
 
-type alias ChatInsertBoxDef a = ModuleConfig Model Msg () EventMsg a
+type alias ChatInsertBoxDef a = ModuleConfig Model Msg LangConfiguration EventMsg a
 
-chatInsertBoxModule : (EventMsg -> List a) -> (ChatInsertBoxDef a, Cmd Msg, List a)
-chatInsertBoxModule event = createModule
-    { init = \() -> init
+chatInsertBoxModule : (EventMsg -> List a) -> LangConfiguration -> (ChatInsertBoxDef a, Cmd Msg, List a)
+chatInsertBoxModule = createModule
+    { init = init
     , view = view
     , update = update
-    , subscriptions = subscriptions
-    } event ()
-
-main : Program Never Model Msg
-main = program
-    { init = programInit (\() -> init) ()
-    , view = lazy view
-    , update = programUpdate update
     , subscriptions = subscriptions
     }
 
 type alias Model =
-    { text : String
+    { config : LangConfiguration
+    , text : String
     , modDetector : ModDetector
     }
 
@@ -44,12 +38,13 @@ type Msg
     | KeyDown Int
     | KeyUp Int
     | Send
+    | UpdateConfig LangConfiguration
 
 type EventMsg
     = SendEvent String
 
-init : (Model, Cmd Msg, List a)
-init = (Model "" newModDetector, Cmd.none, [])
+init : LangConfiguration -> (Model, Cmd Msg, List a)
+init config = (Model config "" newModDetector, Cmd.none, [])
 
 view : Model -> Html Msg
 view model = 
@@ -64,7 +59,7 @@ view model =
             [ text model.text
             ]
         , div [ class "chat-insert-box-button", onClick Send ]
-            [ text "Send"
+            [ text <| getSingle model.config.lang ["ui", "send"]
 
             ]
         ]
@@ -92,6 +87,7 @@ update def msg model =
                 }
                 , Cmd.none, events)
         KeyUp key -> ({ model | modDetector = setUp model.modDetector key }, Cmd.none, [])
+        UpdateConfig config -> ({ model | config = config}, Cmd.none, [])
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

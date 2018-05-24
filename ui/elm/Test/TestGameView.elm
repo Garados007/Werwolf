@@ -2,17 +2,24 @@ module Test.TestGameView exposing (main)
 
 import Game.UI.GameView as GameView exposing (..)
 import Game.Utils.Network as Network exposing (..)
+import Game.Types.Request exposing (..)
+import Game.Types.Changes exposing (..)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
+import Config exposing (..)
 
 import Html exposing (Html, div, node)
 import Html.Attributes exposing (style, attribute)
-import Task exposing (succeed, perform)
 import Navigation exposing (program,Location)
 import String exposing (slice)
 import Http exposing (decodeUri)
+import Task
 
 type alias Model =
     { network : Network
     , gameView : GameView
+    , config : Configuration
+    , lang : LangGlobal
     }
 
 type Msg
@@ -36,7 +43,14 @@ init loc =
     let (group, user) = Maybe.withDefault (3,1) <|
             parse <| loc.search
         (gameView, gcmd) = GameView.init group user
-    in (Model network gameView, Cmd.map MGameView gcmd)
+    in  (Model network gameView empty <|
+            newGlobal lang_backup
+        , Cmd.batch
+            [ Cmd.map MGameView gcmd
+            , Cmd.map MNetwork <| send network <|
+                RespGet <| GetConfig
+            ]
+        )
 
 view : Model -> Html Msg
 view model = div 
@@ -68,12 +82,27 @@ update msg model =
                     let
                         (nm, ncmd) = Network.update nmsg model.network
                         (ng, gcmd) = GameView.update (Manage changes.changes) model.gameView
+                        nmodel = Model nm ng model.config model.lang
+                        (nnmodel, cmd) = List.foldr 
+                            (\change (m, list) -> case change of
+                                CConfig str ->
+                                    let config =
+                                            case Maybe.map decodeConfig str of
+                                                Just conf -> conf
+                                                Nothing -> empty
+                                    in  ({ model | config = config }
+                                        , (Task.perform MGameView <| Task.succeed <| GameView.SetConfig config) :: list
+                                        )
+                                _ -> (m,list)
+                            )
+                            (nmodel, [])
+                            changes.changes
                     in 
-                        ( Model nm ng
-                        , Cmd.batch
+                        ( nnmodel
+                        , Cmd.batch (List.append
                             [ Cmd.map MNetwork ncmd
                             , Cmd.map MGameView gcmd
-                            ]
+                            ] cmd )
                         )
                 _ ->
                     let
@@ -85,12 +114,12 @@ update msg model =
                     let
                         nm = addRegulary model.network req
                         (ng, gcmd) = GameView.update gmsg model.gameView
-                    in (Model nm ng, Cmd.map MGameView gcmd)
+                    in (Model nm ng model.config model.lang, Cmd.map MGameView gcmd)
                 UnregisterNetwork req ->
                     let
                         nm = removeRegulary model.network req
                         (ng, gcmd) = GameView.update gmsg model.gameView
-                    in (Model nm ng, Cmd.map MGameView gcmd) 
+                    in (Model nm ng model.config model.lang, Cmd.map MGameView gcmd) 
                 SendNetwork req ->
                     let
                         ncmd = send model.network req

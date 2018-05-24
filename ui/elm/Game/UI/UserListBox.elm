@@ -4,6 +4,7 @@ module Game.UI.UserListBox exposing
         ( UpdateUser
         , UpdateChats
         , UpdateRuleset
+        , UpdateConfig
         )
     , init
     , view
@@ -13,7 +14,9 @@ module Game.UI.UserListBox exposing
 
 import Game.Types.Types exposing (..)
 import Game.Types.Request exposing (ChatId)
-import Game.Utils.Dates exposing (DateTimeFormat (..), convert)
+import Game.Utils.Dates exposing (convert)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
 
 import Html exposing (Html,div,text,node,img)
 import Html.Attributes exposing (class,value,src,title)
@@ -26,13 +29,12 @@ import Time exposing (Time)
 type UserListBox = UserListBox UserListBoxInfo
 
 type alias UserListBoxInfo =
-    { user : List User
+    { config : LangConfiguration
+    , user : List User
     , chats : Dict ChatId Chat
     , filter: Maybe String
     , ruleset : Maybe String
     , time : Time
-    , timeFormat : DateTimeFormat
-    , dateFormat : DateTimeFormat
     }
 
 type UserListBoxMsg
@@ -40,24 +42,29 @@ type UserListBoxMsg
     = UpdateUser (List User)
     | UpdateChats (Dict ChatId Chat)
     | UpdateRuleset String
+    | UpdateConfig LangConfiguration
     -- private methods
     | ChangeFilter String
     | NewTime Time
 
-init : (UserListBox, Cmd UserListBoxMsg)
-init = 
-    (UserListBox <| 
-        UserListBoxInfo [] Dict.empty Nothing
+single : UserListBoxInfo -> List String -> String
+single info = getSingle info.config.lang
+
+init : LangConfiguration -> (UserListBox, Cmd UserListBoxMsg)
+init conf= 
+    (UserListBox <| UserListBoxInfo 
+        conf 
+        [] 
+        Dict.empty 
+        Nothing
         Nothing 0
-        H24_M 
-        DD_MM_YYYY
     , Cmd.none)
 
 view : UserListBox -> Html UserListBoxMsg
 view (UserListBox model) =
     div [ class "w-user-roles-box" ]
         [ div [ class "w-user-title" ]
-            [ text "Nutzer" ]
+            [ text <| single model ["ui", "user" ] ]
         , viewChatSelector model
         , div []
             (List.map (viewUser model model.ruleset) <| filterUser model)
@@ -96,10 +103,12 @@ viewChatSelector info =
             [ on "change" <| 
                 Json.map ChangeFilter Html.Events.targetValue
             ] <|
-            (::) (node "option" [ value "" ] [ text "all" ]) <|
+            (::) (node "option" [ value "" ] 
+                [ text <| single info ["ui", "filter-all"] ]) <|
                 List.map
                     (\key ->
-                        node "option" [ value key ] [ text key ]
+                        node "option" [ value key ] 
+                            [ text<| getChatName info.config.lang key ]
                     )
                     <| List.map .chatRoom
                     <| Dict.values info.chats
@@ -127,7 +136,7 @@ viewUser info ruleset user =
                             ++ role.roleKey
                         , Html.Attributes.attribute 
                             "data-role" role.roleKey
-                        , title role.roleKey
+                        , title <| single info [ "roles", role.roleKey]
                         ]
                         ( case ruleset of
                             Nothing -> []
@@ -149,12 +158,12 @@ getTime info time =
     let dif = info.time - (toFloat time * 1000)
     in
         if dif < Time.second * 30
-        then "online"
+        then getSingle info.config.lang ["ui", "online"]
         else if dif < Time.minute * 45
         then "-" ++ (toString <| round <| Time.inMinutes dif) ++ "min"
         else if dif < Time.hour * 16
-        then convert info.timeFormat (toFloat time * 1000)
-        else convert info.dateFormat (toFloat time * 1000)
+        then convert info.config.conf.profileTimeFormat (toFloat time * 1000)
+        else convert info.config.conf.profileDateFormat (toFloat time * 1000)
 
 update : UserListBoxMsg -> UserListBox -> (UserListBox, Cmd UserListBoxMsg)
 update msg (UserListBox model) =
@@ -169,6 +178,8 @@ update msg (UserListBox model) =
             (UserListBox { model | filter = Just filter }, Cmd.none)
         NewTime time ->
             (UserListBox { model | time = time }, Cmd.none)
+        UpdateConfig config ->
+            (UserListBox { model | config = config }, Cmd.none)
         
 subscriptions : UserListBox -> Sub UserListBoxMsg
 subscriptions (UserListBox model) =

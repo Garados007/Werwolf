@@ -1,6 +1,7 @@
 module Game.Configuration exposing
     ( Configuration
-    , LanguageConfiguration
+    , LangConfiguration
+    , empty
     , decodeConfig
     , encodeConfig
     )
@@ -23,20 +24,21 @@ type alias Configuration =
     , votingDateFormat: DateTimeFormat
     }
 
-type alias LanguageConfiguration = LanguageConfiguration_ Configuration
-
-type alias LanguageConfiguration_ a =
-    { a
-    | lang: LangLocal
+type alias LangConfiguration =
+    { conf: Configuration
+    , lang: LangLocal
     }
+
+empty : Configuration
+empty = Configuration lang_backup DD_MM_YYYY_H24_M_S
+    H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S
 
 decodeConfig : String -> Configuration
 decodeConfig code = case JD.decodeString decoder code of
     Ok conf -> conf
     Err err ->
         let d = Debug.log "Configuration:decodeConfig" err
-        in Configuration lang_backup DD_MM_YYYY_H24_M_S
-            H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S
+        in empty
 
 encodeConfig : Configuration -> String
 encodeConfig config = JE.encode 0 <| JE.object
@@ -57,7 +59,7 @@ decoder = JD.andThen
             |> required "profileTimeFormat" decodeTime
             |> required "profileDateFormat" decodeTime
             |> required "votingDateFormat" decodeTime
-        _ -> JD.fail "not supported version " ++ (toString version)
+        _ -> JD.fail <| "not supported version " ++ (toString version)
     )
     (JD.field "version" JD.int)
 
@@ -65,16 +67,16 @@ decodeTime : JD.Decoder DateTimeFormat
 decodeTime = JD.andThen
     (\format -> case Dict.get format Game.Utils.Dates.all of
         Just f -> JD.succeed f
-        Nothing -> JD.fail "unsupported date format " ++ format
+        Nothing -> JD.fail <| "unsupported date format " ++ format
     )
     JD.string
 
 encodeTime : DateTimeFormat -> JE.Value
-encodeTime format = Dict.values Game.Utils.Dates.all
+encodeTime format = Dict.toList Game.Utils.Dates.all
     |> find ((==) format << Tuple.second)
     |> Maybe.map (Tuple.first >> JE.string)
     |> Maybe.withDefault (Debug.crash <|
-        "date time format " ++ format ++
+        "date time format " ++ (toString format) ++
         " is not found in convert list, report this bug at github: "++
         "https://github.com/garados007/Werwolf")
 

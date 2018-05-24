@@ -2,9 +2,9 @@ module Game.UI.ChatBox exposing
     ( ChatBox
     , ChatBoxMsg
         ( AddChats
-        , SetDateFormat
         , SetUser
         , SetRooms
+        , SetConfig
         )
     , ChatBoxEvent (..)
     , ChatBoxDef
@@ -21,9 +21,10 @@ import Game.UI.ChatPostTile as ChatPostTile exposing (..)
 import Game.UI.ChatInsertBox as ChatInsertBox exposing (..)
 import Game.Types.Types exposing (..)
 import Game.Types.Request exposing (ChatId, UserId)
-import Game.Utils.Dates exposing (DateTimeFormat(..))
 import Game.Utils.Network exposing (Request)
 import Game.Types.Request exposing (..)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
 
 import Html exposing (Html,div,select,option,node,text)
 import Html.Attributes exposing (class,title,value,attribute)
@@ -32,16 +33,15 @@ import Html.Lazy exposing (lazy)
 import Dict exposing (Dict)
 import Time exposing (second)
 import Json.Decode as Json
-import Task
 
 type ChatBox = ChatBox ChatBoxInfo
 
 type alias ChatBoxInfo =
-    { chatLog : ChatLog
+    { config : LangConfiguration
+    , chatLog : ChatLog
     , insertBox : ChatInsertBoxDef EventMsg
     , user : Dict UserId String
     , rooms : Dict ChatId Chat
-    , dateFormat : DateTimeFormat
     , selected : Maybe ChatId
     , targetChat : Maybe ChatId
     }
@@ -49,9 +49,9 @@ type alias ChatBoxInfo =
 type ChatBoxMsg
     -- public methods
     = AddChats (List ChatEntry)
-    | SetDateFormat DateTimeFormat
     | SetUser (Dict UserId String)
     | SetRooms (Dict ChatId Chat)
+    | SetConfig LangConfiguration
     -- Wrapped
     | WrapChatLog ChatLog.Msg
     | WrapChatInsertBox ChatInsertBox.Msg
@@ -69,9 +69,10 @@ type ChatBoxEvent
     | ViewVotes
     | Send Request
 
-type alias ChatBoxDef a b = ModuleConfig ChatBox ChatBoxMsg a ChatBoxEvent b
+type alias ChatBoxDef a b = ModuleConfig ChatBox ChatBoxMsg 
+    (LangConfiguration, a) ChatBoxEvent b
 
-chatBoxModule : (ChatBoxEvent -> List b) -> a  -> (ChatBoxDef a b, Cmd ChatBoxMsg, List b)
+chatBoxModule : (ChatBoxEvent -> List b) -> (LangConfiguration, a)  -> (ChatBoxDef a b, Cmd ChatBoxMsg, List b)
 chatBoxModule = createModule
     { init = init
     , view = view
@@ -79,17 +80,17 @@ chatBoxModule = createModule
     , subscriptions = \_ -> Sub.none
     }
 
-init : a -> (ChatBox, Cmd ChatBoxMsg, List b)
-init token =
+init : (LangConfiguration, a) -> (ChatBox, Cmd ChatBoxMsg, List b)
+init (config, token) =
     let
         cl = ChatLog.init <| 
             (++) "chat-log-" <| toString token
-        (cb, cbCmd, cbList) = chatInsertBoxModule handleChatInsertBox
+        (cb, cbCmd, cbList) = chatInsertBoxModule handleChatInsertBox config
         info = ChatBoxInfo 
+            config
             cl 
             cb
             Dict.empty Dict.empty
-            DD_MM_YYYY_H24_M_S
             Nothing Nothing
         (ninfo, moreCmd, pt) = handleOwn Nothing info cbList
     in
@@ -126,14 +127,6 @@ update def msg (ChatBox model) =
             let
                 (nm, cmds) = addAllChats model model.chatLog chats
             in (ChatBox {model | chatLog = nm}, Cmd.batch cmds, [])
-        SetDateFormat format ->
-            let
-                (wm, wcmd) = ChatLog.update (UpdateFormat format) 
-                    model.chatLog
-            in  ( ChatBox { model | dateFormat = format, chatLog = wm }
-                , Cmd.map WrapChatLog wcmd
-                , []
-                )
         SetUser user ->
             let cu = Dict.toList user |> List.filterMap
                     (\(id,u) ->
@@ -163,6 +156,15 @@ update def msg (ChatBox model) =
                 , Cmd.batch <| List.map (Cmd.map WrapChatLog) wcmd
                 , []
                 )
+        SetConfig config ->
+            let (wm, wcmd, wt) = MC.update model.insertBox 
+                    (ChatInsertBox.UpdateConfig config)
+                (tm, task, tpm) = handleOwn (Just def) 
+                    { model | config = config, insertBox = wm } wt
+            in  (ChatBox tm
+                , task
+                , tpm
+                )
         ChangeFilter filter ->
             let
                 filt = Result.toMaybe <| String.toInt filter
@@ -186,12 +188,15 @@ divk = div [] << List.singleton
 divc : String -> Html msg -> Html msg
 divc cl = div [ class cl ] << List.singleton
 
+single : ChatBoxInfo -> List String -> String
+single info = getSingle info.config.lang
+
 view : ChatBox -> Html ChatBoxMsg
 view (ChatBox model) = divc "w-chat-box" <|
     div []
         [ divc "w-chat-log-box" <| divk <|
             Html.map WrapChatLog <| 
-            lazy ChatLog.view model.chatLog
+            lazy (ChatLog.view model.config) model.chatLog
         , divc "w-chat-selector-box" <| divk <|
             div [ class "w-chat-selector" ]
             [ div [] <| List.singleton <| select
@@ -200,10 +205,11 @@ view (ChatBox model) = divc "w-chat-box" <|
                 , on "change" <| 
                     Json.map ChangeFilter Html.Events.targetValue
                 ] <|
-                (::) (node "option" [ value "" ] [ text "no filter" ]) <|
+                (::) (node "option" [ value "" ] [ text <| single model ["ui", "no-filter"] ]) <|
                     List.map
                         (\(id,key) ->
-                            node "option" [ value <| toString id ] [ text key ]
+                            node "option" [ value <| toString id ] 
+                                [ text <| getChatName model.config.lang key ]
                         )
                         <| Dict.toList <| Dict.map (expand .chatRoom) model.rooms
             , div [] <| List.singleton <| select
@@ -222,7 +228,7 @@ view (ChatBox model) = divc "w-chat-box" <|
                                     ] 
                                 else [ value <| toString id ] 
                             )
-                            <| [ text chat.chatRoom ]
+                            <| [ text <| getChatName model.config.lang chat.chatRoom ]
                     )
                     <| List.filter 
                         (\(id, chat) ->
@@ -233,12 +239,12 @@ view (ChatBox model) = divc "w-chat-box" <|
                 [ class "w-chat-view-user" 
                 , onClick OnViewUser
                 ]
-                [ text "view-user"]
+                [ text <| single model [ "ui", "view-user"] ]
             , div 
                 [ class "w-chat-view-votes" 
                 , onClick OnViewVotes
                 ]
-                [ text "view-votes"]
+                [ text <| single model [ "ui", "view-votes"] ]
             ]
         , divc "w-chat-insert-box" <| divk <|
             if canViewChatInsertBox model
@@ -273,7 +279,6 @@ addAllChats info log chats =
                 )
                 c.chat
                 c.text
-                info.dateFormat
             )
             chats
 

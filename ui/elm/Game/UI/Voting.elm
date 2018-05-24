@@ -4,6 +4,7 @@ module Game.UI.Voting exposing
         ( SetRooms
         , SetVotes
         , SetUser
+        , SetConfig
         )
     , VotingEvent (..)
     , VotingDef
@@ -24,17 +25,19 @@ import Game.Types.Request as Request exposing
     , Response(RespControl), ResponseControl(Vote))
 import Game.Types.Types as Types exposing (..)
 import Game.Utils.Network exposing (Request)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
 
 type alias TVoting = Types.Voting
 
 type Voting = Voting VotingInfo
 
 type alias VotingInfo =
-    { ownId : Int
+    { config : LangConfiguration
+    , ownId : Int
     , room : Dict ChatId Chat
     , votes : Dict ChatId (Dict VoteKey (Dict UserId Vote))
     , user : List User
-    , dateFormat : DateTimeFormat
     }
 
 type VotingMsg
@@ -42,16 +45,17 @@ type VotingMsg
     = SetRooms (Dict ChatId Chat)
     | SetVotes (Dict ChatId (Dict VoteKey (Dict UserId Vote)))
     | SetUser (List User)
-    | SetFormat DateTimeFormat
+    | SetConfig LangConfiguration
     -- private methods
     | OnVote ChatId VoteKey PlayerId
 
 type VotingEvent 
     = Send Request
 
-type alias VotingDef a = ModuleConfig Voting VotingMsg Int VotingEvent a
+type alias VotingDef a = ModuleConfig Voting VotingMsg 
+    (LangConfiguration, Int) VotingEvent a
 
-votingModule : (VotingEvent -> List a) -> Int -> (VotingDef a, Cmd VotingMsg, List a)
+votingModule : (VotingEvent -> List a) -> (LangConfiguration, Int) -> (VotingDef a, Cmd VotingMsg, List a)
 votingModule = createModule
     { init = init
     , view = view
@@ -59,12 +63,15 @@ votingModule = createModule
     , subscriptions = subscriptions
     } 
     
-init : Int -> (Voting, Cmd VotingMsg, List a)
-init ownId =
-    ( Voting <| VotingInfo ownId Dict.empty Dict.empty [] DD_MM_YYYY_H24_M
+init : (LangConfiguration, Int) -> (Voting, Cmd VotingMsg, List a)
+init (config, ownId) =
+    ( Voting <| VotingInfo config ownId Dict.empty Dict.empty []
     , Cmd.none
     , []
     )
+
+single : VotingInfo -> List String -> String
+single info = getSingle info.config.lang
 
 view : Voting -> Html VotingMsg
 view (Voting model) = div [ class "w-voting-box" ] <|
@@ -76,21 +83,27 @@ view (Voting model) = div [ class "w-voting-box" ] <|
 viewVoting : VotingInfo -> TVoting -> Html VotingMsg
 viewVoting info voting = div [ class "w-voting" ] 
     [ div [ class "w-voting-header" ]
-        [ text "Voting - "
+        [ text <| single info [ "ui", "voting" ]
+        , text " - "
         , div [ class "w-voting-chat" ]
             [ text <| chatName info voting.chat ]
         , text " - "
         , div [ class "w-voting-room" ]
-            [ text voting.voteKey ]
+            [ text <| voteName info voting.chat voting.voteKey ]
         ]
     , div [ class "w-voting-sub-header" ]
-        [ text "created: "
+        [ text <| single info [ "ui", "created" ]
+        , text ": "
         , div [ class "w-voting-created" ]
             [ text <| dateName info <| Just voting.created ]
-        , text " - startet: "
+        , text " - "
+        , text <| single info [ "ui", "started"  ]
+        , text ": "
         , div [ class "w-voting-started" ]
             [ text <| dateName info voting.voteStart ]
-        , text " - voteEnd: "
+        , text " - "
+        , text <| single info [ "ui", "voteEnd" ]
+        , text ": "
         , div [ class "w-voting-ended" ]
             [ text <| dateName info voting.voteEnd ]
         ]
@@ -159,13 +172,19 @@ userName info id =
 chatName : VotingInfo -> ChatId -> String
 chatName info id =
     case Dict.get id info.room of
-        Just chat -> chat.chatRoom
+        Just chat -> getChatName info.config.lang chat.chatRoom
         Nothing -> "Chat #" ++ (toString id)
+
+voteName : VotingInfo -> ChatId -> String -> String
+voteName info id key =
+    case Dict.get id info.room of
+        Just chat -> getVotingName info.config.lang chat.chatRoom key
+        Nothing -> "[" ++ key ++ "]"
 
 dateName : VotingInfo -> Maybe Int -> String
 dateName info time = case time of
-    Nothing -> "not yet"
-    Just t -> convert info.dateFormat (toFloat t * 1000)
+    Nothing -> single info [ "ui", "not-yet" ]
+    Just t -> convert info.config.conf.votingDateFormat (toFloat t * 1000)
 
 voteCount : VotingInfo -> TVoting -> Int
 voteCount info voting = case Dict.get voting.chat info.votes of
@@ -178,8 +197,8 @@ update : VotingDef a -> VotingMsg -> Voting -> (Voting, Cmd VotingMsg, List a)
 update def msg (Voting info) = case msg of
     SetRooms room -> (Voting { info | room = room }, Cmd.none, [])
     SetVotes votes -> (Voting { info | votes = votes }, Cmd.none, [])
-    SetFormat format -> (Voting { info | dateFormat = format }, Cmd.none, [])
     SetUser user -> (Voting { info | user = user }, Cmd.none, [])
+    SetConfig config -> (Voting { info | config = config }, Cmd.none, [])
     OnVote chatId voteKey playerId ->
         (Voting info
         , Cmd.none

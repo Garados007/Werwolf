@@ -4,6 +4,7 @@ module Game.UI.GameView exposing
         ( RegisterNetwork
         , UnregisterNetwork
         , SendNetwork
+        , SetConfig
         , Manage
         , Disposing
         )
@@ -25,6 +26,9 @@ import Game.UI.ChatBox as ChatBox exposing
     (ChatBox, ChatBoxMsg (..), ChatBoxDef, ChatBoxEvent, chatBoxModule)
 import Game.UI.Voting as Voting exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
+import Game.Configuration exposing (..)
+import Game.Utils.Language exposing (..)
+import Config exposing (..)
 
 import Html exposing (Html,div,text)
 import Html.Attributes exposing (class)
@@ -34,7 +38,8 @@ import Dict exposing (Dict)
 type GameView = GameView GameViewInfo
 
 type alias GameViewInfo =
-    { group : Maybe Group
+    { config : LangConfiguration
+    , group : Maybe Group
     , hasPlayer : Bool
     , ownUserId : Int
     , lastVotingChange : Int
@@ -70,11 +75,15 @@ type GameViewMsg
     | SendNetwork Request
     -- public methods
     | Manage (List Changes)
+    | SetConfig Configuration
+    | SetLang LangGlobal
     | Disposing --unregisters all registered requests and other cleanup
     -- Wrapper methods
     | WrapUserListBox UserListBoxMsg
     | WrapChatBox ChatBoxMsg
     | WrapVoting VotingMsg
+    -- private methods
+    | PushConfig ()
 
 type alias ChangeVar a =
     { new : a
@@ -98,11 +107,14 @@ init : Int -> Int -> (GameView, Cmd GameViewMsg)
 init groupId ownUserId =
     let 
         own = perform SendNetwork <| succeed <| initRequest groupId ownUserId
-        (userListBox, ulbCmd) = UserListBox.init
-        (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox groupId
-        (voting, vCmd, vTasks) = votingModule handleVoting ownUserId
+        config = LangConfiguration empty <|
+            createLocal (newGlobal lang_backup) Nothing 
+        (userListBox, ulbCmd) = UserListBox.init config
+        (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox (config, groupId)
+        (voting, vCmd, vTasks) = votingModule handleVoting (config, ownUserId)
         info = 
-            { group = Nothing
+            { config = config
+            , group = Nothing
             , hasPlayer = False
             , ownUserId = ownUserId
             , lastVotingChange = 0
@@ -194,7 +206,15 @@ update msg (GameView model) = case msg of
             cmd_ulb = getChanges_UserListBox model nm
             cmd_cb = getChanges_ChatBox model nm
             cmd_v = getChanges_Voting model nm
-        in (GameView nm, Cmd.batch (cmd ++ [cmd_ulb, cmd_cb, cmd_v]))
+            cmd_conf = getChanges_Config model nm
+        in  (GameView nm
+            , Cmd.batch (cmd ++ 
+                [ cmd_ulb
+                , cmd_cb
+                , cmd_v
+                , cmd_conf
+                ])
+            )
     Disposing ->
         (GameView model
         , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
@@ -217,6 +237,46 @@ update msg (GameView model) = case msg of
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapVoting wcmd) :: tcmd
             )
+    SetConfig config ->
+        let oc = model.config
+            nc = { oc | conf = config }
+        in  ( GameView { model | config = nc }
+            , Task.perform PushConfig <| Task.succeed ()
+            )
+    SetLang lang ->
+        let oc = model.config
+            local = createLocal lang <|
+                    Maybe.map .ruleset <|
+                    Maybe.andThen .currentGame <|
+                    model.group
+            nc = { oc | lang = local }
+        in  ( GameView { model | config = nc }
+            , Task.perform PushConfig <| Task.succeed ()
+            )
+    PushConfig () ->
+        let local = model.config.lang
+                |> flip updateUser model.user
+                |> flip updateChats model.chats
+            oc = model.config
+            nc = { oc | lang = local }
+            model1 = { model | config = nc }
+            (nm1, wcmd1) = UserListBox.update (UpdateConfig nc) model1.userListBox
+            (nm2, wcmd2, wtasks2) = MC.update model.chatBox (ChatBox.SetConfig nc)
+            (nm3, wcmd3, wtasks3) = MC.update model.voting (Voting.SetConfig nc)
+            model2 = { model1 
+                | userListBox = nm1
+                , chatBox = nm2 
+                , voting = nm3
+                }
+            (tm,tcmd) = handleEvent model2 (wtasks2 ++ wtasks3)
+        in  ( GameView tm
+            , Cmd.batch 
+                ([ Cmd.map WrapUserListBox wcmd1 
+                , Cmd.map WrapChatBox wcmd2
+                , Cmd.map WrapVoting wcmd3
+                ] ++ tcmd)
+            )
+
     _ -> (GameView model, Cmd.none)
 
 removeDuplicates : List a -> List a -> (List a, List a)
@@ -495,6 +555,12 @@ getChanges_ChatBox old new =
             then Just <| perform ChatBox.SetRooms <| succeed <| new.chats
             else Nothing
         ]
+
+getChanges_Config : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
+getChanges_Config old new =
+    if (old.chats /= new.chats) || (old.user /= new.user)
+    then Task.perform PushConfig <| Task.succeed ()
+    else Cmd.none
 
 getChanges_Voting : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
 getChanges_Voting old new =
