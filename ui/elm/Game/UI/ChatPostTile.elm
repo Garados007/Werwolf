@@ -14,6 +14,7 @@ type alias ChatPostTile =
     , chat: String
     , chatId : Int
     , text: String
+    , special: Maybe LangVars
     }
 
 view : LangConfiguration -> ChatPostTile -> Html msg
@@ -28,7 +29,10 @@ view config post =
                 [ text (convert config.conf.chatDateFormat post.time) ]
             ]
         , div [ class "chat-post-tile-text" ]
-            [ text post.text ]
+            [ case post.special of
+                Nothing -> text post.text 
+                Just vars -> text <| getSpecial config.lang vars
+            ]
         ]
 
 chatName : LangConfiguration -> String -> String

@@ -279,6 +279,7 @@ addAllChats info log chats =
                 )
                 c.chat
                 c.text
+                (decodeSpecial c.text)
             )
             chats
 

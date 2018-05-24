@@ -24,7 +24,6 @@ import Task exposing (perform,attempt)
 
 import Game.UI.ChatPostTile as ChatPostTile
 import Game.Types.Request exposing (ChatId,UserId)
-import Game.Utils.Dates exposing (DateTimeFormat)
 import Game.Configuration exposing (..)
 
 type ChatTile
