@@ -1,0 +1,18 @@
+{
+    "roles": {
+        "storytel": "Erzähler",
+        "villager": "Dorfbewohner",
+        "wolf": "Werwolf"
+    },
+    "chat-names": {
+        "story": "Geschichte",
+        "main": "Hauptchat",
+        "village": "Dorf",
+        "wolfkill": "Wolfschat"
+    },
+    "voting-names": {
+        "wolfkill": {
+            "kill": "Todesliste"
+        }
+    }
+}

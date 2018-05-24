@@ -10,6 +10,7 @@ module Game.Utils.Language exposing
     , getSpecial
     , getChatName
     , getVotingName
+    , getGameset
     , decodeSpecial
     , updateCurrentLang
     , updateUser
@@ -53,6 +54,7 @@ type alias LanguageLocal =
     { config : LangLibConfig
     , main : Maybe LanguageLibTile
     , game : Maybe LanguageLibTile
+    , gameset : Maybe String
     }
 
 type LangGlobal = LangGlobal (() -> LanguageGlobal)
@@ -105,6 +107,10 @@ createLocal (LangGlobal info) game =
             )
             game
         )
+        game
+
+getGameset : LangLocal -> Maybe String
+getGameset (LangLocal info) = (info ()).gameset
 
 updateUser : LangLocal -> List User -> LangLocal
 updateUser (LangLocal info) list =

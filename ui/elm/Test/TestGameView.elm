@@ -6,6 +6,7 @@ import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
+import Game.Utils.LangLoader exposing (..)
 import Config exposing (..)
 
 import Html exposing (Html, div, node)
@@ -25,6 +26,8 @@ type alias Model =
 type Msg
     = MNetwork NetworkMsg
     | MGameView GameViewMsg
+    | MainLang String (Maybe String)
+    | ModuleLang String String (Maybe String)
     | None
 
 main : Program Never Model Msg
@@ -49,6 +52,8 @@ init loc =
             [ Cmd.map MGameView gcmd
             , Cmd.map MNetwork <| send network <|
                 RespGet <| GetConfig
+            , fetchUiLang lang_backup MainLang
+            , fetchModuleLang "main" lang_backup ModuleLang
             ]
         )
 
@@ -135,6 +140,22 @@ update msg model =
                     let
                         (ng, gcmd) = GameView.update gmsg model.gameView
                     in ({ model | gameView = ng }, Cmd.map MGameView gcmd) 
+        MainLang lang content ->
+            let nm = { model 
+                    | lang = case content of
+                        Nothing -> model.lang
+                        Just l -> addMainLang model.lang lang l
+                    }
+                (ng, gcmd) = GameView.update (GameView.SetLang nm.lang) model.gameView
+            in ({nm | gameView = ng}, Cmd.map MGameView gcmd)
+        ModuleLang mod lang content ->
+            let nm = { model 
+                    | lang = case content of
+                        Nothing -> model.lang
+                        Just l -> addSpecialLang model.lang lang mod l
+                    }
+                (ng, gcmd) = GameView.update (GameView.SetLang nm.lang) model.gameView
+            in ({nm | gameView = ng}, Cmd.map MGameView gcmd)
         None -> (model, Cmd.none)
 
 subscriptions : Model -> Sub Msg

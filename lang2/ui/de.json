@@ -1,0 +1,17 @@
+{
+    "ui": {
+        "user": "Nutzer",
+        "filter-all": "alle",
+        "no-filter": "kein Filter",
+        "voting": "Votings",
+        "created": "erstellt",
+        "started": "gestarted",
+        "voteEnd": "beendet",
+        "not-yet": "noch nicht",
+        "view-user": "zeige Nutzer an",
+        "view-votes": "zeige Votes an",
+        "send": "Senden",
+        "online": "Online"
+    },
+    "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
+}

@@ -5,6 +5,7 @@ module Game.UI.GameView exposing
         , UnregisterNetwork
         , SendNetwork
         , SetConfig
+        , SetLang
         , Manage
         , Disposing
         )
@@ -39,6 +40,7 @@ type GameView = GameView GameViewInfo
 
 type alias GameViewInfo =
     { config : LangConfiguration
+    , lang : LangGlobal
     , group : Maybe Group
     , hasPlayer : Bool
     , ownUserId : Int
@@ -114,6 +116,7 @@ init groupId ownUserId =
         (voting, vCmd, vTasks) = votingModule handleVoting (config, ownUserId)
         info = 
             { config = config
+            , lang = newGlobal lang_backup
             , group = Nothing
             , hasPlayer = False
             , ownUserId = ownUserId
@@ -250,15 +253,20 @@ update msg (GameView model) = case msg of
                     Maybe.andThen .currentGame <|
                     model.group
             nc = { oc | lang = local }
-        in  ( GameView { model | config = nc }
+        in  ( GameView { model | config = nc, lang = lang }
             , Task.perform PushConfig <| Task.succeed ()
             )
     PushConfig () ->
-        let local = model.config.lang
-                |> flip updateUser model.user
-                |> flip updateChats model.chats
+        let cgs = Maybe.map .ruleset <| Maybe.andThen .currentGame <| model.group
+            local = if cgs /= getGameset model.config.lang
+                then createLocal model.lang cgs
+                else model.config.lang
             oc = model.config
-            nc = { oc | lang = local }
+            nc = { oc 
+                | lang = local
+                    |> flip updateUser model.user
+                    |> flip updateChats model.chats
+                }
             model1 = { model | config = nc }
             (nm1, wcmd1) = UserListBox.update (UpdateConfig nc) model1.userListBox
             (nm2, wcmd2, wtasks2) = MC.update model.chatBox (ChatBox.SetConfig nc)
@@ -558,7 +566,8 @@ getChanges_ChatBox old new =
 
 getChanges_Config : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
 getChanges_Config old new =
-    if (old.chats /= new.chats) || (old.user /= new.user)
+    if (old.chats /= new.chats) || (old.user /= new.user) ||
+        (old.group /= new.group)
     then Task.perform PushConfig <| Task.succeed ()
     else Cmd.none
 
