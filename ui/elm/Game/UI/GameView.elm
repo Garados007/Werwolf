@@ -583,6 +583,17 @@ getChanges_Voting old new =
         , if old.user /= new.user
             then Just <| perform Voting.SetUser <| Task.succeed new.user
             else Nothing
+        , if old.group /= new.group
+            then Just <| perform Voting.SetLeader <| Task.succeed <|
+                case new.group of
+                    Nothing -> False
+                    Just group -> group.leader == new.ownUserId
+            else Nothing
+        , if old.group /= new.group
+            then Just <| perform Voting.SetGame <| Task.succeed <|
+                Maybe.map .id <| Maybe.andThen .currentGame <|
+                new.group
+            else Nothing
         ]
 
 (./=) : (a -> b) -> a -> a -> Bool

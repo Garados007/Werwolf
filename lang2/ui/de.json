@@ -8,10 +8,20 @@
         "started": "gestarted",
         "voteEnd": "beendet",
         "not-yet": "noch nicht",
-        "view-user": "zeige Nutzer an",
-        "view-votes": "zeige Votes an",
+        "view-user": "Nutzer",
+        "view-votes": "Steuerung",
         "send": "Senden",
-        "online": "Online"
+        "online": "Online",
+        "start-voting": "Starte Voting",
+        "end-voting": "Beende Voting",
+        "game-control": "Spielsteuerung",
+        "next-round": "Nächste Runde",
+        "voting-votes": "Schon abgestimmt:",
+        "noone-voted": "Niemand hatte bisher abgestimmt.",
+        "voting-waits": "Noch nicht abgestimmt:",
+        "noone-missing": "Alle haben abgestimmt.",
+        "voting-targets": "Mögliche Ziele:",
+        "no-targets": "Es existieren keine Ziele!"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

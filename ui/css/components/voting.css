@@ -8,26 +8,29 @@
   position: absolute;
   overflow-y: auto;
 }
-.w-voting {
+.w-voting, .w-voting-game-control {
   border: 1px solid lightgray;
   margin: 0.3em;
 }
 .w-voting-header > div, .w-voting-sub-header > div {
   display: inline;
 }
-.w-voting-header {
+.w-voting-header, .w-voting-game-control-title, .w-voting-info-header {
   font-weight: bold;
   padding: 0.1em 0.3em;
 }
-.w-voting-sub-header {
+.w-voting-sub-header, .w-voting-info-box {
   font-size: 0.75em;
   padding: 0.1em 0.5em;
 }
-.w-voting-votes {
+.w-voting-votes, .w-voting-info-votes {
   display: table;
   width: 100%;
 }
-.w-voting-votes > div {
+.w-voting-info-vote-single {
+  display: table-row;
+}
+.w-voting-votes > div, .w-voting-info-vote-single > div {
   display: table-cell;
   position: relative;
 }
@@ -62,4 +65,23 @@
   text-align: center;
   font-size: 0.85em;
 }
-
+.w-voting-control {
+  margin-top: 0.3em;
+  border-top: 1px solid lightgray;
+}
+.w-voting-control > div, .w-voting-next-round{
+  cursor: pointer;
+  margin: 0.3em;
+  padding: 0.1em 0.3em;
+  border: 1px solid lightgray;
+  text-align: center;
+  font-size: 0.85em;
+}
+.w-voting-info-missing, .w-voting-info-targets {
+  list-style-position: outside;
+  margin: 0;
+  padding: 0 0 0 1.5em;
+}
+.w-voting-info-none {
+  font-style: italic;
+}
