@@ -27,6 +27,8 @@ import Game.UI.ChatBox as ChatBox exposing
     (ChatBox, ChatBoxMsg (..), ChatBoxDef, ChatBoxEvent, chatBoxModule)
 import Game.UI.Voting as Voting exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
+import Game.UI.WaitGameCreation as WaitGameCreation
+import Game.UI.GameFinished as GameFinished
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
@@ -86,6 +88,7 @@ type GameViewMsg
     | WrapVoting VotingMsg
     -- private methods
     | PushConfig ()
+    | CreateNewGame
 
 type alias ChangeVar a =
     { new : a
@@ -718,7 +721,7 @@ view (GameView info) = case getViewType info of
             [ Html.map WrapUserListBox <| 
                 UserListBox.view info.userListBox 
             ]
-        , text "wait a moment"
+        , WaitGameCreation.view info.config
         ]
     ViewNormalGame -> div [ class "w-box-game-view" ] 
         [ div 
@@ -746,7 +749,6 @@ view (GameView info) = case getViewType info of
                 UserListBox.view info.userListBox 
             ]
         , Html.map WrapChatBox <| MC.view info.chatBox
-        , text "finished"
         ]
     ViewFinished -> div [ class "w-box-game-view" ] 
         [ div 
@@ -756,8 +758,17 @@ view (GameView info) = case getViewType info of
             [ Html.map WrapUserListBox <| 
                 UserListBox.view info.userListBox 
             ]
+        , GameFinished.view info.config
+            (maybeCrash <| Maybe.map ((==) info.ownUserId << .leader) info.group)
+            (maybeCrash <| Maybe.andThen .currentGame <| info.group)
+            CreateNewGame
         , text "finished"
         ]
+
+maybeCrash : Maybe a -> a
+maybeCrash v = case v of
+    Just v -> v
+    Nothing -> Debug.crash "var shouldn't be Nothing. Report this error on https://github.com/Garados007/Werwolf"
 
 subscriptions : GameView -> Sub GameViewMsg
 subscriptions (GameView info) =

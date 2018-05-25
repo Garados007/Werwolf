@@ -21,7 +21,10 @@
         "voting-waits": "Noch nicht abgestimmt:",
         "noone-missing": "Alle haben abgestimmt.",
         "voting-targets": "Mögliche Ziele:",
-        "no-targets": "Es existieren keine Ziele!"
+        "no-targets": "Es existieren keine Ziele!",
+        "wait-for-admin": "Bitte warte, bis der Gruppenleiter das Spiel eingerichtet hat. Das Spiel geht gleich los.",
+        "game-finished": "Das Spiel wurde beendet und folgende Rollen haben gewonnen:",
+        "new-game": "Neues Spiel starten"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }
