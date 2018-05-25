@@ -289,7 +289,7 @@ class GetApi extends ApiBase {
 
     private static $userNameBuffer = array();
 
-    private function &setUserName(&$userJson) {
+    private function setUserName($userJson) {
         $this->inclDb('JsonExport');
         if ($userJson instanceof JsonExport) {
             $json = $userJson->exportJson();
@@ -300,9 +300,10 @@ class GetApi extends ApiBase {
             return $userJson;
         }
         elseif (!isset($userJson['userId'])) {
-            foreach ($userJson as &$user)
-                $this->setUserName($user);
-            return $userJson;
+            $result = array();
+            foreach ($userJson as $user)
+                $result[] = $this->setUserName($user);
+            return $result;
         }
         else {
             $id = $userJson['userId'];
