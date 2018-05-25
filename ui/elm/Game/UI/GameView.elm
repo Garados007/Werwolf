@@ -762,7 +762,6 @@ view (GameView info) = case getViewType info of
             (maybeCrash <| Maybe.map ((==) info.ownUserId << .leader) info.group)
             (maybeCrash <| Maybe.andThen .currentGame <| info.group)
             CreateNewGame
-        , text "finished"
         ]
 
 maybeCrash : Maybe a -> a

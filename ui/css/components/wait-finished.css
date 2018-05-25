@@ -1,0 +1,11 @@
+.w-wait-creation, .w-finished {
+  width: 70%;
+}
+.w-wait-box, .w-finished-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  border: 1px solid lightgray;
+  padding: 0.5em 0.9em;
+}
