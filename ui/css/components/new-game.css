@@ -1,0 +1,120 @@
+.w-newgame-title {
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.w-newgame-variants-box {
+    margin: 0.5em 0 1em;
+}
+
+.w-newgame-variants-title {
+    padding-right: 1em;
+}
+
+.w-newgame-variants-box>* {
+    display: inline-block;
+}
+
+.w-newgame-options-header {
+    text-align: center;
+}
+
+.w-newgame-options-header-item {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border-top: 1px solid lightgray;
+    border-left: 1px solid lightgray;
+    border-right: 1px solid lightgray;
+    border-radius: 0.3em 0.3em 0 0;
+    margin: 0 0.1em;
+    cursor: pointer;
+}
+
+.w-newgame-box-subbox,
+.w-newgame-options-page {
+    border: 1px solid lightgray;
+    padding: 0.3em;
+    margin: 0 0.3em;
+}
+
+.w-newgame-box-subbox {
+    margin: 0.4em 0.3em;
+}
+
+.w-newgame-box-title {
+    font-weight: bold;
+}
+
+.w-newgame-box-text,
+.w-newgame-box-check,
+.w-newgame-box-opt,
+.w-newgame-box-num,
+.w-newgame-roleset-group {
+    display: table;
+    width: 100%;
+}
+.w-newgame-roleset-single {
+    display: table-row;
+}
+
+.w-newgame-box-text>div,
+.w-newgame-box-check>div,
+.w-newgame-box-opt>div,
+.w-newgame-box-num>div,
+.w-newgame-roleset-single>div {
+    display: table-cell;
+    text-align: left;
+    width: 50%;
+}
+
+.w-newgame-box-text>div>*,
+.w-newgame-box-check>div>*,
+.w-newgame-box-opt>div>*,
+.w-newgame-box-num>div>*,
+.w-newgame-enterkey-code, 
+.w-newgame-cleader-select,
+.w-newgame-roleset-single input {
+    width: 100%;
+    box-sizing : border-box;
+}
+
+.w-newgame-box-otitle {
+    margin-right: 1em;
+}
+
+.w-newgame-box-desc {
+    font-style: italic;
+}
+
+.w-newgame-options-page .error {
+    background-color: #fbd6d6;
+}
+.w-newgame-enterkey-header, 
+.w-newgame-cleader-header,
+.w-newgame-roleset-header {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.w-newgame-cleader-header {
+    margin: 0.8em 0 0;
+}
+.w-newgame-enterkey-code {
+    text-align: center;
+    padding: 0.5em 0;
+    font-size: 1.2em;
+    border: 1px solid lightgray;
+}
+.w-newgame-cleader-submit {
+    text-align: center;
+    border: 1px solid lightgray;
+    border-radius: 1em;
+    padding: 0.3em 0;
+    margin: 0.6em 0 0;
+    cursor: pointer;
+}
+.w-newgame-roleset-invalid {
+    color: red;
+    text-align: center;
+    margin: 0.6em 0 0;
+}
+

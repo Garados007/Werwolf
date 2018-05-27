@@ -14,5 +14,9 @@
         "wolfkill": {
             "kill": "Todesliste"
         }
+    },
+    "new-option": {
+        "add-set": "Weitere Einstellungen",
+        "hide-roles": "Verstecke Rollen von Besiegten"
     }
 }

@@ -136,6 +136,23 @@ update msg model =
                             , Cmd.map MGameView gcmd
                             ]
                         )
+                FetchRulesetLang ruleset ->
+                    let has = hasGameset model.lang
+                            (getCurLang model.lang)
+                            ruleset
+                        (wm,wcmd) = GameView.update gmsg model.gameView
+                        nm = { model | gameView = wm }
+                    in if has
+                        then ( nm , Cmd.map MGameView wcmd )
+                        else 
+                            ( nm
+                            , Cmd.batch
+                                [ fetchModuleLang "main" 
+                                    (getCurLang model.lang)
+                                    ModuleLang
+                                , Cmd.map MGameView wcmd
+                                ]
+                            )
                 _ -> 
                     let
                         (ng, gcmd) = GameView.update gmsg model.gameView

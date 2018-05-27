@@ -11,6 +11,8 @@ module Game.Utils.Language exposing
     , getChatName
     , getVotingName
     , getGameset
+    , hasGameset
+    , getCurLang
     , decodeSpecial
     , updateCurrentLang
     , updateUser
@@ -111,6 +113,16 @@ createLocal (LangGlobal info) game =
 
 getGameset : LangLocal -> Maybe String
 getGameset (LangLocal info) = (info ()).gameset
+
+hasGameset : LangGlobal -> String -> String -> Bool
+hasGameset (LangGlobal info) lang ruleset =
+    let l = info ()
+    in Dict.get lang l.gameTexts
+        |> Maybe.map (Dict.member ruleset)
+        |> Maybe.withDefault False
+
+getCurLang : LangGlobal -> String
+getCurLang (LangGlobal info) = (info ()).curLang
 
 updateUser : LangLocal -> List User -> LangLocal
 updateUser (LangLocal info) list =

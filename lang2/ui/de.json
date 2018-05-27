@@ -24,7 +24,17 @@
         "no-targets": "Es existieren keine Ziele!",
         "wait-for-admin": "Bitte warte, bis der Gruppenleiter das Spiel eingerichtet hat. Das Spiel geht gleich los.",
         "game-finished": "Das Spiel wurde beendet und folgende Rollen haben gewonnen:",
-        "new-game": "Neues Spiel starten"
+        "new-game": "Neues Spiel starten",
+        "newgame": "Neues Spiel",
+        "ng-variants": "Spielvariante:",
+        "ng-common": "Allgemeines",
+        "ng-roles": "Rollen",
+        "enter-key": "Passwort für den Beitritt neuer Nutzer",
+        "change-leader": "Ändere den Spielleiter",
+        "on-change-leader": "Übertrage Rechte",
+        "rolesets": "Spielerrollen",
+        "role-leader": "Spielleiter",
+        "role-invalid": "Die Rollenzahl stimmt nicht mit der Nutzerzahl überein!"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

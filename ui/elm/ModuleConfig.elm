@@ -2,6 +2,7 @@ module ModuleConfig exposing
     ( ModuleConfig
     , ModuleConfigCreateOption
     , createModule
+    , getModule
     , view
     , update
     , updateAll
@@ -33,6 +34,9 @@ type alias Local model msg createOptions eventMethod event =
     , model : model
     , events : eventMethod -> List event
     }
+
+getModule : ModuleConfig  model msg createOptions eventMethod even -> model
+getModule (ModuleConfig module_) = module_.model
 
 createModule : ModuleConfigCreateOption model msg createOptions eventMethod event -> 
     (eventMethod -> List event) -> createOptions -> 

@@ -4,6 +4,7 @@ module Game.UI.GameView exposing
         ( RegisterNetwork
         , UnregisterNetwork
         , SendNetwork
+        , FetchRulesetLang
         , SetConfig
         , SetLang
         , Manage
@@ -19,9 +20,9 @@ import ModuleConfig as MC exposing (..)
 
 import Game.Types.Types exposing (..)
 import Game.Types.Changes exposing (..)
-import Game.Types.CreateOptions exposing (..)
+import Game.Types.CreateOptions as CreateOptions exposing (..)
 import Game.Utils.Network exposing (Request)
-import Game.Types.Request exposing (..)
+import Game.Types.Request as Request exposing (..)
 import Game.UI.UserListBox as UserListBox exposing (UserListBox, UserListBoxMsg (..))
 import Game.UI.ChatBox as ChatBox exposing 
     (ChatBox, ChatBoxMsg (..), ChatBoxDef, ChatBoxEvent, chatBoxModule)
@@ -29,6 +30,7 @@ import Game.UI.Voting as Voting exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
 import Game.UI.WaitGameCreation as WaitGameCreation
 import Game.UI.GameFinished as GameFinished
+import Game.UI.NewGame as NewGame exposing (NewGameDef,newGameModule,NewGameMsg,NewGameEvent)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
@@ -54,12 +56,13 @@ type alias GameViewInfo =
     , periods : List Request
     , entrys : Dict ChatId (Dict Int ChatEntry)
     , votes : Dict ChatId (Dict VoteKey (Dict UserId Vote))
-    , installedTypes : List String
+    , installedTypes : Maybe (List String)
     , createOptions : Dict String CreateOptions
     , rolesets : Dict String (List String)
     , userListBox : UserListBox
     , chatBox : ChatBoxDef Int EventMsg
     , voting : VotingDef EventMsg
+    , newGame : Maybe (NewGameDef EventMsg)
     , showPlayers : Bool
     , showVotes : Bool
     }
@@ -77,6 +80,7 @@ type GameViewMsg
     = RegisterNetwork Request
     | UnregisterNetwork Request
     | SendNetwork Request
+    | FetchRulesetLang String
     -- public methods
     | Manage (List Changes)
     | SetConfig Configuration
@@ -86,6 +90,7 @@ type GameViewMsg
     | WrapUserListBox UserListBoxMsg
     | WrapChatBox ChatBoxMsg
     | WrapVoting VotingMsg
+    | WrapNewGame NewGameMsg
     -- private methods
     | PushConfig ()
     | CreateNewGame
@@ -101,6 +106,8 @@ type EventMsg
     = SendMes Request
     | ViewUser
     | ViewVotes
+    | PushInstalledTypes
+    | FetchLangSet String
 
 combine : ChangeVar a -> ChangeVar a -> ChangeVar a
 combine a b = ChangeVar b.new 
@@ -131,12 +138,13 @@ init groupId ownUserId =
             , periods = []
             , entrys = Dict.empty
             , votes = Dict.empty
-            , installedTypes = []
+            , installedTypes = Nothing
             , createOptions = Dict.empty
             , rolesets = Dict.empty
             , userListBox = userListBox
             , chatBox = chatBox
             , voting = voting
+            , newGame = Nothing
             , showPlayers = False
             , showVotes = False
             }
@@ -168,6 +176,13 @@ handleVoting : VotingEvent -> List EventMsg
 handleVoting event = case event of
     Voting.Send request -> [ SendMes request ]
 
+handleNewGame : NewGameEvent -> List EventMsg
+handleNewGame event = case event of
+    NewGame.RequestInstalledTypes -> [ PushInstalledTypes ]
+    NewGame.FetchLangSet ruleset -> [ FetchLangSet ruleset ]
+    NewGame.ChangeLeader group target -> 
+        [ SendMes <| RespControl <| ChangeLeader group target ]
+
 handleEvent : GameViewInfo -> List EventMsg -> (GameViewInfo, List (Cmd GameViewMsg))
 handleEvent = changeWithAll2
     (\info event -> case event of
@@ -182,6 +197,18 @@ handleEvent = changeWithAll2
         ViewVotes ->
             ( { info | showVotes = not info.showVotes }
             , Cmd.none
+            )
+        PushInstalledTypes ->
+            ( info
+            , case info.installedTypes of
+                Just it -> Task.perform WrapNewGame <| Task.succeed <|
+                    NewGame.SetInstalledTypes it
+                Nothing -> Task.perform SendNetwork <| Task.succeed <|
+                    RespInfo InstalledGameTypes
+            )
+        FetchLangSet ruleset ->
+            ( info
+            , Task.perform FetchRulesetLang <| Task.succeed ruleset
             )
     )
 
@@ -213,12 +240,14 @@ update msg (GameView model) = case msg of
             cmd_cb = getChanges_ChatBox model nm
             cmd_v = getChanges_Voting model nm
             cmd_conf = getChanges_Config model nm
+            cmd_ng = getChanges_NewGame model nm
         in  (GameView nm
             , Cmd.batch (cmd ++ 
                 [ cmd_ulb
                 , cmd_cb
                 , cmd_v
                 , cmd_conf
+                , cmd_ng
                 ])
             )
     Disposing ->
@@ -243,6 +272,14 @@ update msg (GameView model) = case msg of
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapVoting wcmd) :: tcmd
             )
+    WrapNewGame wmsg -> case model.newGame of
+        Just newGame ->
+            let (nm, wcmd, wtasks) = MC.update newGame wmsg
+                (tm, tcmd) = handleEvent { model | newGame = Just <| nm } wtasks
+            in  ( GameView tm
+                , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
+                )
+        Nothing -> (GameView model, Cmd.none)
     SetConfig config ->
         let oc = model.config
             nc = { oc | conf = config }
@@ -260,7 +297,10 @@ update msg (GameView model) = case msg of
             , Task.perform PushConfig <| Task.succeed ()
             )
     PushConfig () ->
-        let cgs = Maybe.map .ruleset <| Maybe.andThen .currentGame <| model.group
+        let cgs = case model.newGame of
+                Nothing ->
+                    Maybe.map .ruleset <| Maybe.andThen .currentGame <| model.group
+                Just newGame -> getModule newGame |> NewGame.getActiveRuleset
             local = if cgs /= getGameset model.config.lang
                 then createLocal model.lang cgs
                 else model.config.lang
@@ -274,19 +314,37 @@ update msg (GameView model) = case msg of
             (nm1, wcmd1) = UserListBox.update (UpdateConfig nc) model1.userListBox
             (nm2, wcmd2, wtasks2) = MC.update model.chatBox (ChatBox.SetConfig nc)
             (nm3, wcmd3, wtasks3) = MC.update model.voting (Voting.SetConfig nc)
+            (nm4, wcmd4, wtasks4) = case model.newGame of
+                Just newGame -> 
+                    (\(m,c,l) -> (Just m, c, l)) <|
+                    MC.update newGame (NewGame.SetConfig nc)
+                Nothing -> (Nothing, Cmd.none, [])
             model2 = { model1 
                 | userListBox = nm1
                 , chatBox = nm2 
                 , voting = nm3
+                , newGame = nm4
                 }
-            (tm,tcmd) = handleEvent model2 (wtasks2 ++ wtasks3)
+            (tm,tcmd) = handleEvent model2 (wtasks2 ++ wtasks3 ++ wtasks4)
         in  ( GameView tm
             , Cmd.batch 
                 ([ Cmd.map WrapUserListBox wcmd1 
                 , Cmd.map WrapChatBox wcmd2
                 , Cmd.map WrapVoting wcmd3
+                , Cmd.map WrapNewGame wcmd4
                 ] ++ tcmd)
             )
+    CreateNewGame ->
+        let group = case model.group of
+                Just g -> g
+                Nothing -> Debug.crash "GameView:update:CreateNewGame - no group is set, new Game cant be created"
+            (nm,wcmd,wtask) = newGameModule handleNewGame (model.config, group)
+            (tm,tcmd) = handleEvent { model | newGame = Just nm } wtask
+        in  ( GameView tm
+            , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
+            )
+    FetchRulesetLang _ ->
+        ( GameView model, Task.perform PushConfig <| Task.succeed ())
 
     _ -> (GameView model, Cmd.none)
 
@@ -519,7 +577,7 @@ updateGroup info change =
                 else []
             )
         CInstalledGameTypes list -> ChangeVar
-            { info | installedTypes = list } [] [] []
+            { info | installedTypes = Just list } [] [] []
         CCreateOptions key options -> ChangeVar
             { info | createOptions = Dict.insert key options info.createOptions } [] [] []
         CRolesets key list -> ChangeVar
@@ -599,6 +657,48 @@ getChanges_Voting old new =
             else Nothing
         ]
 
+getChanges_NewGame : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
+getChanges_NewGame old new =
+    Cmd.batch <| List.filterMap identity
+        [ if new.newGame == Nothing
+            then case new.group of
+                Nothing -> Nothing
+                Just group -> case group.currentGame of
+                    Just _ -> Nothing
+                    Nothing -> Just <| Task.perform (always CreateNewGame) <| 
+                        Task.succeed ()
+            else Nothing
+        , if new.installedTypes /= old.installedTypes
+            then case new.installedTypes of
+                Just it -> Just <| Cmd.batch <| (::)
+                    ( Task.perform 
+                        (WrapNewGame << NewGame.SetInstalledTypes) <|
+                        Task.succeed it
+                    ) <| List.singleton <| Task.perform SendNetwork <|
+                    Task.succeed <| RespMulti <| Multi <| 
+                    ( List.map (RespInfo << Request.CreateOptions) <|
+                        Maybe.withDefault [] new.installedTypes
+                    ) ++
+                    (List.map (RespInfo << Rolesets) <|
+                        Maybe.withDefault [] new.installedTypes
+                    )
+                Nothing -> Nothing
+            else Nothing
+        , if new.createOptions /= old.createOptions
+            then Just <| Task.perform WrapNewGame <| Task.succeed <|
+                NewGame.SetCreateOptions new.createOptions
+            else Nothing
+        , if (new.newGame /= Nothing) && (new.user /= old.user)
+            then Just <| Task.perform WrapNewGame <| Task.succeed <|
+                NewGame.SetUser <| List.filter (\u -> u.user /= new.ownUserId ) <|
+                new.user
+            else Nothing
+        , if (new.newGame /= Nothing) && (new.rolesets /= old.rolesets)
+            then Just <| Task.perform WrapNewGame <| Task.succeed <|
+                NewGame.SetRoleset new.rolesets
+            else Nothing
+        ]
+
 (./=) : (a -> b) -> a -> a -> Bool
 (./=) f a b = (f a) /= (f b)
 
@@ -675,10 +775,14 @@ getViewType info =
         Just group -> case group.currentGame of
             Nothing ->
                 if group.leader == info.ownUserId 
-                then ViewInitGame
+                then case info.newGame of
+                    Just _ -> ViewInitGame
+                    Nothing -> ViewLoading
                 else ViewWaitGame
             Just game -> case game.finished of
-                Just _ -> ViewFinished
+                Just _ -> case info.newGame of
+                    Just _ -> ViewInitGame
+                    Nothing -> ViewFinished
                 Nothing ->
                     if info.hasPlayer
                     then ViewNormalGame
@@ -712,6 +816,9 @@ view (GameView info) = case getViewType info of
             [ Html.map WrapUserListBox <| 
                 UserListBox.view info.userListBox 
             ]
+        , case info.newGame of
+            Just newGame -> Html.map WrapNewGame <| MC.view newGame
+            Nothing -> div [] []
         ]
     ViewWaitGame -> div [ class "w-box-game-view" ] 
         [ div 
