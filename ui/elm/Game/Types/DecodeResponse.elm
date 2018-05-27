@@ -41,7 +41,7 @@ decodeError =
     maybe (field "error"
         ( decode ErrorInfo
             |> required "key" string
-            |> required "key" string
+            |> required "info" string
         )
     )
 
