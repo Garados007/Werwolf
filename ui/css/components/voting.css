@@ -1,83 +1,87 @@
-.w-newgame-title {
-  font-size: 1.3em;
-  font-weight: bold;
+.w-voting-box {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  overflow-y: auto;
 }
-
-.w-newgame-variants-box {
-  margin: 0.5em 0 1em;
-}
-
-.w-newgame-variants-title {
-  padding-right: 1em;
-}
-
-.w-newgame-variants-box>* {
-  display: inline-block;
-}
-
-.w-newgame-options-header {
-  text-align: center;
-}
-
-.w-newgame-options-header-item {
-  display: inline-block;
-  padding: 0.1em 0.4em;
-  border-top: 1px solid lightgray;
-  border-left: 1px solid lightgray;
-  border-right: 1px solid lightgray;
-  border-radius: 0.3em 0.3em 0 0;
-  margin: 0 0.1em;
-  cursor: pointer;
-}
-
-.w-newgame-box-subbox,
-.w-newgame-options-page {
+.w-voting, .w-voting-game-control {
   border: 1px solid lightgray;
-  padding: 0.3em;
-  margin: 0 0.3em;
+  margin: 0.3em;
 }
-
-.w-newgame-box-subbox {
-  margin: 0.4em 0.3em;
+.w-voting-header > div, .w-voting-sub-header > div {
+  display: inline;
 }
-
-.w-newgame-box-title {
+.w-voting-header, .w-voting-game-control-title, .w-voting-info-header {
   font-weight: bold;
+  padding: 0.1em 0.3em;
 }
-
-.w-newgame-box-text,
-.w-newgame-box-check,
-.w-newgame-box-opt,
-.w-newgame-box-num {
+.w-voting-sub-header, .w-voting-info-box {
+  font-size: 0.75em;
+  padding: 0.1em 0.5em;
+}
+.w-voting-votes, .w-voting-info-votes {
   display: table;
   width: 100%;
 }
-
-.w-newgame-box-text>div,
-.w-newgame-box-check>div,
-.w-newgame-box-opt>div,
-.w-newgame-box-num>div {
-  display: table-cell;
-  text-align: left;
-  width: 50%;
+.w-voting-info-vote-single {
+  display: table-row;
 }
-
-.w-newgame-box-text>div>*,
-.w-newgame-box-check>div>*,
-.w-newgame-box-opt>div>*,
-.w-newgame-box-num>div>* {
+.w-voting-votes > div, .w-voting-info-vote-single > div {
+  display: table-cell;
+  position: relative;
+}
+.w-voting-bar-container {
   width: 100%;
 }
-
-.w-newgame-box-otitle {
-  margin-right: 1em;
+.w-voting-bar {
+  border: 1px solid lightgray;
+  height: 1em;
+  margin: 0.1em 0.3em;
+  position: relative;
 }
-
-.w-newgame-box-desc {
+.w-voting-bar-fill {
+  background-color: lightgray;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+}
+.w-voting-info-container {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0 0.3em;
+}
+.w-voting-select-user {
+  cursor: pointer;
+  margin: 0.3em;
+  padding: 0.1em 0.3em;
+  border: 1px solid lightgray;
+  border-radius: 1em;
+  text-align: center;
+  font-size: 0.85em;
+}
+.w-voting-control {
+  margin-top: 0.3em;
+  border-top: 1px solid lightgray;
+}
+.w-voting-control > div, .w-voting-next-round{
+  cursor: pointer;
+  margin: 0.3em;
+  padding: 0.1em 0.3em;
+  border: 1px solid lightgray;
+  text-align: center;
+  font-size: 0.85em;
+}
+.w-voting-info-missing, .w-voting-info-targets {
+  list-style-position: outside;
+  margin: 0;
+  padding: 0 0 0 1.5em;
+}
+.w-voting-info-none {
   font-style: italic;
 }
-
-.w-newgame-options-page .error {
-  background-color: #fbd6d6;
-}
-
