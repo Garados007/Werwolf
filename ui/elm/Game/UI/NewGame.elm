@@ -466,9 +466,9 @@ formatKey key =
     in String.fromList <| List.concat <|
         List.intersperse [' '] <| ml <| String.toList key
 
-prepairRoleList : Dict String Int -> List String
+prepairRoleList : Dict String Int -> Dict String Int
 prepairRoleList =
-    List.concat << List.map (uncurry (flip List.repeat)) << Dict.toList
+    Dict.filter (\k v -> v > 0)
 
 prepairConfig : Dict (List String) OValue -> JE.Value
 prepairConfig =

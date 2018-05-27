@@ -14,7 +14,7 @@ module Game.Types.Request exposing
 
 import Json.Encode exposing (Value, object, string, int, list, encode)
 import List exposing (map)
-import Http exposing (encodeUri)
+import Dict exposing (Dict)
 
 type alias UserId = Int
 type alias GroupId = Int
@@ -32,7 +32,7 @@ type alias GroupVersion =
 
 type alias NewGameConfig =
     { group : GroupId
-    , roles : List String
+    , roles : Dict String Int
     , ruleset : String
     , config : Value
     }
@@ -202,7 +202,9 @@ encodeRequestInternal response =
                 StartNewGame ng ->
                     EncodedRequestInternal "control" "startNewGame"
                         [ ("group", EInt ng.group)
-                        , ("roles", EString <| encode 0 <| list <| map string ng.roles)
+                        , ("roles", EString <| encode 0 <| object <| 
+                            List.map (\(k,v) -> (k,int v)) <|
+                            Dict.toList ng.roles)
                         , ("ruleset", EString ng.ruleset)
                         , ("config", EString <| encode 0 ng.config)
                         ]
