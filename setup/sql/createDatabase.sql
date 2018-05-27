@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>Player (
 
 	UNIQUE (Game, User),
 	FOREIGN KEY (Game) REFERENCES <?php echo DB_PREFIX; ?>Games(Id),
-	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>User(UserId)
+	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
 
 ALTER TABLE <?php echo DB_PREFIX; ?>User ADD CONSTRAINT
