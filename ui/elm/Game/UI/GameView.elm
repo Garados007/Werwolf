@@ -440,24 +440,37 @@ updateGroup info change =
                 else info.hasPlayer
             }
             [] [] []
-        CLastOnline list -> ChangeVar
-            { info
-            | user = List.map
-                (\user -> pushUpdate
-                    (\u (id, time) ->
-                        if u.user == id
-                        then 
-                            let
-                                s1 = u.stats
-                                s2 = { s1 | lastOnline = time }
-                            in { u | stats = s2}
-                        else u
+        CLastOnline list ->
+            let el = List.map .user info.user
+                ul = List.map Tuple.first list
+                nl = List.filter (not << flip List.member el) ul
+                rl = List.filter (not << flip List.member ul) el
+            in ChangeVar
+                { info
+                | user = List.filterMap
+                    (\user -> if not <| List.member user.user rl
+                        then Just <| pushUpdate
+                            (\u (id, time) ->
+                                if u.user == id
+                                then 
+                                    let
+                                        s1 = u.stats
+                                        s2 = { s1 | lastOnline = time }
+                                    in { u | stats = s2}
+                                else u
+                            )
+                            user
+                            list
+                        else Nothing
                     )
-                    user
-                    list
+                    info.user
+                } [] []
+                ( case info.group of
+                    Just group -> if List.length nl /= 0
+                        then [ RespGet <| GetUserFromGroup group.id ]
+                        else []
+                    Nothing -> []
                 )
-                info.user
-            } [] [] []
         CChat chat -> 
             let 
                 old = Dict.get chat.id info.chats
