@@ -7,6 +7,7 @@ import Html.Attributes exposing (class,value,type_,attribute)
 import Html.Events exposing (on,onClick,onInput)
 import Task
 import Json.Decode as Json
+import Json.Encode as JE
 import Dict exposing (Dict)
 import Regex exposing (regex)
 import Result
@@ -16,6 +17,7 @@ import Game.Utils.Language exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
 import Game.Types.CreateOptions exposing (..)
 import Game.Types.Types exposing (..)
+import Game.Types.Request exposing (NewGameConfig)
 
 type NewGame = NewGame NewGameInfo
 
@@ -48,11 +50,13 @@ type NewGameMsg
     | OnChangeTargetUser String
     | OnChangeLeader Int
     | OnChangeSelRole String String
+    | OnCreateGame
 
 type NewGameEvent
     = RequestInstalledTypes
     | FetchLangSet String
     | ChangeLeader Int Int --group user
+    | CreateGame NewGameConfig
 
 type Pages = PCommon | PRoles | PSpecial
 
@@ -61,6 +65,8 @@ type OValue
     | OText Bool String 
     | OCheck Bool 
     | OOpt Bool String
+
+type PT = PTG (Dict String PT) | PTV JE.Value
 
 type alias NewGameDef a = ModuleConfig NewGame NewGameMsg
     (LangConfiguration, Group) NewGameEvent a
@@ -140,6 +146,19 @@ view (NewGame info) = div [ class "w-newgame-box" ]
             PRoles -> viewPageRoles
             PSpecial -> viewPageSpecial
         ) info
+    , if (info.currentType /= Nothing) &&
+            ((List.sum <| Dict.values info.selRoles) == (List.length info.user)) &&
+            (List.all
+                (\(list,ov) -> case ov of
+                    ONum er _ -> er
+                    OText er _ -> er
+                    OCheck _ -> True
+                    OOpt er _ -> er
+                ) <| Dict.toList info.setting
+            )
+        then div [ class "w-newgame-submit", onClick OnCreateGame ]
+            [ text <| getSingle info.config.lang [ "ui", "create-newgame" ] ]
+        else div [] []
     ]
 
 viewInstalledTypes : List String -> Html NewGameMsg
@@ -416,6 +435,17 @@ update def msg (NewGame info) = case msg of
         , Cmd.none
         , []
         )
+    OnCreateGame ->
+        (NewGame info, Cmd.none
+        , event def <| CreateGame <| NewGameConfig
+            info.group.id
+            (prepairRoleList info.selRoles)
+            (case info.currentType of
+                Just ct -> ct
+                Nothing -> Debug.crash "NewGame:update:OnCreateGame - require ruleset"
+            )
+            (prepairConfig info.setting)
+        )
 
 subscriptions : NewGame -> Sub NewGameMsg
 subscriptions model = Sub.none
@@ -435,4 +465,46 @@ formatKey key =
             else (List.take 4 list) :: (ml <| List.drop 4 list)
     in String.fromList <| List.concat <|
         List.intersperse [' '] <| ml <| String.toList key
-        
+
+prepairRoleList : Dict String Int -> List String
+prepairRoleList =
+    List.concat << List.map (uncurry (flip List.repeat)) << Dict.toList
+
+prepairConfig : Dict (List String) OValue -> JE.Value
+prepairConfig =
+    let convOvalue : OValue -> JE.Value
+        convOvalue = \ov -> case ov of
+            ONum _ v -> JE.float v
+            OText _ v -> JE.string v
+            OCheck v -> JE.bool v
+            OOpt _ v -> JE.string v
+        insertpt : PT -> List String -> JE.Value -> PT
+        insertpt = \pt list val -> case list of
+            [] -> PTV val
+            l :: ls -> case pt of
+                PTV _ -> PTG <| Dict.insert l 
+                    (insertpt (PTG Dict.empty) ls val) Dict.empty
+                PTG group -> PTG <| Dict.insert l
+                    ( insertpt 
+                        ( PTG <| Maybe.withDefault Dict.empty <| 
+                            case Dict.get l group of
+                                Just (PTG dict) -> Just dict
+                                Just (PTV _) -> Nothing
+                                Nothing -> Nothing
+                        )
+                        ls
+                        val
+                    )
+                    group
+        translate : PT -> JE.Value
+        translate = \pt -> case pt of
+            PTG dict -> JE.object <| 
+                List.map (\(k,v) -> (k, translate v)) <| 
+                Dict.toList dict
+            PTV val -> val
+    in translate << List.foldr
+        (\(list, val) pt ->
+            insertpt pt list <| convOvalue val
+        )
+        (PTG Dict.empty) <<
+        Dict.toList

@@ -34,7 +34,8 @@
         "on-change-leader": "Übertrage Rechte",
         "rolesets": "Spielerrollen",
         "role-leader": "Spielleiter",
-        "role-invalid": "Die Rollenzahl stimmt nicht mit der Nutzerzahl überein!"
+        "role-invalid": "Die Rollenzahl stimmt nicht mit der Nutzerzahl überein!",
+        "create-newgame": "Erstelle neues Spiel"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

@@ -182,6 +182,8 @@ handleNewGame event = case event of
     NewGame.FetchLangSet ruleset -> [ FetchLangSet ruleset ]
     NewGame.ChangeLeader group target -> 
         [ SendMes <| RespControl <| ChangeLeader group target ]
+    NewGame.CreateGame config ->
+        [ SendMes <| RespControl <| StartNewGame config ]
 
 handleEvent : GameViewInfo -> List EventMsg -> (GameViewInfo, List (Cmd GameViewMsg))
 handleEvent = changeWithAll2
