@@ -383,17 +383,46 @@ pushUpdate f init list =
         [] -> init
         l :: ls -> pushUpdate f (f init l) ls
 
+groupFinished : Group -> Bool
+groupFinished group = case group.currentGame of
+    Nothing -> True
+    Just game -> case game.finished of
+        Nothing -> False
+        Just _ -> True
+
 updateGroup : GameViewInfo -> Changes -> ChangeVar GameViewInfo
 updateGroup info change = 
     case change of
         CGroup group ->
-            case info.group of
-                Nothing -> ChangeVar
-                    { info | group = Just group }
-                    (List.filterMap identity
+            let finished = groupFinished group
+                newModel =
+                    if finished
+                    then { info
+                        | group = Just group
+                        , hasPlayer = False
+                        , lastVotingChange = 0
+                        , lastVoteTime = 0
+                        , chats = Dict.empty
+                        , lastChat = Dict.empty
+                        , entrys = Dict.empty
+                        , votes = Dict.empty
+                        }
+                    else { info 
+                        | group = Just group 
+                        , newGame = Nothing
+                        }
+                nperiods = List.filterMap identity 
                         [ Just <| requestUpdatedGroup group
-                        , requestChangedVotings group info.lastVotingChange
-                        , Just <| RespConv <| LastOnline group.id
+                        , if finished
+                            then Nothing
+                            else requestChangedVotings group info.lastVotingChange
+                        ]
+
+            in case info.group of
+                Nothing -> ChangeVar
+                    newModel
+                    (nperiods ++ 
+                        [ RespConv <| LastOnline group.id
                         ]
                     )
                     []
@@ -404,27 +433,15 @@ updateGroup info change =
                         ]
                     )
                 Just old -> ChangeVar
-                    ( if group.currentGame == Nothing
-                    then { info
-                        | group = Just group
-                        , chats = Dict.empty
-                        , entrys = Dict.empty
-                        , votes = Dict.empty
-                        }
-                    else { info | group = Just group }
-                    )
-                    (List.filterMap identity 
-                        [ Just <| requestUpdatedGroup group
-                        , requestChangedVotings group info.lastVotingChange
-                        ]
-                    )
+                    newModel
+                    nperiods
                     (List.filterMap identity 
                         [ Just <| requestUpdatedGroup old
                         , requestChangedVotings old info.lastVotingChange
                         ]
                     )
                     (List.filterMap identity 
-                        [ if old /= group
+                        [ if (old /= group) && (not finished)
                             then Maybe.map
                                 (\game -> RespGet <| GetChatRooms game.id)
                                 group.currentGame
