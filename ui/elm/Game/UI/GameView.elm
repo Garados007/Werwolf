@@ -405,6 +405,16 @@ updateGroup info change =
                 changefinished = case info.group of
                     Just g -> xor finished <| groupFinished g
                     Nothing -> True
+                cleanUser : List User -> List User
+                cleanUser = List.map (\u -> { u | player = Nothing})
+                filterPeriods : List Request -> List Request
+                filterPeriods = List.filter
+                    (\req -> case req of
+                        RespConv (GetNewVotes _ _ _) -> True
+                        RespConv (GetNewChatEntrys _ _) -> True
+                        RespConv (GetChangedVotings _ _) -> True
+                        _ -> False
+                    )
                 newModel =
                     if changefinished
                     then
@@ -418,6 +428,7 @@ updateGroup info change =
                             , lastChat = Dict.empty
                             , entrys = Dict.empty
                             , votes = Dict.empty
+                            , user = cleanUser info.user
                             }
                         else { info 
                             | group = Just group 
@@ -440,15 +451,21 @@ updateGroup info change =
                             group.currentGame
                         ])
                     Just old -> 
-                        ( List.filterMap identity 
-                            [ Just <| requestUpdatedGroup old
-                            , requestChangedVotings old info.lastVotingChange
+                        ( List.filterMap identity  <| List.concat
+                            [ List.singleton <| Just <| requestUpdatedGroup old
+                            , List.singleton <| requestChangedVotings old info.lastVotingChange
+                            , if changefinished && finished
+                                then List.map Just <| filterPeriods info.periods
+                                else []
                             ]
                         , List.filterMap identity 
                             [ if (old /= group) && (not finished)
                                 then Maybe.map
                                     (\game -> RespGet <| GetChatRooms game.id)
                                     group.currentGame
+                                else Nothing
+                            , if changefinished && (not finished)
+                                then Just <| RespGet <| GetUserFromGroup group.id
                                 else Nothing
                             ]
                         )
