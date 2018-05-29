@@ -1,5 +1,0 @@
-RewriteEngine on
-RewriteRule ^createGroup/([0-9]*)/([a-zA-Z0-9\+]*)/?$ index.php?mode=createGroup&user=$1&name=$2 [L]
-RewriteRule ^([a-zA-Z0-9]*)/?$ index.php?mode=$1 [L,QSA]
-RewriteRule ^(index.php)?$ index.php [L,QSA]
-RewriteRule ^(.*)$ - [L,R=403]
