@@ -607,30 +607,9 @@ updateGroup info change =
                         else []
                         )
                         []
-        CGame game -> ChangeVar
-            ( if game.finished == Nothing
-            then { info
-                | group = Maybe.map (\g -> { g | currentGame = Just game }) info.group
-                , chats = Dict.empty
-                , entrys = Dict.empty
-                , votes = Dict.empty
-                }
-            else { info | group = Maybe.map (\g -> { g | currentGame = Just game }) info.group }
-            )
-            [ requestChangedVotings2 game info.lastVotingChange
-            ]
-            (case Maybe.andThen .currentGame info.group of
-                Nothing -> []
-                Just old -> 
-                    [ requestChangedVotings2 old info.lastVotingChange
-                    ]
-            )
-            (if Maybe.withDefault False <| 
-                Maybe.map ((/=) game ) <| 
-                Maybe.andThen .currentGame info.group
-                then [ RespGet <| GetChatRooms game.id ]
-                else []
-            )
+        CGame game -> case info.group of
+            Nothing -> ChangeVar info [] [] []
+            Just g -> updateGroup info <| CGroup { g | currentGame = Just game }
         CInstalledGameTypes list -> ChangeVar
             { info | installedTypes = Just list } [] [] []
         CCreateOptions key options -> ChangeVar
