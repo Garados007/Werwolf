@@ -5,6 +5,7 @@ module Game.UI.ChatBox exposing
         , SetUser
         , SetRooms
         , SetConfig
+        , SetGame
         )
     , ChatBoxEvent (..)
     , ChatBoxDef
@@ -44,6 +45,7 @@ type alias ChatBoxInfo =
     , rooms : Dict ChatId Chat
     , selected : Maybe ChatId
     , targetChat : Maybe ChatId
+    , game: Maybe Game
     }
 
 type ChatBoxMsg
@@ -52,6 +54,7 @@ type ChatBoxMsg
     | SetUser (Dict UserId String)
     | SetRooms (Dict ChatId Chat)
     | SetConfig LangConfiguration
+    | SetGame Game
     -- Wrapped
     | WrapChatLog ChatLog.Msg
     | WrapChatInsertBox ChatInsertBox.Msg
@@ -91,7 +94,7 @@ init (config, token) =
             cl 
             cb
             Dict.empty Dict.empty
-            Nothing Nothing
+            Nothing Nothing Nothing
         (ninfo, moreCmd, pt) = handleOwn Nothing info cbList
     in
         ( ChatBox ninfo
@@ -165,6 +168,8 @@ update def msg (ChatBox model) =
                 , task
                 , tpm
                 )
+        SetGame game ->
+            (ChatBox { model | game = Just game }, Cmd.none, [])
         ChangeFilter filter ->
             let
                 filt = Result.toMaybe <| String.toInt filter
@@ -193,11 +198,12 @@ single info = getSingle info.config.lang
 
 view : ChatBox -> Html ChatBoxMsg
 view (ChatBox model) = divc "w-chat-box" <|
-    div []
-        [ divc "w-chat-log-box" <| divk <|
+    div [] <| List.filterMap identity
+        [ Maybe.map (viewStatus model.config.lang) model.game
+        , Just <| divc "w-chat-log-box" <| divk <|
             Html.map WrapChatLog <| 
             lazy (ChatLog.view model.config) model.chatLog
-        , divc "w-chat-selector-box" <| divk <|
+        , Just <| divc "w-chat-selector-box" <| divk <|
             div [ class "w-chat-selector" ]
             [ div [] <| List.singleton <| select
                 [ class "w-chat-filter"
@@ -246,12 +252,23 @@ view (ChatBox model) = divc "w-chat-box" <|
                 ]
                 [ text <| single model [ "ui", "view-votes"] ]
             ]
-        , divc "w-chat-insert-box" <| divk <|
-            if canViewChatInsertBox model
-            then Html.map WrapChatInsertBox <|
+        , if canViewChatInsertBox model
+            then Just <| divc "w-chat-insert-box" <| divk <|
+                Html.map WrapChatInsertBox <|
                 MC.view model.insertBox
-            else div [] []
+            else Nothing
         ]
+
+viewStatus : LangLocal -> Game -> Html ChatBoxMsg
+viewStatus lang game = divc "w-chat-phase-status" <| divk <| div []
+    [ divk <| text <| getSingle lang [ "ui", "day-count" ]
+    , divk <| text <| toString <| game.day
+    , divk <| text <| getSingle lang [ "ui", "day-time" ]
+    , divk <| text <| getSingle lang 
+        [ "phase-time", String.left 1 game.phase ]
+    , divk <| text <| getSingle lang [ "ui", "day-phase" ]
+    , divk <| text <| getSingle lang [ "phase", game.phase ]
+    ]
 
 updateAll : (a -> b -> (b, Cmd a)) -> b -> List a -> (b, List (Cmd a))
 updateAll f model tasks = case tasks of

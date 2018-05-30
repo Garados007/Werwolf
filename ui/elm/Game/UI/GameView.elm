@@ -681,6 +681,11 @@ getChanges_ChatBox old new =
         , if old.chats /= new.chats
             then Just <| perform ChatBox.SetRooms <| succeed <| new.chats
             else Nothing
+        , if (Maybe.andThen .currentGame old.group) /= (Maybe.andThen .currentGame new.group)
+            then Maybe.andThen (Just << perform ChatBox.SetGame << succeed)
+                <| Maybe.andThen .currentGame new.group
+            else Nothing
+            
         ]
 
 getChanges_Config : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg

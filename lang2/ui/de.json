@@ -35,7 +35,10 @@
         "rolesets": "Spielerrollen",
         "role-leader": "Spielleiter",
         "role-invalid": "Die Rollenzahl stimmt nicht mit der Nutzerzahl überein!",
-        "create-newgame": "Erstelle neues Spiel"
+        "create-newgame": "Erstelle neues Spiel",
+        "day-count": "Tag:",
+        "day-time": "Tageszeit:",
+        "day-phase": "Phase:"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

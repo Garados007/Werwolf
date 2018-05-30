@@ -18,5 +18,12 @@
     "new-option": {
         "add-set": "Weitere Einstellungen",
         "hide-roles": "Verstecke Rollen von Besiegten"
+    },
+    "phase-time": {
+        "n": "Nacht",
+        "d": "Tag"
+    },
+    "phase": {
+        "n:wolfvo": "Wolfphase"
     }
 }
