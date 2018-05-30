@@ -8,10 +8,11 @@ if (!isset($_GET["_class"]) || !isset($_GET["_method"])) {
 }
 
 include_once __DIR__.'/../config.php';
+$jsonFormat = RELEASE_MODE ? 0 : JSON_PRETTY_PRINT;
 if (MAINTENANCE) {
     include_once __DIR__ . '/Maintenance.php';
     $m = new Maintenance();
-    echo json_encode($m->doMaintenance(), JSON_PRETTY_PRINT);
+    echo json_encode($m->doMaintenance(), $jsonFormat);
     return;
 }
 
@@ -47,4 +48,4 @@ if ($class === null || !is_callable([$class, $_GET["_method"]]) || substr($_GET[
 
 $method = $_GET["_method"];
 $result = $class->$method();
-echo json_encode($result, JSON_PRETTY_PRINT);
+echo json_encode($result, $jsonFormat);
