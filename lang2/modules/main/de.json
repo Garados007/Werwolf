@@ -11,6 +11,9 @@
         "wolfkill": "Wolfschat"
     },
     "voting-names": {
+        "village": {
+            "kill": "Dorfwahl"
+        },
         "wolfkill": {
             "kill": "Todesliste"
         }
@@ -24,6 +27,7 @@
         "d": "Tag"
     },
     "phase": {
-        "n:wolfvo": "Wolfphase"
+        "d:vote": "Dorfabstimmung",
+        "n:wolfvo": "Wolfsphase"
     }
 }
