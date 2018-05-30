@@ -7,6 +7,14 @@ if (!isset($_GET["_class"]) || !isset($_GET["_method"])) {
     return;
 }
 
+include_once __DIR__.'/../config.php';
+if (MAINTENANCE) {
+    include_once __DIR__ . '/Maintenance.php';
+    $m = new Maintenance();
+    echo json_encode($m->doMaintenance(), JSON_PRETTY_PRINT);
+    return;
+}
+
 $class = null;
 
 switch ($_GET["_class"]) {
