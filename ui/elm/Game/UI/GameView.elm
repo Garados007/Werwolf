@@ -429,12 +429,20 @@ updateGroup info change =
                             , entrys = Dict.empty
                             , votes = Dict.empty
                             , user = cleanUser info.user
+                            , newGame = if group.leader == info.ownUserId
+                                then info.newGame
+                                else Nothing
                             }
                         else { info 
                             | group = Just group 
                             , newGame = Nothing
                             }
-                    else { info | group = Just group }
+                    else { info 
+                        | group = Just group
+                        , newGame = if group.leader == info.ownUserId
+                            then info.newGame
+                            else Nothing 
+                        }
                 nperiods = List.filterMap identity 
                         [ Just <| requestUpdatedGroup group
                         , if finished
