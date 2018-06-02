@@ -64,8 +64,6 @@ class User extends JsonExport {
 	}
 	
 	public static function createUser($group, $user) {
-		// var_dump($user);
-		// debug_print_backtrace();
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addUser.sql',
 			array(

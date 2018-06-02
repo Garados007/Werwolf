@@ -163,7 +163,6 @@ class GameGroup extends JsonExport {
 	}
 
 	public function setWinner(array $roles) {
-		var_dump($roles);
 		$result = DB::executeFormatFile(
 			__DIR__ . '/sql/setWinningGame.sql',
 			array(
