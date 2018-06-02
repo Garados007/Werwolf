@@ -169,7 +169,7 @@ class Permission {
                         return true;
                 return self::errorStatus("user has no rights to change phase");
             }
-        else return self::errorId("user is not in this game");
+        return self::errorId("user is not in this game");
     }
 
     //endregion
