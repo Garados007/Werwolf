@@ -445,6 +445,7 @@ updateGroup info change =
                         , if info.group == Nothing
                             then Just <| RespConv <| LastOnline group.id
                             else Nothing
+                        , requestChangedVotings group newModel.lastVotingChange
                         ]
                 (rperiods, send) = case info.group of
                     Nothing -> ([], List.filterMap identity 
@@ -597,17 +598,30 @@ updateGroup info change =
                                 (\v -> v.chat /= voting.chat || v.voteKey /= v.voteKey)
                                 voting chat.voting
                             }
+                        lastVotingChange = Maybe.withDefault 0 <| List.maximum <| List.filterMap identity
+                            [ Just <| info.lastVotingChange
+                            , Just <| voting.created
+                            , voting.voteStart
+                            , voting.voteEnd
+                            ]
                     in ChangeVar
                         { info
                         | chats = Dict.insert nc.id nc info.chats
+                        , lastVotingChange = lastVotingChange
                         } 
-                        (if voting.voteEnd == Nothing && voting.voteStart /= Nothing
-                        then [ requestNewVotesS voting info.lastVoteTime ]
-                        else []
+                        ( List.filterMap identity
+                            [ if voting.voteEnd == Nothing && voting.voteStart /= Nothing
+                                then Just <| requestNewVotesS voting info.lastVoteTime
+                                else Nothing
+                            , Maybe.andThen (flip requestChangedVotings lastVotingChange) info.group
+                            ]
                         )
-                        (if voting.voteEnd /= Nothing
-                        then [ requestNewVotesS voting info.lastVoteTime ]
-                        else []
+                        ( List.filterMap identity
+                            [ if voting.voteEnd /= Nothing
+                                then Just <| requestNewVotesS voting info.lastVoteTime
+                                else Nothing
+                            , Maybe.andThen (flip requestChangedVotings info.lastVotingChange) info.group
+                            ]
                         )
                         []
         CGame game -> case info.group of
