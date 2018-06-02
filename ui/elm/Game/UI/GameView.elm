@@ -417,26 +417,20 @@ updateGroup info change =
                     )
                 newModel =
                     if changefinished
-                    then
-                        if finished
-                        then { info
-                            | group = Just group
-                            , hasPlayer = False
-                            , lastVotingChange = 0
-                            , lastVoteTime = 0
-                            , chats = Dict.empty
-                            , lastChat = Dict.empty
-                            , entrys = Dict.empty
-                            , votes = Dict.empty
-                            , user = cleanUser info.user
-                            , newGame = if group.leader == info.ownUserId
-                                then info.newGame
-                                else Nothing
-                            }
-                        else { info 
-                            | group = Just group 
-                            , newGame = Nothing
-                            }
+                    then { info
+                        | group = Just group
+                        , hasPlayer = False
+                        , lastVotingChange = 0
+                        , lastVoteTime = 0
+                        , chats = Dict.empty
+                        , lastChat = Dict.empty
+                        , entrys = Dict.empty
+                        , votes = Dict.empty
+                        , user = cleanUser info.user
+                        , newGame = if (group.leader == info.ownUserId) && finished
+                            then info.newGame
+                            else Nothing
+                        }
                     else { info 
                         | group = Just group
                         , newGame = if group.leader == info.ownUserId
@@ -472,7 +466,7 @@ updateGroup info change =
                                     (\game -> RespGet <| GetChatRooms game.id)
                                     group.currentGame
                                 else Nothing
-                            , if changefinished && (not finished)
+                            , if changefinished
                                 then Just <| RespGet <| GetUserFromGroup group.id
                                 else Nothing
                             ]
@@ -521,6 +515,7 @@ updateGroup info change =
                 )
         CChat chat -> 
             let 
+                finished = Maybe.withDefault True <| Maybe.map groupFinished info.group
                 old = Dict.get chat.id info.chats
                 oldTime = Maybe.withDefault 0 <| 
                     Dict.get chat.id info.lastChat
@@ -538,7 +533,7 @@ updateGroup info change =
                 , entrys = Dict.insert chat.id Dict.empty info.entrys
                 , votes = Dict.insert chat.id dict info.votes
                 } 
-                (List.append
+                (if finished then [] else List.append
                     [ requestChatEntrys chat.id oldTime ]
                     <| requestNewVotes chat info.lastVoteTime
                 )
