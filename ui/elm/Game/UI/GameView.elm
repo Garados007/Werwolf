@@ -175,6 +175,7 @@ handleChatBox event = case event of
 handleVoting : VotingEvent -> List EventMsg
 handleVoting event = case event of
     Voting.Send request -> [ SendMes request ]
+    Voting.CloseBox -> [ ViewVotes ]
 
 handleNewGame : NewGameEvent -> List EventMsg
 handleNewGame event = case event of
@@ -263,12 +264,15 @@ update msg (GameView model) = case msg of
         (GameView model
         , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
         )
-    WrapUserListBox wmsg ->
-        let
-            (nm, wcmd) = UserListBox.update wmsg model.userListBox
-        in  ( GameView { model | userListBox = nm }
-            , Cmd.map WrapUserListBox wcmd
-            )
+    WrapUserListBox wmsg -> case wmsg of
+        OnCloseBox ->
+            (GameView { model | showPlayers = False }, Cmd.none)
+        _ ->
+            let
+                (nm, wcmd) = UserListBox.update wmsg model.userListBox
+            in  ( GameView { model | userListBox = nm }
+                , Cmd.map WrapUserListBox wcmd
+                )
     WrapChatBox wmsg -> case model.chatBox of
         Just chatBox ->
             let (nm, wcmd, wtasks) = MC.update chatBox wmsg

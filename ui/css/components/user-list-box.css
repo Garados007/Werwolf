@@ -1,41 +1,46 @@
 .w-user-roles-box {
-    position: relative;
-    padding: 0.3em;
-  }
-  .w-user-title {
-      font-size: 1.3em;
-      font-weight: bold;
-  }
-  .w-user-select-chat select {
-    width: 100%;
-  }
-  .w-user-box {
-    margin: 0.4em 0;
-    border: 1px solid lightgray;
-    display: table;
-    width: 100%;
-  }
-  .w-user-icon-area {
-    display: table-cell;
-    width: 3.5em;
-    padding: 0 0.3em;
-  }
-  .w-user-icon {
-    width: 3em;
-    height: 3em;
-    text-align: center;
-  }
-  .w-user-last-online {
-    font-size: 0.7em;
-    text-align: right;
-  }
-  .w-user-info-area {
-    display: table-cell;
-  }
-  .w-user-role {
-    display: inline-block;
-    padding: 0.1em;
-  }
-  
-  
-  
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+.w-user-select-chat {
+  margin: 0.3em;
+}
+.w-user-select-chat select {
+  width: 100%;
+  box-sizing : border-box;
+}
+.w-user-box-outer {
+  margin: 0.4em 0.3em;
+  border: 1px solid lightgray;
+}
+.w-user-box {
+  display: table;
+  width: 100%;
+}
+.w-user-icon-area {
+  display: table-cell;
+  width: 3.5em;
+  padding: 0 0.3em;
+}
+.w-user-icon {
+  width: 3em;
+  height: 3em;
+  text-align: center;
+}
+.w-user-last-online {
+  font-size: 0.7em;
+  text-align: right;
+}
+.w-user-info-area {
+  display: table-cell;
+}
+.w-user-role {
+  display: inline-block;
+  padding: 0.1em;
+}
+
+

@@ -1,6 +1,7 @@
 {
     "ui": {
-        "user": "Nutzer",
+        "user-header": "Nutzer",
+        "vote-header": "Steuerung",
         "filter-all": "alle",
         "no-filter": "kein Filter",
         "voting": "Votings",

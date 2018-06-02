@@ -60,9 +60,11 @@ type VotingMsg
     | OnVoteEnd ChatId VoteKey
     | OnNextRound
     | OnChangeVis ChatId VoteKey
+    | OnCloseBox
 
 type VotingEvent 
     = Send Request
+    | CloseBox
 
 type alias VotingDef a = ModuleConfig Voting VotingMsg 
     (LangConfiguration, Int) VotingEvent a
@@ -90,6 +92,7 @@ single info = getSingle info.config.lang
 
 view : Voting -> Html VotingMsg
 view (Voting model) = div [ class "w-voting-box" ] <|
+    (::) (viewBoxHeader model) <|
     (::) (viewGameControl model) <|
     List.map (viewVoting model) <|
     List.concat <|
@@ -223,6 +226,16 @@ viewGameControl info =
                 ]
             ]
     else div [] []
+
+viewBoxHeader : VotingInfo -> Html VotingMsg
+viewBoxHeader info = div [ class "w-box-header"]
+    [ div [ class "w-box-header-title" ]
+        [ text <| getSingle info.config.lang
+            [ "ui", "vote-header" ]
+        ]
+    , div [ class "w-box-header-close", onClick OnCloseBox ]
+        [ text "X" ]
+    ]
 
 viewSingleVotingInfo : VotingInfo -> TVoting -> Html VotingMsg
 viewSingleVotingInfo info voting =
@@ -363,6 +376,11 @@ update def msg (Voting info) = case msg of
     OnChangeVis chat key ->
         let vis = not <| Maybe.withDefault False <| Dict.get (chat,key) info.info
         in ( Voting { info | info = Dict.insert (chat, key) vis info.info }, Cmd.none, [])
+    OnCloseBox ->
+        ( Voting info
+        , Cmd.none
+        , MC.event def <| CloseBox
+        )
 
 subscriptions : Voting -> Sub VotingMsg
 subscriptions model = Sub.none

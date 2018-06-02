@@ -1,13 +1,58 @@
 .w-box-game-view {
-    display: table;
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+.w-box-game-view > div {
+  display: table-cell;
+  vertical-align: top;
+  position: relative;
+}
+.w-box-player,
+.w-box-voting {
+    width: 25%;
+}
+.w-box-header {
+  display: table;
+  width: 100%;
+  border: 1px solid lightgray;
+  background-color: lightgray;
+}
+.w-box-header-title, .w-box-header-close {
+  display: table-cell;
+  text-align: center;
+}
+.w-box-header-close {
+  cursor: pointer;
+  visibility: hidden;
+}
+.w-chat-view-user,
+.w-chat-view-votes {
+  visibility: hidden;
+}
+@media (max-width: 600px) {
+.w-box-player,
+.w-box-voting {
+    display: block !important;
+  z-index: 100;
     width: 100%;
-    height: 100%;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+}
+  .w-box-player:not(.visible),
+  .w-box-voting:not(.visible) {
+    display: none !important;
   }
-  .w-box-game-view > div {
-    display: table-cell;
-    vertical-align: top;
-    position: relative;
+  .w-box-header-close {
+    visibility: visible;
   }
-  .w-box-voting {
-      width: 15em;
-  }
+  
+.w-chat-view-user,
+.w-chat-view-votes {
+  visibility: visible;
+}
+}

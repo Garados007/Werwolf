@@ -5,6 +5,7 @@ module Game.UI.UserListBox exposing
         , UpdateChats
         , UpdateRuleset
         , UpdateConfig
+        , OnCloseBox
         )
     , init
     , view
@@ -20,7 +21,7 @@ import Game.Utils.Language exposing (..)
 
 import Html exposing (Html,div,text,node,img)
 import Html.Attributes exposing (class,value,src,title)
-import Html.Events exposing (on)
+import Html.Events exposing (on,onClick)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Config exposing (..)
@@ -43,6 +44,8 @@ type UserListBoxMsg
     | UpdateChats (Dict ChatId Chat)
     | UpdateRuleset String
     | UpdateConfig LangConfiguration
+    -- public event
+    | OnCloseBox
     -- private methods
     | ChangeFilter String
     | NewTime Time
@@ -63,11 +66,13 @@ init conf=
 view : UserListBox -> Html UserListBoxMsg
 view (UserListBox model) =
     div [ class "w-user-roles-box" ]
-        [ div [ class "w-user-title" ]
-            [ text <| single model ["ui", "user" ] ]
+        [ viewBoxHeader model
         , viewChatSelector model
         , div []
-            (List.map (viewUser model model.ruleset) <| filterUser model)
+            ( List.map (div [ class "w-user-box-outer" ] << List.singleton) <|
+                List.map (viewUser model model.ruleset) <| 
+                filterUser model
+            )
         ]
 
 filterUser : UserListBoxInfo -> List User
@@ -153,6 +158,16 @@ viewUser info ruleset user =
             ]
         ]
 
+viewBoxHeader : UserListBoxInfo -> Html UserListBoxMsg
+viewBoxHeader info = div [ class "w-box-header"]
+    [ div [ class "w-box-header-title" ]
+        [ text <| getSingle info.config.lang
+            [ "ui", "user-header" ]
+        ]
+    , div [ class "w-box-header-close", onClick OnCloseBox ]
+        [ text "X" ]
+    ]
+
 getTime : UserListBoxInfo -> Int -> String
 getTime info time =
     let dif = info.time - (toFloat time * 1000)
@@ -180,7 +195,8 @@ update msg (UserListBox model) =
             (UserListBox { model | time = time }, Cmd.none)
         UpdateConfig config ->
             (UserListBox { model | config = config }, Cmd.none)
-        
+        OnCloseBox -> (UserListBox model, Cmd.none)
+
 subscriptions : UserListBox -> Sub UserListBoxMsg
 subscriptions (UserListBox model) =
     Time.every Time.second NewTime
