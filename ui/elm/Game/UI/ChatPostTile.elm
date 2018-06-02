@@ -15,6 +15,7 @@ type alias ChatPostTile =
     , chatId : Int
     , text: String
     , special: Maybe LangVars
+    , id : Int
     }
 
 view : LangConfiguration -> ChatPostTile -> Html msg

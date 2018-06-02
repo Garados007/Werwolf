@@ -67,8 +67,14 @@ update msg (Internal model) =
     case msg of
         Add tile ->
             let
-                list = List.append model.items [ tile ]
-                cmd = attempt NoOp1 (toBottom model.id)
+                contains = case tile of
+                    PostTile tile -> List.any
+                        (\t -> case t of
+                            PostTile tile2 -> tile.id == tile2.id
+                        )
+                        model.items
+                list = if contains then model.items else List.append model.items [ tile ]
+                cmd = if contains then Cmd.none else attempt NoOp1 (toBottom model.id)
             in (Internal { model | items = sortTiles list }, cmd)
         Set tiles ->
             let

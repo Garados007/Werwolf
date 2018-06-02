@@ -127,7 +127,8 @@ decodeControl method =
         "startVoting" ->
             decSingle StartVoting decodeVoting
         "finishVoting" ->
-            succeed (Just FinishVoting)
+            decSingle (always FinishVoting) bool
+            --succeed (Just FinishVoting)
         "vote" ->
             decSingle Vote_ decodeVote
         "setConfig" ->

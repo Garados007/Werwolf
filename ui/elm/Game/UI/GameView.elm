@@ -415,6 +415,20 @@ updateGroup info change =
                         RespConv (GetChangedVotings _ _) -> True
                         _ -> False
                     )
+                filterNewRound : List Request -> List Request
+                filterNewRound = List.filter
+                    (\req -> case req of
+                        RespConv (GetNewVotes _ _ _) -> True
+                        RespConv (GetChangedVotings _ _) -> True
+                        RespConv (GetNewChatEntrys _ _) -> True
+                        _ -> False
+                    )
+                samePhase : Group -> Group -> Bool
+                samePhase = \old new -> case old.currentGame of
+                    Nothing -> new.currentGame == Nothing
+                    Just og -> case new.currentGame of
+                        Nothing -> False
+                        Just ng -> (og.phase == ng.phase) && (og.day == ng.day)
                 newModel =
                     if changefinished
                     then { info
@@ -431,16 +445,25 @@ updateGroup info change =
                             then info.newGame
                             else Nothing
                         }
-                    else { info 
-                        | group = Just group
-                        , newGame = if group.leader == info.ownUserId
-                            then info.newGame
-                            else Nothing 
-                        }
+                    else if Maybe.withDefault True <| Maybe.map (samePhase group) info.group
+                        then { info 
+                            | group = Just group
+                            , newGame = if group.leader == info.ownUserId
+                                then info.newGame
+                                else Nothing 
+                            }
+                        else { info
+                            | group = Just group
+                            , newGame = Nothing
+                            , chats = Dict.empty
+                            , lastChat = Dict.empty
+                            , entrys = Dict.empty
+                            , votes = Dict.empty
+                            }
                 nperiods = List.filterMap identity 
                         [ Just <| requestUpdatedGroup group
                         , if finished
-                            then Nothing
+                            then Nothing 
                             else requestChangedVotings group info.lastVotingChange
                         , if info.group == Nothing
                             then Just <| RespConv <| LastOnline group.id
@@ -460,6 +483,9 @@ updateGroup info change =
                             , if changefinished && finished
                                 then List.map Just <| filterPeriods info.periods
                                 else []
+                            , if samePhase old group
+                                then []
+                                else List.map Just <| filterNewRound info.periods
                             ]
                         , List.filterMap identity 
                             [ if (old /= group) && (not finished)
@@ -534,12 +560,13 @@ updateGroup info change =
                 , entrys = Dict.insert chat.id Dict.empty info.entrys
                 , votes = Dict.insert chat.id dict info.votes
                 } 
-                (if finished then [] else List.append
+                (--if finished then [] else 
+                    List.append
                     [ requestChatEntrys chat.id oldTime ]
                     <| requestNewVotes chat info.lastVoteTime
                 )
                 ( List.append
-                    ( Maybe.withDefault []
+                    ( if not finished then [] else Maybe.withDefault []
                         <| Maybe.map 
                             (List.singleton << 
                                 flip requestChatEntrys oldTime
