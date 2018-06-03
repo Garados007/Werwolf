@@ -10,6 +10,7 @@ import Game.Types.DecodeCreateOptions exposing (..)
 
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (decode, required)
+import Dict
 
 decodeResponse : Decoder Response
 decodeResponse =
@@ -34,7 +35,19 @@ decodeResponseInfo =
     decode ResponseInfo
         |> required "class" string
         |> required "method" string
-        |> required "request" (dict value)
+        |> required "request"
+            ( oneOf
+                [ dict value
+                , andThen
+                    (\list ->
+                        if List.isEmpty list
+                        then succeed Dict.empty
+                        else fail "Require object of values or an empty array"
+                    )
+                    <| list int
+                ]
+
+            )
 
 decodeError : Decoder (Maybe ErrorInfo)
 decodeError =
