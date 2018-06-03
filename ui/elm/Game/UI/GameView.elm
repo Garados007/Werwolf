@@ -43,6 +43,7 @@ type alias GameViewInfo =
     , group : Maybe Group
     , hasPlayer : Bool
     , ownUserId : Int
+    , ownGroupId : Int
     , lastVotingChange : Int
     , lastVoteTime : Int
     , chats : Dict ChatId Chat
@@ -127,7 +128,7 @@ gameViewModule = createModule
     , update = update
     , subscriptions = subscriptions
     }
-
+    
 combine : ChangeVar a -> ChangeVar a -> ChangeVar a
 combine a b = ChangeVar b.new 
     (a.register ++ b.register) 
@@ -149,6 +150,7 @@ init (groupId, ownUserId) =
             , group = Nothing
             , hasPlayer = False
             , ownUserId = ownUserId
+            , ownGroupId = groupId
             , lastVotingChange = 0
             , lastVoteTime = 0
             , chats = Dict.empty
@@ -473,7 +475,7 @@ compact =
 updateGroup : GameViewInfo -> Changes -> ChangeVar GameViewInfo
 updateGroup info change = 
     case change of
-        CGroup group ->
+        CGroup group -> if group.id /= info.ownGroupId then ChangeVar info [] [] [] else
             let finished = groupFinished group
                 changefinished = case info.group of
                     Just g -> xor finished <| groupFinished g
