@@ -1,19 +1,14 @@
 module Game.UI.GameView exposing
     ( GameView
     , GameViewMsg
-        ( RegisterNetwork
-        , UnregisterNetwork
-        , SendNetwork
-        , FetchRulesetLang
-        , SetConfig
+        ( SetConfig
         , SetLang
         , Manage
         , Disposing
         )
-    , init
-    , update
-    , view
-    , subscriptions
+    , GameViewEvent (..)
+    , GameViewDef
+    , gameViewModule
     )
 
 import ModuleConfig as MC exposing (..)
@@ -77,12 +72,12 @@ type GameViewViewType
 
 type GameViewMsg
     -- public events
-    = RegisterNetwork Request
-    | UnregisterNetwork Request
-    | SendNetwork Request
-    | FetchRulesetLang String
+    -- = RegisterNetwork Request
+    -- | UnregisterNetwork Request
+    -- | SendNetwork Request
+    -- | FetchRulesetLang String
     -- public methods
-    | Manage (List Changes)
+    = Manage (List Changes)
     | SetConfig Configuration
     | SetLang LangGlobal
     | Disposing --unregisters all registered requests and other cleanup
@@ -94,6 +89,17 @@ type GameViewMsg
     -- private methods
     | PushConfig ()
     | CreateNewGame
+    | Init Int Int
+    | ProxyEvents (List EventMsg)
+
+type GameViewEvent
+    = Register Request
+    | Unregister Request
+    | Send Request
+    | FetchRuleset String
+
+type alias GameViewDef a = ModuleConfig GameView GameViewMsg
+    (Int, Int) GameViewEvent a
 
 type alias ChangeVar a =
     { new : a
@@ -108,6 +114,19 @@ type EventMsg
     | ViewVotes
     | PushInstalledTypes
     | FetchLangSet String
+    | PChatBox ChatBoxMsg
+    | PUserListBox UserListBoxMsg
+    | PVoting VotingMsg
+    | PNewGame NewGameMsg
+
+gameViewModule : (GameViewEvent -> List a) ->
+    (Int, Int) -> (GameViewDef a, Cmd GameViewMsg, List a)
+gameViewModule = createModule
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
 
 combine : ChangeVar a -> ChangeVar a -> ChangeVar a
 combine a b = ChangeVar b.new 
@@ -115,10 +134,10 @@ combine a b = ChangeVar b.new
     (a.unregister ++ b.unregister)
     (a.send ++ b.send)
 
-init : Int -> Int -> (GameView, Cmd GameViewMsg)
-init groupId ownUserId =
+init : (Int, Int) -> (GameView, Cmd GameViewMsg, List a)
+init (groupId, ownUserId) =
     let 
-        own = perform SendNetwork <| succeed <| initRequest groupId ownUserId
+        own = perform (always <| Init groupId ownUserId) <| succeed ()
         config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing 
         (userListBox, ulbCmd) = UserListBox.init config
@@ -148,15 +167,16 @@ init groupId ownUserId =
             , showPlayers = False
             , showVotes = False
             }
-        (ninfo, eventCmd) = handleEvent info (cbTasks ++ vTasks)
-    in  ( GameView ninfo
+    in  ( GameView info
         , Cmd.batch 
             [ own
             , Cmd.map WrapUserListBox ulbCmd
             , Cmd.map WrapChatBox cbCmd
             , Cmd.map WrapVoting vCmd
-            , Cmd.batch eventCmd
+            , Task.perform (always <| ProxyEvents <| cbTasks ++ vTasks)
+                <| Task.succeed ()
             ]
+        , []
         )
 
 initRequest : Int -> Int -> Request
@@ -186,33 +206,62 @@ handleNewGame event = case event of
     NewGame.CreateGame config ->
         [ SendMes <| RespControl <| StartNewGame config ]
 
-handleEvent : GameViewInfo -> List EventMsg -> (GameViewInfo, List (Cmd GameViewMsg))
-handleEvent = changeWithAll2
+handleEvent : GameViewDef a -> GameViewInfo -> List EventMsg -> (GameViewInfo, List (Cmd GameViewMsg), List (List a))
+handleEvent def = changeWithAll3
     (\info event -> case event of
         SendMes request ->
             ( info
-            , Task.perform SendNetwork <| Task.succeed request
+            , Cmd.none
+            , MC.event def <| Send request
             )
         ViewUser ->
             ( { info | showPlayers = not info.showPlayers }
             , Cmd.none
+            , []
             )
         ViewVotes ->
             ( { info | showVotes = not info.showVotes }
             , Cmd.none
+            , []
             )
-        PushInstalledTypes ->
-            ( info
-            , case info.installedTypes of
-                Just it -> Task.perform WrapNewGame <| Task.succeed <|
-                    NewGame.SetInstalledTypes it
-                Nothing -> Task.perform SendNetwork <| Task.succeed <|
-                    RespInfo InstalledGameTypes
-            )
+        PushInstalledTypes -> case info.newGame of
+            Nothing -> (info, Cmd.none, [])
+            Just newGame -> case info.installedTypes of
+                Just it ->
+                    let (nm, ncmd, ntasks) = MC.update newGame <|
+                            NewGame.SetInstalledTypes it
+                        (tm, tcmd, tt) = handleEvent def
+                            { info | newGame = Just nm } ntasks
+                    in  ( tm
+                        , Cmd.batch <| Cmd.map WrapNewGame ncmd :: tcmd
+                        , List.concat tt
+                        )
+                Nothing ->
+                    ( info
+                    , Cmd.none
+                    , MC.event def <| Send <| RespInfo InstalledGameTypes
+                    )
         FetchLangSet ruleset ->
             ( info
-            , Task.perform FetchRulesetLang <| Task.succeed ruleset
+            , Cmd.none
+            , MC.event def <| FetchRuleset ruleset
             )
+        PChatBox msg ->
+            let (GameView nm, cmd, tasks) = update def (WrapChatBox msg)
+                    (GameView info)
+            in (nm, cmd, tasks)
+        PUserListBox msg ->
+            let (GameView nm, cmd, tasks) = update def (WrapUserListBox msg)
+                    (GameView info)
+            in (nm, cmd, tasks)
+        PVoting msg ->
+            let (GameView nm, cmd, tasks) = update def (WrapVoting msg)
+                    (GameView info)
+            in (nm, cmd, tasks)
+        PNewGame msg ->
+            let (GameView nm, cmd, tasks) = update def (WrapNewGame msg)
+                    (GameView info)
+            in (nm, cmd, tasks)
     )
 
 justMcUpdate : (a -> msg -> (a, Cmd msg, List ev)) -> Maybe a -> msg -> (Maybe a, Cmd msg, List ev)
@@ -220,8 +269,8 @@ justMcUpdate fc model msg = case model of
     Just m -> (\(m,c,l) -> (Just m, c, l)) <| fc m msg
     Nothing -> (Nothing, Cmd.none, [])
 
-update : GameViewMsg -> GameView -> (GameView, Cmd GameViewMsg)
-update msg (GameView model) = case msg of
+update : GameViewDef a -> GameViewMsg -> GameView -> (GameView, Cmd GameViewMsg, List a)
+update def msg (GameView model) = case msg of
     Manage changes ->
         let
             changed_ = performUpdate updateGroup model changes
@@ -234,75 +283,81 @@ update msg (GameView model) = case msg of
             req1 = flip List.filter model.periods 
                 <| not << flip List.member changed.unregister
             req2 = List.append req1 changed.register
-            cmd = List.concat
-                [ List.map (Task.perform UnregisterNetwork << Task.succeed)
+            tasks = List.concat
+                [ List.map (MC.event def << Unregister)
                     changed.unregister
-                , List.map (Task.perform RegisterNetwork << Task.succeed)
+                , List.map (MC.event def << Register)
                     changed.register
-                , List.map (Task.perform SendNetwork << Task.succeed)
+                , List.map (MC.event def << Send)
                     changed.send
                 ]
             new = changed.new
             nm = { new | periods = req2 }
-            cmd_ulb = getChanges_UserListBox model nm
-            cmd_cb = getChanges_ChatBox model nm
-            cmd_v = getChanges_Voting model nm
+            (cmd_ulb, t_ulb) = getChanges_UserListBox model nm
+            (cmd_cb, t_cb) = getChanges_ChatBox model nm
+            (cmd_v, t_v) = getChanges_Voting model nm
             cmd_conf = getChanges_Config model nm
-            cmd_ng = getChanges_NewGame model nm
-            (tm, cmd_g) = performChanges_Group model nm
-        in  (GameView tm
-            , Cmd.batch (cmd ++ 
+            (cmd_ng, t_ng) = getChanges_NewGame model nm
+            (tm, cmd_g, ptasks) = performChanges_Group model nm
+            (tm2, tcmd, ttasks) = handleEvent def tm <| 
+                t_ulb ++ t_cb ++ t_v ++ t_ng ++ ptasks
+        in  (GameView tm2
+            , Cmd.batch <|
                 [ cmd_ulb
                 , cmd_cb
                 , cmd_v
                 , cmd_conf
                 , cmd_ng
                 , cmd_g
-                ])
+                ] ++ tcmd
+            , List.concat <| tasks ++ ttasks
             )
     Disposing ->
         (GameView model
-        , Cmd.batch <| List.map (Task.perform UnregisterNetwork << Task.succeed) model.periods
+        , Cmd.none
+        , List.concat <| List.map (MC.event def << Unregister) model.periods
         )
     WrapUserListBox wmsg -> case wmsg of
         OnCloseBox ->
-            (GameView { model | showPlayers = False }, Cmd.none)
+            (GameView { model | showPlayers = False }, Cmd.none, [])
         _ ->
             let
                 (nm, wcmd) = UserListBox.update wmsg model.userListBox
             in  ( GameView { model | userListBox = nm }
                 , Cmd.map WrapUserListBox wcmd
+                , []
                 )
     WrapChatBox wmsg -> case model.chatBox of
         Just chatBox ->
             let (nm, wcmd, wtasks) = MC.update chatBox wmsg
-                (tm, tcmd) = handleEvent { model | chatBox = Just nm } wtasks
+                (tm, tcmd, ttasks) = handleEvent def { model | chatBox = Just nm } wtasks
             in  ( GameView tm
                 , Cmd.batch <| (Cmd.map WrapChatBox wcmd) :: tcmd
+                , List.concat ttasks
                 )
-        Nothing -> (GameView model, Cmd.none)
+        Nothing -> (GameView model, Cmd.none, [])
     WrapVoting wmsg -> case model.voting of
         Just voting ->
             let (nm, wcmd, wtasks) = MC.update voting wmsg
-                (tm, tcmd) = handleEvent { model | voting = Just nm } wtasks
+                (tm, tcmd, ttasks) = handleEvent def { model | voting = Just nm } wtasks
             in  ( GameView tm
                 , Cmd.batch <| (Cmd.map WrapVoting wcmd) :: tcmd
+                , List.concat ttasks
                 )
-        Nothing -> (GameView model, Cmd.none)
+        Nothing -> (GameView model, Cmd.none, [])
     WrapNewGame wmsg -> case model.newGame of
         Just newGame ->
             let (nm, wcmd, wtasks) = MC.update newGame wmsg
-                (tm, tcmd) = handleEvent { model | newGame = Just <| nm } wtasks
+                (tm, tcmd, ttasks) = handleEvent def { model | newGame = Just <| nm } wtasks
             in  ( GameView tm
                 , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
+                , List.concat ttasks
                 )
-        Nothing -> (GameView model, Cmd.none)
+        Nothing -> (GameView model, Cmd.none, [])
     SetConfig config ->
         let oc = model.config
             nc = { oc | conf = config }
-        in  ( GameView { model | config = nc }
-            , Task.perform PushConfig <| Task.succeed ()
-            )
+        in update def (PushConfig ()) <| GameView { model | config = nc }
     SetLang lang ->
         let oc = model.config
             local = createLocal lang <|
@@ -310,9 +365,8 @@ update msg (GameView model) = case msg of
                     Maybe.andThen .currentGame <|
                     model.group
             nc = { oc | lang = local }
-        in  ( GameView { model | config = nc, lang = lang }
-            , Task.perform PushConfig <| Task.succeed ()
-            )
+        in update def (PushConfig ()) <| GameView
+            { model | config = nc, lang = lang }
     PushConfig () ->
         let cgs = case model.newGame of
                 Nothing ->
@@ -338,7 +392,7 @@ update msg (GameView model) = case msg of
                 , voting = nm3
                 , newGame = nm4
                 }
-            (tm,tcmd) = handleEvent model2 (wtasks2 ++ wtasks3 ++ wtasks4)
+            (tm,tcmd,ttasks) = handleEvent def model2 (wtasks2 ++ wtasks3 ++ wtasks4)
         in  ( GameView tm
             , Cmd.batch 
                 ([ Cmd.map WrapUserListBox wcmd1 
@@ -346,20 +400,26 @@ update msg (GameView model) = case msg of
                 , Cmd.map WrapVoting wcmd3
                 , Cmd.map WrapNewGame wcmd4
                 ] ++ tcmd)
+            , List.concat ttasks
             )
     CreateNewGame ->
         let group = case model.group of
                 Just g -> g
                 Nothing -> Debug.crash "GameView:update:CreateNewGame - no group is set, new Game cant be created"
             (nm,wcmd,wtask) = newGameModule handleNewGame (model.config, group)
-            (tm,tcmd) = handleEvent { model | newGame = Just nm } wtask
+            (tm,tcmd,ttasks) = handleEvent def { model | newGame = Just nm } wtask
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
+            , List.concat ttasks
             )
-    FetchRulesetLang _ ->
-        ( GameView model, Task.perform PushConfig <| Task.succeed ())
-
-    _ -> (GameView model, Cmd.none)
+    Init groupId ownUserId ->
+        ( GameView model
+        , Cmd.none
+        , MC.event def <| Send <| initRequest groupId ownUserId 
+        )
+    ProxyEvents events ->
+        let (tm, tcmd, ttasks) = handleEvent def model events
+        in ( GameView tm, Cmd.batch tcmd, List.concat ttasks )
 
 removeDuplicates : List a -> List a -> (List a, List a)
 removeDuplicates a b =
@@ -400,6 +460,15 @@ groupFinished group = case group.currentGame of
     Just game -> case game.finished of
         Nothing -> False
         Just _ -> True
+
+compact : List (Maybe (Cmd GameViewMsg, List EventMsg)) -> (Cmd GameViewMsg, List EventMsg)
+compact =
+    let perform : (a -> b, a -> c) -> a -> (b, c)
+        perform = \(a, b) c -> (a c, b c)
+    in  List.filterMap identity >> perform
+            ( List.map Tuple.first >> Cmd.batch
+            , List.map Tuple.second >> List.concat
+            )
 
 updateGroup : GameViewInfo -> Changes -> ChangeVar GameViewInfo
 updateGroup info change = 
@@ -666,7 +735,7 @@ updateGroup info change =
             { info | rolesets = Dict.insert key list info.rolesets } [] [] []
         _ -> ChangeVar info [] [] []
 
-performChanges_Group : GameViewInfo -> GameViewInfo -> (GameViewInfo, Cmd GameViewMsg)
+performChanges_Group : GameViewInfo -> GameViewInfo -> (GameViewInfo, Cmd GameViewMsg, List EventMsg)
 performChanges_Group old new = case new.group of
     Just group ->
         let finished = groupFinished group
@@ -684,57 +753,68 @@ performChanges_Group old new = case new.group of
                 else if changefinished && finished
                     then (Nothing, Cmd.none, [])
                     else (new.voting, Cmd.none, [])
-            (newModel, eCmd) = handleEvent
-                { new | chatBox = chatBox, voting = voting } 
-                (cbTasks ++ vTasks)
-        in (newModel, Cmd.batch <| [ Cmd.map WrapChatBox cbCmd, Cmd.map WrapVoting vCmd] ++ eCmd)
-    Nothing -> (new, Cmd.none)
+        in  ( { new | chatBox = chatBox, voting = voting } 
+            , Cmd.batch
+                [ Cmd.map WrapChatBox cbCmd
+                , Cmd.map WrapVoting vCmd
+                ]
+            , cbTasks ++ vTasks
+            )
+    Nothing -> (new, Cmd.none, [])
 
-getChanges_UserListBox : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
-getChanges_UserListBox old new =
-    Cmd.batch <| List.map (Cmd.map WrapUserListBox) <| List.filterMap identity
-        [ if old.user /= new.user
-            then Just <| perform UpdateUser <| succeed new.user
-            else Nothing
-        , if old.chats /= new.chats
-            then Just <| perform UpdateChats <| succeed new.chats
-            else Nothing
-        , if old.group == new.group
-            then Nothing
-            else case new.group of
+getChanges_UserListBox : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List EventMsg)
+getChanges_UserListBox old new = compact
+    [ if old.user /= new.user
+        then Just (Cmd.none, List.singleton <| PUserListBox <|
+            UserListBox.UpdateUser new.user
+            )
+        else Nothing
+    , if old.chats /= new.chats
+        then Just (Cmd.none, List.singleton <| PUserListBox <|
+            UserListBox.UpdateChats new.chats
+            )
+        else Nothing
+    , if old.group == new.group
+        then Nothing
+        else case new.group of
+            Nothing -> Nothing
+            Just group -> case group.currentGame of
                 Nothing -> Nothing
-                Just group -> case group.currentGame of
-                    Nothing -> Nothing
-                    Just game ->
-                        Just <| perform UpdateRuleset <| succeed game.ruleset
-        ]
+                Just game -> Just (Cmd.none, List.singleton <| PUserListBox <|
+                    UserListBox.UpdateRuleset game.ruleset
+                    )
+    ]
 
-getChanges_ChatBox : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
-getChanges_ChatBox old new =
-    Cmd.batch <| List.map (Cmd.map WrapChatBox) <| List.filterMap identity
-        [ if old.entrys /= new.entrys
-            then Just <| perform AddChats <| Task.succeed <|
+getChanges_ChatBox : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List EventMsg)
+getChanges_ChatBox old new = compact
+    [ if old.entrys /= new.entrys
+        then Just ( Cmd.none
+            , List.singleton <| PChatBox <| ChatBox.AddChats <|
                 List.filter (\ce ->
                     let time = Maybe.withDefault -1 <| 
                             Dict.get ce.chat old.lastChat
                     in ce.sendDate > time
-                ) <|
-                List.concat <| 
+                ) <| List.concat <| 
                 List.map Dict.values <| Dict.values new.entrys
-            else Nothing
-        , if old.user /= new.user
-            then Just <| perform ChatBox.SetUser <| succeed <| Dict.fromList <|
+            )
+        else Nothing
+    , if old.user /= new.user
+        then Just ( Cmd.none
+            , List.singleton <| PChatBox <| ChatBox.SetUser <| Dict.fromList <|
                 List.map (\user -> (user.user, user.stats.name)) new.user
-            else Nothing
-        , if old.chats /= new.chats
-            then Just <| perform ChatBox.SetRooms <| succeed <| new.chats
-            else Nothing
-        , if (Maybe.andThen .currentGame old.group) /= (Maybe.andThen .currentGame new.group)
-            then Maybe.andThen (Just << perform ChatBox.SetGame << succeed)
-                <| Maybe.andThen .currentGame new.group
-            else Nothing
-            
-        ]
+            )
+        else Nothing
+    , if old.chats /= new.chats
+        then Just ( Cmd.none
+            , List.singleton <| PChatBox <| ChatBox.SetRooms new.chats
+            )
+        else Nothing
+    , if (Maybe.andThen .currentGame old.group) /= (Maybe.andThen .currentGame new.group)
+        then Maybe.map (\v -> (Cmd.none, [v]))
+            <| Maybe.andThen (Just << PChatBox << ChatBox.SetGame)
+            <| Maybe.andThen .currentGame new.group
+        else Nothing
+    ]
 
 getChanges_Config : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
 getChanges_Config old new =
@@ -743,72 +823,92 @@ getChanges_Config old new =
     then Task.perform PushConfig <| Task.succeed ()
     else Cmd.none
 
-getChanges_Voting : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
-getChanges_Voting old new =
-    Cmd.batch <| List.map (Cmd.map WrapVoting) <| List.filterMap identity
-        [ if old.chats /= new.chats
-            then Just <| perform Voting.SetRooms <| Task.succeed new.chats
-            else Nothing
-        , if old.votes /= new.votes
-            then Just <| perform SetVotes <| Task.succeed new.votes
-            else Nothing
-        , if old.user /= new.user
-            then Just <| perform Voting.SetUser <| Task.succeed new.user
-            else Nothing
-        , if old.group /= new.group
-            then Just <| perform Voting.SetLeader <| Task.succeed <|
+getChanges_Voting : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List EventMsg)
+getChanges_Voting old new = compact
+    [ if old.chats /= new.chats
+        then Just (Cmd.none
+            , List.singleton <| PVoting <| Voting.SetRooms new.chats
+            )
+        else Nothing
+    , if old.votes /= new.votes
+        then Just (Cmd.none
+            , List.singleton <| PVoting <| Voting.SetVotes new.votes
+            )
+        else Nothing
+    , if old.user /= new.user
+        then Just (Cmd.none
+            , List.singleton <| PVoting <| Voting.SetUser new.user
+            )
+        else Nothing
+    , if old.group /= new.group
+        then Just (Cmd.none
+            , List.singleton <| PVoting <| Voting.SetLeader <|
                 case new.group of
                     Nothing -> False
                     Just group -> group.leader == new.ownUserId
-            else Nothing
-        , if old.group /= new.group
-            then Just <| perform Voting.SetGame <| Task.succeed <|
+            )
+        else Nothing
+    , if old.group /= new.group
+        then Just (Cmd.none
+            , List.singleton <| PVoting <| Voting.SetGame <|
                 Maybe.map .id <| Maybe.andThen .currentGame <|
                 new.group
-            else Nothing
-        ]
+            )
+        else Nothing
+    ]
 
-getChanges_NewGame : GameViewInfo -> GameViewInfo -> Cmd GameViewMsg
-getChanges_NewGame old new =
-    Cmd.batch <| List.filterMap identity
-        [ if new.newGame == Nothing
-            then case new.group of
-                Nothing -> Nothing
-                Just group -> case group.currentGame of
-                    Just _ -> Nothing
-                    Nothing -> Just <| Task.perform (always CreateNewGame) <| 
+getChanges_NewGame : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List EventMsg)
+getChanges_NewGame old new = compact
+    [ if new.newGame == Nothing
+        then case new.group of
+            Nothing -> Nothing
+            Just group -> case group.currentGame of
+                Just _ -> Nothing
+                Nothing -> Just 
+                    (Task.perform (always CreateNewGame) <| 
                         Task.succeed ()
-            else Nothing
-        , if new.installedTypes /= old.installedTypes
-            then case new.installedTypes of
-                Just it -> Just <| Cmd.batch <| (::)
-                    ( Task.perform 
-                        (WrapNewGame << NewGame.SetInstalledTypes) <|
-                        Task.succeed it
-                    ) <| List.singleton <| Task.perform SendNetwork <|
-                    Task.succeed <| RespMulti <| Multi <| 
+                    , []
+                    )
+        else Nothing
+    , if new.installedTypes /= old.installedTypes
+        then case new.installedTypes of
+            Just it -> Just 
+                ( Cmd.none
+                , [ SendMes <| RespMulti <| Multi <|
                     ( List.map (RespInfo << Request.CreateOptions) <|
                         Maybe.withDefault [] new.installedTypes
-                    ) ++
-                    (List.map (RespInfo << Rolesets) <|
+                    ) 
+                    ++
+                    ( List.map (RespInfo << Rolesets) <|
                         Maybe.withDefault [] new.installedTypes
                     )
-                Nothing -> Nothing
-            else Nothing
-        , if new.createOptions /= old.createOptions
-            then Just <| Task.perform WrapNewGame <| Task.succeed <|
-                NewGame.SetCreateOptions new.createOptions
-            else Nothing
-        , if (new.newGame /= Nothing) && (new.user /= old.user)
-            then Just <| Task.perform WrapNewGame <| Task.succeed <|
+                , PNewGame <| NewGame.SetInstalledTypes it
+                ])
+            Nothing -> Nothing
+        else Nothing
+    , if new.createOptions /= old.createOptions
+        then Just
+            ( Cmd.none 
+            , List.singleton <| PNewGame <| NewGame.SetCreateOptions 
+                new.createOptions
+            )
+        else Nothing
+    , if (new.newGame /= Nothing) && (new.user /= old.user)
+        then Just
+            ( Cmd.none
+            , List.singleton <| PNewGame <|
                 NewGame.SetUser <| List.filter (\u -> u.user /= new.ownUserId ) <|
                 new.user
-            else Nothing
-        , if (new.newGame /= Nothing) && (new.rolesets /= old.rolesets)
-            then Just <| Task.perform WrapNewGame <| Task.succeed <|
+            )
+        else Nothing
+    , if (new.newGame /= Nothing) && (new.rolesets /= old.rolesets)
+        then Just
+            ( Cmd.none
+            , List.singleton <| PNewGame <|
                 NewGame.SetRoleset new.rolesets
-            else Nothing
-        ]
+            )
+        else Nothing
+    ]
 
 (./=) : (a -> b) -> a -> a -> Bool
 (./=) f a b = (f a) /= (f b)
