@@ -41,5 +41,8 @@
         "day-time": "Tageszeit:",
         "day-phase": "Phase:"
     },
+    "lobby": {
+        "nogame": "Du bist aktuell kein Mitglied einer Spielrunde. Tritt doch einer bei oder erstelle eine!"
+    },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

@@ -1,0 +1,17 @@
+html,
+body,
+body > div:first-child,
+{
+  height: 100%;
+}
+body > div:first-child {
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+.w-lobby-game {
+  display: table-row;
+}
+.w-lobby-gameview {
+  display: table-cell;
+}
