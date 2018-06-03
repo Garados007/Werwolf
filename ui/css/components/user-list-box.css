@@ -5,6 +5,7 @@
   right: 0;
   bottom: 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .w-user-select-chat {
   margin: 0.3em;

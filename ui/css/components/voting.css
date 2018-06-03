@@ -7,6 +7,7 @@
   height: 100%;
   position: absolute;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .w-voting, .w-voting-game-control {
   border: 1px solid lightgray;
