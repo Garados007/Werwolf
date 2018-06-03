@@ -472,6 +472,11 @@ compact =
             , List.map Tuple.second >> List.concat
             )
 
+isOwnChat : Chat -> GameViewInfo -> Bool
+isOwnChat chat info = case Maybe.andThen .currentGame info.group of
+    Nothing -> False
+    Just game -> game.id == chat.game
+
 updateGroup : GameViewInfo -> Changes -> ChangeVar GameViewInfo
 updateGroup info change = 
     case change of
@@ -575,7 +580,7 @@ updateGroup info change =
                         )
                 
             in ChangeVar newModel nperiods rperiods send
-        CUser user -> ChangeVar
+        CUser user -> if user.group /= info.ownGroupId then ChangeVar info [] [] [] else ChangeVar
             { info
             | user = (::) user <| List.filter ((./=) .user user) info.user
             , hasPlayer =
@@ -615,7 +620,7 @@ updateGroup info change =
                         else []
                     Nothing -> []
                 )
-        CChat chat -> 
+        CChat chat -> if not <| isOwnChat chat info then ChangeVar info [] [] [] else
             let 
                 finished = Maybe.withDefault True <| Maybe.map groupFinished info.group
                 old = Dict.get chat.id info.chats
