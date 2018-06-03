@@ -589,7 +589,7 @@ updateGroup info change =
                 else info.hasPlayer
             }
             [] [] []
-        CLastOnline list ->
+        CLastOnline groupId list -> if groupId /= info.ownGroupId then ChangeVar info [] [] [] else
             let el = List.map .user info.user
                 ul = List.map Tuple.first list
                 nl = List.filter (not << flip List.member el) ul

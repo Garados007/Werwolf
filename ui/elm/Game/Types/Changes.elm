@@ -10,7 +10,7 @@ import Game.Types.Response exposing (..)
 import Debug exposing (log)
 import List
 import Dict
-import Json.Decode exposing (decodeValue, string)
+import Json.Decode exposing (decodeValue, string, int)
 
 type Changes
     = CUserStat UserStat
@@ -21,7 +21,7 @@ type Changes
     | CChatEntry ChatEntry
     | CVote Vote
     | CVoting Voting
-    | CLastOnline (List (Int, Int))
+    | CLastOnline Int (List (Int, Int))
     | CInstalledGameTypes (List String)
     | CCreateOptions String CreateOptions
     | CRolesets String (List String)
@@ -64,7 +64,13 @@ concentrate resp =
         RConv r -> 
             case r of
                 LastOnline v ->
-                    ChangeConfig [ CLastOnline v ] False
+                    let t = Dict.get "group" resp.info.request
+                        dv = Maybe.andThen 
+                            (Result.toMaybe << decodeValue int) t
+                    in case dv of
+                        Just ti -> 
+                            ChangeConfig [ CLastOnline ti v ] False
+                        Nothing -> ChangeConfig [] False
                 GetUpdatedGroup v ->
                     case v of
                         Just g -> ChangeConfig [ CGroup g ] False
