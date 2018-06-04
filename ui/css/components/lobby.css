@@ -4,6 +4,7 @@ body > div:first-child,
 .w-lobby-game
 {
   height: 100%;
+  overflow-x: hidden;
 }
 body > div:first-child {
   display: table;
