@@ -1,6 +1,7 @@
 .w-game-selector-tabarea {
     white-space: nowrap;
     overflow-x: auto;
+    overflow-y: hidden;
     padding: 0 0.5em;
     width: 100%;
   }
