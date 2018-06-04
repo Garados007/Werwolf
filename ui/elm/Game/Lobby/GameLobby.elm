@@ -75,6 +75,7 @@ handleGameMenu event = case event of
     GameMenu.NewGameBox -> [ ChangeMenu False ]
     GameMenu.JoinGameBox -> [ ChangeMenu False ]
     GameMenu.EditGamesBox -> [ ChangeMenu False ]
+    GameMenu.LanguageBox -> [ ChangeMenu False ]
     GameMenu.OptionsBox -> [ ChangeMenu False ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))

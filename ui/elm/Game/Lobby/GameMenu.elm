@@ -13,7 +13,7 @@ import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
 
-import Html exposing (Html,div,text,a)
+import Html exposing (Html,div,text,a,img)
 import Html.Attributes exposing (class,attribute,href)
 import Html.Events exposing (onClick)
 import Char
@@ -22,20 +22,22 @@ type GameMenu = GameMenu GameMenuInfo
 
 type alias GameMenuInfo =
     { config : LangConfiguration
+    , lang : String
     }
 
 type GameMenuMsg
     -- public methods
     = SetConfig LangConfiguration
+    | SetLang String
     -- private methods
     | OnEvent GameMenuEvent
-    | None
 
 type GameMenuEvent
     = CloseMenu
     | NewGameBox
     | JoinGameBox
     | EditGamesBox
+    | LanguageBox
     | OptionsBox
 
 type alias GameMenuDef a = ModuleConfig GameMenu GameMenuMsg
@@ -56,6 +58,7 @@ init () =
     ( GameMenu
         { config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing
+        , lang = lang_backup
         }
     , Cmd.none
     , []
@@ -68,12 +71,16 @@ update def msg (GameMenu model) = case msg of
         , Cmd.none
         , []
         )
+    SetLang lang ->
+        ( GameMenu { model | lang = lang }
+        , Cmd.none
+        , []
+        )
     OnEvent event ->
         ( GameMenu model
         , Cmd.none
         , MC.event def event
         )
-    None -> (GameMenu model, Cmd.none, [])
 
 view : GameMenu -> Html GameMenuMsg
 view (GameMenu model) = div [ class "w-menu-background" ]
@@ -109,6 +116,9 @@ viewButtons model = div []
         , viewLink "" <| menuString model "main-screen"
         , viewLink "" <| menuString model "user-info"
         , viewSplitter
+        , viewImgButton (OnEvent LanguageBox) 
+            ("ui/img/lang/" ++ model.lang ++ ".png")
+            <| menuString model "language"
         , viewButton (OnEvent OptionsBox) <| menuString model "options"
         , div [ class "w-menu-space" ] []
         , viewCredits
@@ -122,6 +132,15 @@ viewLink href label =
         , attribute "target" "_blank"
         ]
         [ text label ]
+
+viewImgButton : msg -> String -> String -> Html msg
+viewImgButton msg src label =
+    div [ class "w-menu-button image", onClick msg ]
+        [ text label
+        , img
+            [ attribute "src" <| uri_host ++ uri_path ++ src
+            ] []
+        ]
 
 viewButton : msg -> String -> Html msg
 viewButton msg label =

@@ -66,6 +66,12 @@
 .w-menu-button:hover {
   border: 1px solid lightgray;
 }
+.w-menu-button.image img {
+  min-height: 0.5em;
+  max-height:0.8em;
+  max-width: 2em;
+  margin-left: 1em;
+}
 .w-menu-splitter {
   border-top: 1px solid lightgray;
   margin: 0.8em 0.8em;
