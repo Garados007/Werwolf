@@ -4,6 +4,7 @@ import ModuleConfig as MC exposing (..)
 
 import Game.UI.GameView as GameView exposing (..)
 import Game.Lobby.GameSelector as GameSelector exposing (..)
+import Game.Lobby.GameMenu as GameMenu exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -27,13 +28,15 @@ type alias GameLobbyInfo =
     , curGame : Maybe Int
     , ownId : Maybe Int
     , gameNames : Dict Int String
-    , menu : Bool
+    , showMenu : Bool
+    , menu : GameMenuDef EventMsg
     }
 
 type GameLobbyMsg
     = MNetwork NetworkMsg
     | MGameView Int GameViewMsg
     | MGameSelector GameSelectorMsg
+    | MGameMenu GameMenuMsg
     | MainLang String (Maybe String)
     | ModuleLang String String (Maybe String)
 
@@ -44,7 +47,7 @@ type EventMsg
     | FetchRuleset String
     | EnterGroup Int
     | SetCurrent (Maybe Int)
-    | OpenMenu
+    | ChangeMenu Bool
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -64,7 +67,15 @@ handleGameView id event = case event of
 handleGameSelector : GameSelectorEvent -> List EventMsg
 handleGameSelector event = case event of
     GameSelector.ChangeCurrent id -> [ SetCurrent id ]
-    GameSelector.OpenMenu -> [ OpenMenu ]
+    GameSelector.OpenMenu -> [ ChangeMenu True ]
+
+handleGameMenu : GameMenuEvent -> List EventMsg
+handleGameMenu event = case event of
+    GameMenu.CloseMenu -> [ ChangeMenu False ]
+    GameMenu.NewGameBox -> [ ChangeMenu False ]
+    GameMenu.JoinGameBox -> [ ChangeMenu False ]
+    GameMenu.EditGamesBox -> [ ChangeMenu False ]
+    GameMenu.OptionsBox -> [ ChangeMenu False ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))
 handleEvent = changeWithAll2
@@ -122,13 +133,14 @@ handleEvent = changeWithAll2
                     )
         SetCurrent id ->
             ( { model | curGame = id }, Cmd.none)
-        OpenMenu ->
-            ( { model | menu = True }, Cmd.none)
+        ChangeMenu state ->
+            ( { model | showMenu = state }, Cmd.none)
     )
 
 init : (GameLobby, Cmd GameLobbyMsg)
 init = 
     let (mgs, cgs, tgs) = gameSelectorModule handleGameSelector
+        (mgm, cgm, tgm) = gameMenuModule handleGameMenu
         model = 
             { network = network
             , games = Dict.empty
@@ -138,9 +150,10 @@ init =
             , curGame = Nothing
             , ownId = Nothing
             , gameNames = Dict.empty
-            , menu = False
+            , showMenu = False
+            , menu = mgm
             }
-        (tm, tcmd) = handleEvent model tgs
+        (tm, tcmd) = handleEvent model <| tgs ++ tgm
     in  ( GameLobby tm
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
@@ -149,6 +162,8 @@ init =
                 ]
             , fetchUiLang lang_backup MainLang
             , fetchModuleLang "main" lang_backup ModuleLang
+            , Cmd.map MGameSelector cgs
+            , Cmd.map MGameMenu cgm
             ] ++ tcmd
         )
 
@@ -171,7 +186,9 @@ view (GameLobby model) = div []
             [ Html.map (MGameView (Maybe.withDefault 0 model.curGame)) 
                 <| MC.view gameView
             ]
-
+    , if model.showMenu
+        then Html.map MGameMenu <| MC.view model.menu
+        else div [] []
     ]
 
 stylesheet : String -> Html msg
@@ -216,48 +233,44 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | selector = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MGameSelector wcmd :: tcmd)
-    MainLang lang content ->
-        let nm = { model
-                | lang = case content of
-                    Nothing -> model.lang
-                    Just l -> addMainLang model.lang lang l
-                }
-            (ng, gcmd, gtasks) = updateAllGames model.games <|
-                GameView.SetLang nm.lang
-            (ns, scmd, stasks) = MC.update model.selector <|
-                GameSelector.SetConfig <| LangConfiguration
-                model.config <| createLocal model.lang Nothing
-            (tm, tcmd) = handleEvent 
-                { nm 
-                | games = ng 
-                , selector = ns
-                } 
-                <| gtasks ++ stasks
-        in  ( GameLobby tm
-            , Cmd.batch <| gcmd :: 
-                Cmd.map MGameSelector scmd :: tcmd
-            )
-    ModuleLang mod lang content ->
-        let nm = { model
-                | lang = case content of
-                    Nothing -> model.lang
-                    Just l -> addSpecialLang model.lang lang mod l
-                }
-            (ng, gcmd, gtasks) = updateAllGames model.games <|
-                GameView.SetLang nm.lang
-            (ns, scmd, stasks) = MC.update model.selector <|
-                GameSelector.SetConfig <| LangConfiguration
-                model.config <| createLocal model.lang Nothing
-            (tm, tcmd) = handleEvent 
-                { nm 
-                | games = ng 
-                , selector = ns
-                } 
-                <| gtasks ++ stasks
-        in  ( GameLobby tm
-            , Cmd.batch <| gcmd :: 
-                Cmd.map MGameSelector scmd :: tcmd
-            )
+    MGameMenu wmsg ->
+        let (wm, wcmd, wtasks) = MC.update model.menu wmsg
+            nmodel = { model | menu = wm }
+            (tm, tcmd) = handleEvent nmodel wtasks
+        in  (GameLobby tm, Cmd.batch <| Cmd.map MGameMenu wcmd :: tcmd)
+    MainLang lang content -> updateLang model <|
+        case content of
+            Nothing -> model.lang
+            Just l -> addMainLang model.lang lang l
+    ModuleLang mod lang content -> updateLang model <|
+        case content of
+            Nothing -> model.lang
+            Just l -> addSpecialLang model.lang lang mod l
+        
+
+updateLang : GameLobbyInfo -> LangGlobal -> (GameLobby, Cmd GameLobbyMsg)
+updateLang model lang =
+    let nm = { model | lang = lang }
+        lconfig = LangConfiguration model.config <|
+            createLocal lang Nothing
+        (ng, gcmd, gtasks) = updateAllGames model.games <|
+            GameView.SetLang nm.lang
+        (ns, scmd, stasks) = MC.update model.selector <|
+            GameSelector.SetConfig lconfig
+        (mgm, cgm, tgm) = MC.update model.menu <|
+            GameMenu.SetConfig lconfig
+        (tm, tcmd) = handleEvent 
+            { nm 
+            | games = ng 
+            , selector = ns
+            , menu = mgm
+            } 
+            <| gtasks ++ stasks ++ tgm
+    in  ( GameLobby tm
+        , Cmd.batch <| gcmd :: 
+            Cmd.map MGameSelector scmd ::
+            Cmd.map MGameMenu cgm :: tcmd
+        )
   
 updateConfig : Changes -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg) -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg)
 updateConfig change (m, list, tasks) = case change of
@@ -265,19 +278,23 @@ updateConfig change (m, list, tasks) = case change of
         let config = case Maybe.map decodeConfig str of
                 Just conf -> conf
                 Nothing -> empty
+            lconfig = LangConfiguration config <|
+                createLocal m.lang Nothing
             (ng, gcmd, gtasks) = updateAllGames m.games 
                 <| GameView.SetConfig config
             (ns, scmd, stasks) = MC.update m.selector
-                <| GameSelector.SetConfig <|
-                LangConfiguration config <|
-                createLocal m.lang Nothing
+                <| GameSelector.SetConfig lconfig
+            (mgm, cgm, tgm) = MC.update m.menu <|
+                GameMenu.SetConfig lconfig
         in  ( { m 
                 | config = config
                 , games = ng 
                 , selector = ns
+                , menu = mgm
                 }
-            , gcmd :: Cmd.map MGameSelector scmd :: list
-            , gtasks ++ stasks ++ tasks
+            , gcmd :: Cmd.map MGameSelector scmd ::
+                Cmd.map MGameMenu cgm :: list
+            , gtasks ++ stasks ++ tgm ++ tasks
             )
     CUser user ->
         if Dict.member user.group m.games
@@ -326,6 +343,7 @@ subscriptions : GameLobby -> Sub GameLobbyMsg
 subscriptions (GameLobby model) = Sub.batch <|
     (Sub.map MNetwork <| Network.subscriptions model.network) ::
     (Sub.map MGameSelector <| MC.subscriptions model.selector) ::
+    (Sub.map MGameMenu <| MC.subscriptions model.menu) ::
     (List.map 
         (\(k,v) -> 
             Sub.map (MGameView k) <| MC.subscriptions v

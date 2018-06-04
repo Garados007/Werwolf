@@ -42,7 +42,14 @@
         "day-phase": "Phase:"
     },
     "lobby": {
-        "nogame": "Du bist aktuell kein Mitglied einer Spielrunde. Tritt doch einer bei oder erstelle eine!"
+        "nogame": "Du bist aktuell kein Mitglied einer Spielrunde. Tritt doch einer bei oder erstelle eine!",
+        "menu-title": "Menü",
+        "new-group": "Neue Gruppe",
+        "join-group": "Gruppe beitreten",
+        "manage-groups": "Gruppen verwalten",
+        "main-screen": "Hauptseite",
+        "user-info": "Benutzerinformationen",
+        "options": "Optionen"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

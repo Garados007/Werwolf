@@ -1,0 +1,91 @@
+.w-menu-background {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0, 0.6);
+  z-index: 100;
+}
+.w-menu-box {
+  display: table;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 15em;
+  background-color: white;
+  box-shadow: 0 0 20px black;
+}
+.w-menu-box > div {
+  display: table-row;
+}
+.w-menu-box > div > div {
+  display: table-cell;
+  position: relative;
+}
+.w-menu-title > div {
+  border-bottom: 1px solid lightgray;
+  height: 2em;
+}
+.w-menu-title-content {
+  display: table;
+  height: 100%;
+  width: 100%;
+}
+.w-menu-title-content > div:first-child {
+  display: table-cell;
+  width: 4em;
+}
+.w-menu-title-content > div:last-child {
+  display: table-cell;
+  font-size: 1.4em;
+  padding: 0.2em 0.7em;
+}
+.w-menu-content-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.w-menu-button {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin: 0.2em;
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.w-menu-button:hover {
+  border: 1px solid lightgray;
+}
+.w-menu-splitter {
+  border-top: 1px solid lightgray;
+  margin: 0.8em 0.8em;
+}
+.w-menu-space {
+  height: 4em;
+}
+.w-menu-content-box > div {
+  position: relative;
+  min-height: 99%;
+}
+.w-credits {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.75em;
+  padding: 0 0 0.3em;
+}
+.w-credits a {
+  color: inherit;
+}
