@@ -27,6 +27,7 @@ type alias GameLobbyInfo =
     , curGame : Maybe Int
     , ownId : Maybe Int
     , gameNames : Dict Int String
+    , menu : Bool
     }
 
 type GameLobbyMsg
@@ -43,6 +44,7 @@ type EventMsg
     | FetchRuleset String
     | EnterGroup Int
     | SetCurrent (Maybe Int)
+    | OpenMenu
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -62,6 +64,7 @@ handleGameView id event = case event of
 handleGameSelector : GameSelectorEvent -> List EventMsg
 handleGameSelector event = case event of
     GameSelector.ChangeCurrent id -> [ SetCurrent id ]
+    GameSelector.OpenMenu -> [ OpenMenu ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))
 handleEvent = changeWithAll2
@@ -119,6 +122,8 @@ handleEvent = changeWithAll2
                     )
         SetCurrent id ->
             ( { model | curGame = id }, Cmd.none)
+        OpenMenu ->
+            ( { model | menu = True }, Cmd.none)
     )
 
 init : (GameLobby, Cmd GameLobbyMsg)
@@ -133,6 +138,7 @@ init =
             , curGame = Nothing
             , ownId = Nothing
             , gameNames = Dict.empty
+            , menu = False
             }
         (tm, tcmd) = handleEvent model tgs
     in  ( GameLobby tm
@@ -149,7 +155,7 @@ init =
 view : GameLobby -> Html GameLobbyMsg
 view (GameLobby model) = div []
     [ stylesheet <| absUrl "ui/css/test-lobby.css"
-    , stylesheet "https://fonts.googleapis.com/css?family=Kavivanar&amp;subset=latin-ext"
+    , stylesheet "https://fonts.googleapis.com/css?family=Kavivanar&subset=latin-ext"
     , div [ class "w-lobby-selector" ]
         [ div [ class "w-lobby-selector-bar" ]
             [ Html.map MGameSelector <|

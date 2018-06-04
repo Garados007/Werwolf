@@ -36,9 +36,11 @@ type GameSelectorMsg
     | SetCurrent (Maybe Int)
     -- private methods
     | OnChangeCurrent Int
+    | OnOpenMenu
 
 type GameSelectorEvent
     = ChangeCurrent (Maybe Int)
+    | OpenMenu
 
 type alias GameSelectorDef a = ModuleConfig GameSelector GameSelectorMsg
     () GameSelectorEvent a
@@ -87,11 +89,20 @@ update def msg (GameSelector model) = case msg of
         , Cmd.none
         , MC.event def <| ChangeCurrent <| Just id
         )
+    OnOpenMenu ->
+        ( GameSelector model
+        , Cmd.none
+        , MC.event def <| OpenMenu
+        )
 
 view : GameSelector -> Html GameSelectorMsg
 view (GameSelector model) = div [ class "w-gameselector-box" ] 
-    [ div [ class "w-game-selector-tabarea" ]
-        <| viewButtons model
+    [ div [ class "w-gameselector-nav", onClick OnOpenMenu ] <|
+        List.repeat 3 <| div [] []
+    , div [ class "w-gameselector-tabs" ]
+        [ div [ class "w-game-selector-tabarea" ]
+            <| viewButtons model
+        ]
     ]
 
 viewButtons : GameSelectorInfo -> List (Html GameSelectorMsg)

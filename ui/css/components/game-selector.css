@@ -1,43 +1,73 @@
+.w-gameselector-box {
+  display: table;
+  width: 100%;
+}
+.w-gameselector-nav,
+.w-gameselector-tabs {
+  display: table-cell;
+}
+.w-gameselector-nav {
+  width: 4em;
+  border-right: 1px solid lightgray;
+  cursor: pointer;
+  position: relative;
+}
 .w-game-selector-tabarea {
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0 0.5em;
-    width: 100%;
-  }
-  .w-gameselector-button {
-    display: inline-block;
-    border-top: 1px solid lightgray;
-    border-bottom: none;
-    margin: 0.3em 0.2em 0;
-    padding: 0.2em 0.6em;
-    cursor: pointer;
-    font-size: 1.2em;
-    position: relative;
-  }
-  .w-gameselector-button:before, .w-gameselector-button:after {
-    content: " ";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 103.528%; /* = 1 / cos(15°) */
-    transform: rotate(15deg);
-    transform-origin: top left;
-    border-left: 1px solid lightgray;
-    background-color: white;
-    width: 1em;
-    z-index: -1;
-  }
-  .w-gameselector-button:after {
-    left: unset;
-    right: 0;
-    transform: rotate(-15deg);
-    transform-origin: top right;
-    border-left: none;
-    border-right: 1px solid lightgray;
-  }
-  .w-gameselector-button.selected {
-    font-weight: bold;
-    z-index: 5;
-  }
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 0.5em;
+  width: 100%;
+}
+.w-gameselector-button {
+  display: inline-block;
+  border-top: 1px solid lightgray;
+  border-bottom: none;
+  margin: 0.3em 0.2em 0;
+  padding: 0.2em 0.6em;
+  cursor: pointer;
+  font-size: 1.2em;
+  position: relative;
+}
+.w-gameselector-button:before, .w-gameselector-button:after {
+  content: " ";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 103.528%; /* = 1 / cos(15°) */
+  transform: rotate(15deg);
+  transform-origin: top left;
+  border-left: 1px solid lightgray;
+  background-color: white;
+  width: 1em;
+  z-index: -1;
+}
+.w-gameselector-button:after {
+  left: unset;
+  right: 0;
+  transform: rotate(-15deg);
+  transform-origin: top right;
+  border-left: none;
+  border-right: 1px solid lightgray;
+}
+.w-gameselector-button.selected {
+  font-weight: bold;
+  z-index: 5;
+}
+.w-gameselector-nav > div {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  height: 10%;
+  background-color: lightgray;
+  border-radius: 1em;
+  top: 45%;
+}
+.w-gameselector-nav > div:first-child {
+  top: 25%;
+  height: 9%;
+}
+.w-gameselector-nav > div:last-child {
+  top: 65%;
+}
