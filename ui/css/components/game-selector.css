@@ -12,12 +12,20 @@
   cursor: pointer;
   position: relative;
 }
+.w-gameselector-tabs {
+  height: 2.75em;
+  position: relative;
+}
 .w-game-selector-tabarea {
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0 0.5em;
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 .w-gameselector-button {
   display: inline-block;
