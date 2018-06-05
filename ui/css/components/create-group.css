@@ -1,0 +1,19 @@
+.w-creategroup-box {
+  max-width: 100%;
+}
+.w-creategroup-box input {
+  box-sizing: border-box;
+  display: block;
+  width: 30em;
+  max-width: 100%;
+  margin: 0.5em 0;
+  padding: 0.5em;
+  border-radius: 0.3em;
+  border: 1px solid lightgray;
+}
+.w-creategroup-submit {
+  border: 1px solid lightgray;
+  padding: 0.3em 0.7em;
+  cursor: pointer;
+  text-align: center;
+}

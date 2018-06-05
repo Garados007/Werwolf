@@ -5,6 +5,7 @@ import ModuleConfig as MC exposing (..)
 import Game.UI.GameView as GameView exposing (..)
 import Game.Lobby.GameSelector as GameSelector exposing (..)
 import Game.Lobby.GameMenu as GameMenu exposing (..)
+import Game.Lobby.CreateGroup as CreateGroup exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -23,6 +24,7 @@ type alias GameLobbyInfo =
     { network : Network
     , games : Dict Int (GameViewDef EventMsg)
     , selector : GameSelectorDef EventMsg
+    , createGroup : CreateGroupDef EventMsg
     , config : Configuration
     , lang : LangGlobal
     , curGame : Maybe Int
@@ -30,11 +32,13 @@ type alias GameLobbyInfo =
     , gameNames : Dict Int String
     , showMenu : Bool
     , menu : GameMenuDef EventMsg
+    , modal : ViewModal
     }
 
 type GameLobbyMsg
     = MNetwork NetworkMsg
     | MGameView Int GameViewMsg
+    | MCreateGroup CreateGroupMsg
     | MGameSelector GameSelectorMsg
     | MGameMenu GameMenuMsg
     | MainLang String (Maybe String)
@@ -48,6 +52,11 @@ type EventMsg
     | EnterGroup Int
     | SetCurrent (Maybe Int)
     | ChangeMenu Bool
+    | ChangeModal ViewModal
+
+type ViewModal
+    = None
+    | VMCreateGroup
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -72,11 +81,19 @@ handleGameSelector event = case event of
 handleGameMenu : GameMenuEvent -> List EventMsg
 handleGameMenu event = case event of
     GameMenu.CloseMenu -> [ ChangeMenu False ]
-    GameMenu.NewGameBox -> [ ChangeMenu False ]
+    GameMenu.NewGameBox -> [ ChangeMenu False, ChangeModal VMCreateGroup ]
     GameMenu.JoinGameBox -> [ ChangeMenu False ]
     GameMenu.EditGamesBox -> [ ChangeMenu False ]
     GameMenu.LanguageBox -> [ ChangeMenu False ]
     GameMenu.OptionsBox -> [ ChangeMenu False ]
+
+handleCreateGroup : CreateGroupEvent -> List EventMsg
+handleCreateGroup event = case event of
+    CreateGroup.Close -> [ ChangeModal None ]
+    CreateGroup.Create name ->
+        [ ChangeModal None
+        , Send <| RespControl <| CreateGroup name
+        ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))
 handleEvent = changeWithAll2
@@ -136,16 +153,20 @@ handleEvent = changeWithAll2
             ( { model | curGame = id }, Cmd.none)
         ChangeMenu state ->
             ( { model | showMenu = state }, Cmd.none)
+        ChangeModal modal ->
+            ( { model | modal = modal }, Cmd.none)
     )
 
 init : (GameLobby, Cmd GameLobbyMsg)
 init = 
     let (mgs, cgs, tgs) = gameSelectorModule handleGameSelector
         (mgm, cgm, tgm) = gameMenuModule handleGameMenu
+        (mcg, ccg, tcg) = createGroupModule handleCreateGroup
         model = 
             { network = network
             , games = Dict.empty
             , selector = mgs
+            , createGroup = mcg
             , config = empty
             , lang = newGlobal lang_backup
             , curGame = Nothing
@@ -153,8 +174,9 @@ init =
             , gameNames = Dict.empty
             , showMenu = False
             , menu = mgm
+            , modal = None
             }
-        (tm, tcmd) = handleEvent model <| tgs ++ tgm
+        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg
     in  ( GameLobby tm
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
@@ -165,6 +187,7 @@ init =
             , fetchModuleLang "main" lang_backup ModuleLang
             , Cmd.map MGameSelector cgs
             , Cmd.map MGameMenu cgm
+            , Cmd.map MCreateGroup ccg
             ] ++ tcmd
         )
 
@@ -190,6 +213,10 @@ view (GameLobby model) = div []
     , if model.showMenu
         then Html.map MGameMenu <| MC.view model.menu
         else div [] []
+    , case model.modal of
+        None -> div [] []
+        VMCreateGroup -> Html.map MCreateGroup <|
+            MC.view model.createGroup
     ]
 
 stylesheet : String -> Html msg
@@ -239,6 +266,11 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | menu = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MGameMenu wcmd :: tcmd)
+    MCreateGroup wmsg ->
+        let (wm, wcmd, wtasks) = MC.update model.createGroup wmsg
+            nmodel = { model | createGroup = wm }
+            (tm, tcmd) = handleEvent nmodel wtasks
+        in  (GameLobby tm, Cmd.batch <| Cmd.map MCreateGroup wcmd :: tcmd)
     MainLang lang content -> updateLang model <|
         case content of
             Nothing -> model.lang
@@ -260,17 +292,22 @@ updateLang model lang =
             GameSelector.SetConfig lconfig
         (mgm, cgm, tgm) = MC.update model.menu <|
             GameMenu.SetConfig lconfig
+        (mcg, ccg, tcg) = MC.update model.createGroup <|
+            CreateGroup.SetConfig lconfig
         (tm, tcmd) = handleEvent 
             { nm 
             | games = ng 
             , selector = ns
             , menu = mgm
+            , createGroup = mcg
             } 
-            <| gtasks ++ stasks ++ tgm
+            <| gtasks ++ stasks ++ tgm ++ tcg
     in  ( GameLobby tm
         , Cmd.batch <| gcmd :: 
             Cmd.map MGameSelector scmd ::
-            Cmd.map MGameMenu cgm :: tcmd
+            Cmd.map MGameMenu cgm ::
+            Cmd.map MCreateGroup ccg :: 
+            tcmd
         )
   
 updateConfig : Changes -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg) -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg)
@@ -287,15 +324,21 @@ updateConfig change (m, list, tasks) = case change of
                 <| GameSelector.SetConfig lconfig
             (mgm, cgm, tgm) = MC.update m.menu <|
                 GameMenu.SetConfig lconfig
+            (mcg, ccg, tcg) = MC.update m.createGroup <|
+                CreateGroup.SetConfig lconfig
         in  ( { m 
                 | config = config
                 , games = ng 
                 , selector = ns
                 , menu = mgm
+                , createGroup = mcg
                 }
-            , gcmd :: Cmd.map MGameSelector scmd ::
-                Cmd.map MGameMenu cgm :: list
-            , gtasks ++ stasks ++ tgm ++ tasks
+            , gcmd :: 
+                Cmd.map MGameSelector scmd ::
+                Cmd.map MGameMenu cgm :: 
+                Cmd.map MCreateGroup ccg ::
+                list
+            , gtasks ++ stasks ++ tgm ++ tcg ++ tasks
             )
     CUser user ->
         if Dict.member user.group m.games
@@ -309,11 +352,14 @@ updateConfig change (m, list, tasks) = case change of
             )
     CGroup group ->
         let names =  Dict.insert group.id group.name m.gameNames
+            fetch = if Dict.member group.id m.games
+                then []
+                else [ EnterGroup group.id ]
             (wm, wcmd, wtasks) = MC.update m.selector <|
                 GameSelector.SetGames names
         in  ( { m | gameNames = names, selector = wm }
             , Cmd.map MGameSelector wcmd :: list
-            , wtasks ++ tasks
+            , fetch ++ wtasks ++ tasks
             )
     _ -> (m, list, tasks)
 
@@ -345,6 +391,7 @@ subscriptions (GameLobby model) = Sub.batch <|
     (Sub.map MNetwork <| Network.subscriptions model.network) ::
     (Sub.map MGameSelector <| MC.subscriptions model.selector) ::
     (Sub.map MGameMenu <| MC.subscriptions model.menu) ::
+    (Sub.map MCreateGroup <| MC.subscriptions model.createGroup) ::
     (List.map 
         (\(k,v) -> 
             Sub.map (MGameView k) <| MC.subscriptions v

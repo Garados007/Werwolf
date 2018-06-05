@@ -50,7 +50,9 @@
         "main-screen": "Hauptseite",
         "user-info": "Benutzerinformationen",
         "language": "Sprache",
-        "options": "Optionen"
+        "options": "Optionen",
+        "new-group-name": "Name für die neue Gruppe:",
+        "on-create-group": "Gruppe erstellen"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }
