@@ -7,6 +7,7 @@ import Game.Lobby.GameSelector as GameSelector exposing (..)
 import Game.Lobby.GameMenu as GameMenu exposing (..)
 import Game.Lobby.CreateGroup as CreateGroup exposing (..)
 import Game.Lobby.JoinGroup as JoinGroup exposing (..)
+import Game.Lobby.Options as Options exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -27,6 +28,7 @@ type alias GameLobbyInfo =
     , selector : GameSelectorDef EventMsg
     , createGroup : CreateGroupDef EventMsg
     , joinGroup : JoinGroupDef EventMsg
+    , options : OptionsDef EventMsg
     , config : Configuration
     , lang : LangGlobal
     , curGame : Maybe Int
@@ -42,6 +44,7 @@ type GameLobbyMsg
     | MGameView Int GameViewMsg
     | MCreateGroup CreateGroupMsg
     | MJoinGroup JoinGroupMsg
+    | MOptions OptionsMsg
     | MGameSelector GameSelectorMsg
     | MGameMenu GameMenuMsg
     | MainLang String (Maybe String)
@@ -56,11 +59,13 @@ type EventMsg
     | SetCurrent (Maybe Int)
     | ChangeMenu Bool
     | ChangeModal ViewModal
+    | UpdateConfig Configuration
 
 type ViewModal
     = None
     | VMCreateGroup
     | VMJoinGroup
+    | VMOptions
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -89,7 +94,7 @@ handleGameMenu event = case event of
     GameMenu.JoinGameBox -> [ ChangeMenu False, ChangeModal VMJoinGroup ]
     GameMenu.EditGamesBox -> [ ChangeMenu False ]
     GameMenu.LanguageBox -> [ ChangeMenu False ]
-    GameMenu.OptionsBox -> [ ChangeMenu False ]
+    GameMenu.OptionsBox -> [ ChangeMenu False, ChangeModal VMOptions ]
 
 handleCreateGroup : CreateGroupEvent -> List EventMsg
 handleCreateGroup event = case event of
@@ -103,6 +108,15 @@ handleJoinGroup : JoinGroupEvent -> List EventMsg
 handleJoinGroup event = case event of
     JoinGroup.Close -> [ ChangeModal None ]
     JoinGroup.Join key -> [ Send <| RespControl <| JoinGroup key ]
+
+handleOptions : OptionsEvent -> List EventMsg
+handleOptions event = case event of
+    Options.Close -> [ ChangeModal None ]
+    Options.UpdateConfig conf -> 
+        [ UpdateConfig conf
+        , Send <| RespControl <| 
+            Game.Types.Request.SetConfig <| encodeConfig conf
+        ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))
 handleEvent = changeWithAll2
@@ -139,21 +153,24 @@ handleEvent = changeWithAll2
                     curGame = Just <| Maybe.withDefault id model.curGame
                     (ng, lcmd, ltasks) = MC.update gameView <|
                         GameView.SetLang model.lang
+                    (ng2, lcmd2, ltasks2) = MC.update ng <|
+                        GameView.SetConfig model.config
                     (ns, scmd, stasks) =
                         if curGame /= model.curGame
                         then MC.update model.selector <|
                             GameSelector.SetCurrent curGame
                         else (model.selector, Cmd.none, [])
                     nmodel = { model 
-                        | games = Dict.insert id ng model.games
+                        | games = Dict.insert id ng2 model.games
                         , selector = ns
                         , curGame = curGame
                         }
                     (nnmodel, eventCmd) = handleEvent nmodel <| 
-                        gtasks ++ ltasks ++ stasks
+                        gtasks ++ ltasks ++ ltasks2 ++ stasks
                 in  ( nnmodel
                     , Cmd.batch <|
                         Cmd.map (MGameView id) lcmd ::
+                        Cmd.map (MGameView id) lcmd2 ::
                         Cmd.map (MGameView id) gcmd :: 
                         Cmd.map MGameSelector scmd :: 
                         eventCmd
@@ -164,6 +181,17 @@ handleEvent = changeWithAll2
             ( { model | showMenu = state }, Cmd.none)
         ChangeModal modal ->
             ( { model | modal = modal }, Cmd.none)
+        UpdateConfig conf ->
+            let lconfig = LangConfiguration conf <| createLocal nm.lang Nothing
+                (ng, gcmd, gtasks) = updateAllGames model.games
+                    <| GameView.SetConfig conf
+                nm = { model | config = conf, games = ng }
+                (mpc, cpc, tpc) = pushLangConfig lconfig nm
+                (nmodel, eventCmd) = handleEvent mpc <|
+                    gtasks ++ tpc
+            in  ( nmodel
+                , Cmd.batch <| gcmd :: cpc :: eventCmd
+                )
     )
 
 init : (GameLobby, Cmd GameLobbyMsg)
@@ -172,12 +200,14 @@ init =
         (mgm, cgm, tgm) = gameMenuModule handleGameMenu
         (mcg, ccg, tcg) = createGroupModule handleCreateGroup
         (mjg, cjg, tjg) = joinGroupModule handleJoinGroup
+        (mo, co, to) = optionsModule handleOptions
         model = 
             { network = network
             , games = Dict.empty
             , selector = mgs
             , createGroup = mcg
             , joinGroup = mjg
+            , options = mo
             , config = empty
             , lang = newGlobal lang_backup
             , curGame = Nothing
@@ -187,7 +217,7 @@ init =
             , menu = mgm
             , modal = None
             }
-        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg
+        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ to
     in  ( GameLobby tm
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
@@ -200,6 +230,7 @@ init =
             , Cmd.map MGameMenu cgm
             , Cmd.map MCreateGroup ccg
             , Cmd.map MJoinGroup cjg
+            , Cmd.map MOptions co
             ] ++ tcmd
         )
 
@@ -227,10 +258,9 @@ view (GameLobby model) = div []
         else div [] []
     , case model.modal of
         None -> div [] []
-        VMCreateGroup -> Html.map MCreateGroup <|
-            MC.view model.createGroup
-        VMJoinGroup -> Html.map MJoinGroup <|
-            MC.view model.joinGroup
+        VMCreateGroup -> Html.map MCreateGroup <| MC.view model.createGroup
+        VMJoinGroup -> Html.map MJoinGroup <| MC.view model.joinGroup
+        VMOptions -> Html.map MOptions <| MC.view model.options
     ]
 
 stylesheet : String -> Html msg
@@ -290,6 +320,11 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | joinGroup = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MJoinGroup wcmd :: tcmd)
+    MOptions wmsg ->
+        let (wm, wcmd, wtasks) = MC.update model.options wmsg
+            nmodel = { model | options = wm }
+            (tm, tcmd) = handleEvent nmodel wtasks
+        in  (GameLobby tm, Cmd.batch <| Cmd.map MOptions wcmd :: tcmd)
     MainLang lang content -> updateLang model <|
         case content of
             Nothing -> model.lang
@@ -327,44 +362,40 @@ pushLangConfig lconfig model =
             CreateGroup.SetConfig lconfig
         (mjg, cjg, tjg) = MC.update model.joinGroup <|
             JoinGroup.SetConfig lconfig
+        (mo, co, to) = MC.update model.options <|
+            Options.SetConfig lconfig
     in  ( { model
             | selector = mgs
             , menu = mgm
             , createGroup = mcg
             , joinGroup = mjg
+            , options = mo
             }
         , Cmd.batch
             [ Cmd.map MGameSelector cgs
             , Cmd.map MGameMenu cgm
             , Cmd.map MCreateGroup ccg
             , Cmd.map MJoinGroup cjg
+            , Cmd.map MOptions co
             ]
         , List.concat
             [ tgs
             , tgm 
             , tcg 
             , tjg
+            , to
             ]
         )
   
 updateConfig : Changes -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg) -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg)
 updateConfig change (m, list, tasks) = case change of
     CConfig str ->
-        let config = case Maybe.map decodeConfig str of
-                Just conf -> conf
-                Nothing -> empty
-            lconfig = LangConfiguration config <|
-                createLocal m.lang Nothing
-            (ng, gcmd, gtasks) = updateAllGames m.games 
-                <| GameView.SetConfig config
-            (mpc, cpc, tpc) = pushLangConfig lconfig m
-        in  ( { mpc
-                | config = config
-                , games = ng 
-                }
-            , gcmd :: cpc :: list
-            , gtasks ++ tpc ++ tasks
-            )
+        ( m
+        , list
+        , case Maybe.map decodeConfig str of
+            Just conf -> UpdateConfig conf :: tasks
+            Nothing -> tasks
+        )
     CUser user ->
         if Dict.member user.group m.games
         then (m, list, tasks)
@@ -436,6 +467,7 @@ subscriptions (GameLobby model) = Sub.batch <|
     (Sub.map MGameMenu <| MC.subscriptions model.menu) ::
     (Sub.map MCreateGroup <| MC.subscriptions model.createGroup) ::
     (Sub.map MJoinGroup <| MC.subscriptions model.joinGroup) ::
+    (Sub.map MOptions <| MC.subscriptions model.options) ::
     (List.map 
         (\(k,v) -> 
             Sub.map (MGameView k) <| MC.subscriptions v

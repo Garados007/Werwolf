@@ -56,7 +56,13 @@
         "join-group-key": "Passwort für den Beitritt in die neue Gruppe:",
         "on-join-group": "Gruppe beitreten",
         "key-not-exists": "Leider konnte keine Gruppe mit diesen Schlüssel gefunden werden.",
-        "invalid-key-pattern": "Es wurde kein gültiger Schlüssel eingegeben."
+        "invalid-key-pattern": "Es wurde kein gültiger Schlüssel eingegeben.",
+        "opt-datetime": "Anzeige: Zeit- und Datumsformate",
+        "opt-chatDateFormat": "Zeitpunkt des Absendens eines Chatbeitrags",
+        "opt-profileTimeFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (noch am selben Tag)",
+        "opt-profileDateFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (länger als ein Tag her)",
+        "opt-votingDateFormat": "Zeitpunkte des Erstellens, Startens oder Beendes von einzelnen Votings",
+        "opt-reset": "Alles Zurücksetzen"
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }
