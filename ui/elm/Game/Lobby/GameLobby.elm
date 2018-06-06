@@ -307,7 +307,19 @@ updateLang model lang =
             createLocal lang Nothing
         (ng, gcmd, gtasks) = updateAllGames model.games <|
             GameView.SetLang nm.lang
-        (ns, scmd, stasks) = MC.update model.selector <|
+        (mpc, cpc, tpc) = pushLangConfig lconfig nm
+        (tm, tcmd) = handleEvent 
+            { mpc
+            | games = ng 
+            } 
+            gtasks
+    in  ( GameLobby tm
+        , Cmd.batch <| gcmd :: cpc :: tcmd
+        )
+
+pushLangConfig : LangConfiguration -> GameLobbyInfo -> (GameLobbyInfo, Cmd GameLobbyMsg, List EventMsg)
+pushLangConfig lconfig model =
+    let (mgs, cgs, tgs) = MC.update model.selector <|
             GameSelector.SetConfig lconfig
         (mgm, cgm, tgm) = MC.update model.menu <|
             GameMenu.SetConfig lconfig
@@ -315,22 +327,24 @@ updateLang model lang =
             CreateGroup.SetConfig lconfig
         (mjg, cjg, tjg) = MC.update model.joinGroup <|
             JoinGroup.SetConfig lconfig
-        (tm, tcmd) = handleEvent 
-            { nm 
-            | games = ng 
-            , selector = ns
+    in  ( { model
+            | selector = mgs
             , menu = mgm
             , createGroup = mcg
             , joinGroup = mjg
-            } 
-            <| gtasks ++ stasks ++ tgm ++ tcg ++ tjg
-    in  ( GameLobby tm
-        , Cmd.batch <| gcmd :: 
-            Cmd.map MGameSelector scmd ::
-            Cmd.map MGameMenu cgm ::
-            Cmd.map MCreateGroup ccg :: 
-            Cmd.map MJoinGroup cjg ::
-            tcmd
+            }
+        , Cmd.batch
+            [ Cmd.map MGameSelector cgs
+            , Cmd.map MGameMenu cgm
+            , Cmd.map MCreateGroup ccg
+            , Cmd.map MJoinGroup cjg
+            ]
+        , List.concat
+            [ tgs
+            , tgm 
+            , tcg 
+            , tjg
+            ]
         )
   
 updateConfig : Changes -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg) -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg)
@@ -343,29 +357,13 @@ updateConfig change (m, list, tasks) = case change of
                 createLocal m.lang Nothing
             (ng, gcmd, gtasks) = updateAllGames m.games 
                 <| GameView.SetConfig config
-            (ns, scmd, stasks) = MC.update m.selector
-                <| GameSelector.SetConfig lconfig
-            (mgm, cgm, tgm) = MC.update m.menu <|
-                GameMenu.SetConfig lconfig
-            (mcg, ccg, tcg) = MC.update m.createGroup <|
-                CreateGroup.SetConfig lconfig
-            (mjg, cjg, tjg) = MC.update m.joinGroup <|
-                JoinGroup.SetConfig lconfig
-        in  ( { m 
+            (mpc, cpc, tpc) = pushLangConfig lconfig m
+        in  ( { mpc
                 | config = config
                 , games = ng 
-                , selector = ns
-                , menu = mgm
-                , createGroup = mcg
-                , joinGroup = mjg
                 }
-            , gcmd :: 
-                Cmd.map MGameSelector scmd ::
-                Cmd.map MGameMenu cgm :: 
-                Cmd.map MCreateGroup ccg ::
-                Cmd.map MJoinGroup cjg ::
-                list
-            , gtasks ++ stasks ++ tgm ++ tcg ++ tjg ++ tasks
+            , gcmd :: cpc :: list
+            , gtasks ++ tpc ++ tasks
             )
     CUser user ->
         if Dict.member user.group m.games
