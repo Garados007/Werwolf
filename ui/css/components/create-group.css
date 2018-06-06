@@ -1,7 +1,9 @@
-.w-creategroup-box {
+.w-creategroup-box,
+.w-joingroup-box {
   max-width: 100%;
 }
-.w-creategroup-box input {
+.w-creategroup-box input,
+.w-joingroup-box input {
   box-sizing: border-box;
   display: block;
   width: 30em;
@@ -11,7 +13,8 @@
   border-radius: 0.3em;
   border: 1px solid lightgray;
 }
-.w-creategroup-submit {
+.w-creategroup-submit,
+.w-joingroup-submit {
   border: 1px solid lightgray;
   padding: 0.3em 0.7em;
   cursor: pointer;

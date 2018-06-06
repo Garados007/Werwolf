@@ -52,7 +52,11 @@
         "language": "Sprache",
         "options": "Optionen",
         "new-group-name": "Name für die neue Gruppe:",
-        "on-create-group": "Gruppe erstellen"
+        "on-create-group": "Gruppe erstellen",
+        "join-group-key": "Passwort für den Beitritt in die neue Gruppe:",
+        "on-join-group": "Gruppe beitreten",
+        "key-not-exists": "Leider konnte keine Gruppe mit diesen Schlüssel gefunden werden.",
+        "invalid-key-pattern": "Es wurde kein gültiger Schlüssel eingegeben."
     },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }

@@ -6,6 +6,7 @@ import Game.UI.GameView as GameView exposing (..)
 import Game.Lobby.GameSelector as GameSelector exposing (..)
 import Game.Lobby.GameMenu as GameMenu exposing (..)
 import Game.Lobby.CreateGroup as CreateGroup exposing (..)
+import Game.Lobby.JoinGroup as JoinGroup exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -25,6 +26,7 @@ type alias GameLobbyInfo =
     , games : Dict Int (GameViewDef EventMsg)
     , selector : GameSelectorDef EventMsg
     , createGroup : CreateGroupDef EventMsg
+    , joinGroup : JoinGroupDef EventMsg
     , config : Configuration
     , lang : LangGlobal
     , curGame : Maybe Int
@@ -39,6 +41,7 @@ type GameLobbyMsg
     = MNetwork NetworkMsg
     | MGameView Int GameViewMsg
     | MCreateGroup CreateGroupMsg
+    | MJoinGroup JoinGroupMsg
     | MGameSelector GameSelectorMsg
     | MGameMenu GameMenuMsg
     | MainLang String (Maybe String)
@@ -57,6 +60,7 @@ type EventMsg
 type ViewModal
     = None
     | VMCreateGroup
+    | VMJoinGroup
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -82,7 +86,7 @@ handleGameMenu : GameMenuEvent -> List EventMsg
 handleGameMenu event = case event of
     GameMenu.CloseMenu -> [ ChangeMenu False ]
     GameMenu.NewGameBox -> [ ChangeMenu False, ChangeModal VMCreateGroup ]
-    GameMenu.JoinGameBox -> [ ChangeMenu False ]
+    GameMenu.JoinGameBox -> [ ChangeMenu False, ChangeModal VMJoinGroup ]
     GameMenu.EditGamesBox -> [ ChangeMenu False ]
     GameMenu.LanguageBox -> [ ChangeMenu False ]
     GameMenu.OptionsBox -> [ ChangeMenu False ]
@@ -94,6 +98,11 @@ handleCreateGroup event = case event of
         [ ChangeModal None
         , Send <| RespControl <| CreateGroup name
         ]
+
+handleJoinGroup : JoinGroupEvent -> List EventMsg
+handleJoinGroup event = case event of
+    JoinGroup.Close -> [ ChangeModal None ]
+    JoinGroup.Join key -> [ Send <| RespControl <| JoinGroup key ]
 
 handleEvent : GameLobbyInfo -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg))
 handleEvent = changeWithAll2
@@ -162,11 +171,13 @@ init =
     let (mgs, cgs, tgs) = gameSelectorModule handleGameSelector
         (mgm, cgm, tgm) = gameMenuModule handleGameMenu
         (mcg, ccg, tcg) = createGroupModule handleCreateGroup
+        (mjg, cjg, tjg) = joinGroupModule handleJoinGroup
         model = 
             { network = network
             , games = Dict.empty
             , selector = mgs
             , createGroup = mcg
+            , joinGroup = mjg
             , config = empty
             , lang = newGlobal lang_backup
             , curGame = Nothing
@@ -176,7 +187,7 @@ init =
             , menu = mgm
             , modal = None
             }
-        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg
+        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg
     in  ( GameLobby tm
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
@@ -188,6 +199,7 @@ init =
             , Cmd.map MGameSelector cgs
             , Cmd.map MGameMenu cgm
             , Cmd.map MCreateGroup ccg
+            , Cmd.map MJoinGroup cjg
             ] ++ tcmd
         )
 
@@ -217,6 +229,8 @@ view (GameLobby model) = div []
         None -> div [] []
         VMCreateGroup -> Html.map MCreateGroup <|
             MC.view model.createGroup
+        VMJoinGroup -> Html.map MJoinGroup <|
+            MC.view model.joinGroup
     ]
 
 stylesheet : String -> Html msg
@@ -271,6 +285,11 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | createGroup = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MCreateGroup wcmd :: tcmd)
+    MJoinGroup wmsg ->
+        let (wm, wcmd, wtasks) = MC.update model.joinGroup wmsg
+            nmodel = { model | joinGroup = wm }
+            (tm, tcmd) = handleEvent nmodel wtasks
+        in  (GameLobby tm, Cmd.batch <| Cmd.map MJoinGroup wcmd :: tcmd)
     MainLang lang content -> updateLang model <|
         case content of
             Nothing -> model.lang
@@ -294,19 +313,23 @@ updateLang model lang =
             GameMenu.SetConfig lconfig
         (mcg, ccg, tcg) = MC.update model.createGroup <|
             CreateGroup.SetConfig lconfig
+        (mjg, cjg, tjg) = MC.update model.joinGroup <|
+            JoinGroup.SetConfig lconfig
         (tm, tcmd) = handleEvent 
             { nm 
             | games = ng 
             , selector = ns
             , menu = mgm
             , createGroup = mcg
+            , joinGroup = mjg
             } 
-            <| gtasks ++ stasks ++ tgm ++ tcg
+            <| gtasks ++ stasks ++ tgm ++ tcg ++ tjg
     in  ( GameLobby tm
         , Cmd.batch <| gcmd :: 
             Cmd.map MGameSelector scmd ::
             Cmd.map MGameMenu cgm ::
             Cmd.map MCreateGroup ccg :: 
+            Cmd.map MJoinGroup cjg ::
             tcmd
         )
   
@@ -326,19 +349,23 @@ updateConfig change (m, list, tasks) = case change of
                 GameMenu.SetConfig lconfig
             (mcg, ccg, tcg) = MC.update m.createGroup <|
                 CreateGroup.SetConfig lconfig
+            (mjg, cjg, tjg) = MC.update m.joinGroup <|
+                JoinGroup.SetConfig lconfig
         in  ( { m 
                 | config = config
                 , games = ng 
                 , selector = ns
                 , menu = mgm
                 , createGroup = mcg
+                , joinGroup = mjg
                 }
             , gcmd :: 
                 Cmd.map MGameSelector scmd ::
                 Cmd.map MGameMenu cgm :: 
                 Cmd.map MCreateGroup ccg ::
+                Cmd.map MJoinGroup cjg ::
                 list
-            , gtasks ++ stasks ++ tgm ++ tcg ++ tasks
+            , gtasks ++ stasks ++ tgm ++ tcg ++ tjg ++ tasks
             )
     CUser user ->
         if Dict.member user.group m.games
@@ -354,12 +381,30 @@ updateConfig change (m, list, tasks) = case change of
         let names =  Dict.insert group.id group.name m.gameNames
             fetch = if Dict.member group.id m.games
                 then []
-                else [ EnterGroup group.id ]
+                else [ EnterGroup group.id, SetCurrent <| Just group.id ]
+            closeModal = (m.modal == VMJoinGroup) &&
+                ((==) group.enterKey <| JoinGroup.getKey <| MC.getModule m.joinGroup)
             (wm, wcmd, wtasks) = MC.update m.selector <|
                 GameSelector.SetGames names
-        in  ( { m | gameNames = names, selector = wm }
-            , Cmd.map MGameSelector wcmd :: list
-            , fetch ++ wtasks ++ tasks
+            (mgs, cgs, tgs) = if fetch == []
+                then (wm, Cmd.none, [])
+                else MC.update wm <| GameSelector.SetCurrent <| Just group.id
+        in  ( { m 
+                | gameNames = names
+                , selector = mgs
+                , modal = if closeModal then None else m.modal 
+                }
+            , Cmd.map MGameSelector wcmd :: 
+                Cmd.map MGameSelector cgs :: 
+                list
+            , fetch ++ wtasks ++ tgs ++ tasks
+            )
+    CErrInvalidGroupKey ->
+        let (mjg, cjg, tjg) = MC.update m.joinGroup <|
+                JoinGroup.InvalidKey
+        in  ( { m | joinGroup = mjg }
+            , Cmd.map MJoinGroup cjg :: list
+            , tjg ++ tasks 
             )
     _ -> (m, list, tasks)
 
@@ -392,6 +437,7 @@ subscriptions (GameLobby model) = Sub.batch <|
     (Sub.map MGameSelector <| MC.subscriptions model.selector) ::
     (Sub.map MGameMenu <| MC.subscriptions model.menu) ::
     (Sub.map MCreateGroup <| MC.subscriptions model.createGroup) ::
+    (Sub.map MJoinGroup <| MC.subscriptions model.joinGroup) ::
     (List.map 
         (\(k,v) -> 
             Sub.map (MGameView k) <| MC.subscriptions v
