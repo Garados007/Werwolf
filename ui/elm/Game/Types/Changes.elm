@@ -28,6 +28,7 @@ type Changes
     | CConfig (Maybe String)
     | CAccountInvalid
     | CNetworkError
+    | CErrInvalidGroupKey
     
 type alias ChangeConfig =
     { changes: List Changes
@@ -140,11 +141,19 @@ concentrate resp =
                         rl = List.concat (List.map .changes c)
                         rb = List.foldr (||) False (List.map .reload c)
                     in ChangeConfig rl rb
-        RError e ->
-            if e.key == "account"
-            then ChangeConfig [ CAccountInvalid ] False
-            else
-                let
-                    d = log "server error" resp
-                    r = ChangeConfig [] False
-                in always r d
+        RError e -> case e.key of
+            "account" -> ChangeConfig [ CAccountInvalid ] False
+            "wrongId" -> case resp.info.class of
+                "control" -> case resp.info.method of
+                    "joinGroup" -> case e.info of
+                        "group key not found in db" -> ChangeConfig [ CErrInvalidGroupKey ] False
+                        _ -> handleError resp
+                    _ -> handleError resp
+                _ -> handleError resp
+            _ -> handleError resp
+
+handleError : Response -> ChangeConfig
+handleError resp =
+    let d = log "server error" resp
+        r = ChangeConfig [] False
+    in  always r d
