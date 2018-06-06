@@ -75,10 +75,12 @@ encodeTime : DateTimeFormat -> JE.Value
 encodeTime format = Dict.toList Game.Utils.Dates.all
     |> find ((==) format << Tuple.second)
     |> Maybe.map (Tuple.first >> JE.string)
-    |> Maybe.withDefault (Debug.crash <|
-        "date time format " ++ (toString format) ++
-        " is not found in convert list, report this bug at github: "++
-        "https://github.com/garados007/Werwolf")
+    |> \t -> case t of
+        Nothing ->Debug.crash <|
+            "date time format " ++ (toString format) ++
+            " is not found in convert list, report this bug at github: "++
+            "https://github.com/garados007/Werwolf"
+        Just v -> v
 
 find : (a -> Bool) -> List a -> Maybe a
 find f list = case list of
