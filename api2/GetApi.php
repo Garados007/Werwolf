@@ -115,7 +115,7 @@ class GetApi extends ApiBase {
 
         $this->inclDb('UserConfig');
         $conf = UserConfig::create($this->account['id']);
-            return $this->wrapResult($conf);
+            return $this->wrapResult(is_null($conf) ? null : $conf->config);
     }
 
     public function getChatRoom() {

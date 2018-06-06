@@ -266,6 +266,6 @@ class ControlApi extends ApiBase {
             $this->account['id'],
             $this->formated['config']
         );
-        return $this->wrapResult($conf);
+        return $this->wrapResult($conf->config);
     }
 }
