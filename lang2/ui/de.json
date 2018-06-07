@@ -64,5 +64,13 @@
         "opt-votingDateFormat": "Zeitpunkte des Erstellens, Startens oder Beendes von einzelnen Votings",
         "opt-reset": "Alles Zurücksetzen"
     },
+    "pages": {
+        "RoleDescription": {
+            "main-description": "Gewöhnliche Spiele, in denen alle regulären Rollen vorkommen können.",
+            "easy-description": "Für Anfänger geeignete Runden mit nur wenigen grundlegenden Rollen.",
+            "db-description": "Gewöhnliche Dorfbewohner ohne Sonderfähigkeiten. Sein Verstand ist seine einzige Waffe bei der Wolfsjagd.",
+            "ww-description": "Gewöhnlicher Werwolf ohne Sonderfähigkeiten. Einigt sich mit seinem Rudel jede Nacht auf ein Fressopfer und versucht tagsüber, nicht aufzufallen."
+        }
+    },
     "debug": "Diese Nachricht wurde nicht direkt eingegeben. Der Inhalt wurde durch das Sprachsystem erzeugt."
 }
