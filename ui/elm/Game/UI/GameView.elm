@@ -760,12 +760,17 @@ performChanges_Group old new = case new.group of
                 else if changefinished && finished
                     then (Nothing, Cmd.none, [])
                     else (new.voting, Cmd.none, [])
+            reqLang = if changefinished && (not finished)
+                then case Maybe.andThen .currentGame <| new.group of
+                    Just game -> [ FetchLangSet game.ruleset ]
+                    Nothing -> []
+                else []
         in  ( { new | chatBox = chatBox, voting = voting } 
             , Cmd.batch
                 [ Cmd.map WrapChatBox cbCmd
                 , Cmd.map WrapVoting vCmd
                 ]
-            , cbTasks ++ vTasks
+            , cbTasks ++ vTasks ++ reqLang
             )
     Nothing -> (new, Cmd.none, [])
 

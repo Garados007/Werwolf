@@ -14,6 +14,7 @@ module Game.Utils.Language exposing
     , hasGameset
     , allGamesets
     , hasLanguage
+    , allLanguages
     , getCurLang
     , getCurLangLocal
     , decodeSpecial
@@ -141,6 +142,13 @@ hasLanguage (LangGlobal info) lang =
     let l = info ()
     in  (Dict.member lang l.texts) ||
         (Dict.member lang l.gameTexts) 
+
+allLanguages : LangGlobal -> Set String
+allLanguages (LangGlobal info) =
+    let l = info ()
+    in Dict.keys l.texts
+        |> (++) (Dict.keys l.gameTexts)
+        |> Set.fromList
 
 getCurLang : LangGlobal -> String
 getCurLang (LangGlobal info) = (info ()).curLang

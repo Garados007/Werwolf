@@ -1,7 +1,9 @@
 module Game.Lobby.GameMenu exposing
     ( GameMenu
     , GameMenuMsg
-        (SetConfig)
+        ( SetConfig
+        , SetLang
+        )
     , GameMenuEvent (..)
     , GameMenuDef
     , gameMenuModule

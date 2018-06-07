@@ -1,0 +1,21 @@
+.w-language-button {
+  display: table;
+  width: 100%;
+  border: 1px solid lightgray;
+  border-radius: 1em;
+  cursor: pointer;
+}
+.w-language-button + .w-language-button {
+  margin-top: 0.4em;
+}
+.w-language-button > div {
+  display: table-cell;
+  padding: 0.3em 0.5em;
+}
+.w-language-button img {
+  height: 0.8em;
+  margin: 0 0 0 0.4em;
+}
+.w-language-button.selected {
+  background-color: lightgray;
+}
