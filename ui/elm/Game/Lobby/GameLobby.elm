@@ -37,6 +37,7 @@ type alias GameLobbyInfo =
     , showMenu : Bool
     , menu : GameMenuDef EventMsg
     , modal : ViewModal
+    , langs : List LangInfo
     }
 
 type GameLobbyMsg
@@ -49,6 +50,7 @@ type GameLobbyMsg
     | MGameMenu GameMenuMsg
     | MainLang String (Maybe String)
     | ModuleLang String String (Maybe String)
+    | LangList (List LangInfo)
 
 type EventMsg
     = Register Request
@@ -216,6 +218,7 @@ init =
             , showMenu = False
             , menu = mgm
             , modal = None
+            , langs = []
             }
         (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ to
     in  ( GameLobby tm
@@ -226,6 +229,7 @@ init =
                 ]
             , fetchUiLang lang_backup MainLang
             , fetchModuleLang "main" lang_backup ModuleLang
+            , fetchLangList LangList
             , Cmd.map MGameSelector cgs
             , Cmd.map MGameMenu cgm
             , Cmd.map MCreateGroup ccg
@@ -333,6 +337,13 @@ update msg (GameLobby model) = case msg of
         case content of
             Nothing -> model.lang
             Just l -> addSpecialLang model.lang lang mod l
+    LangList list ->
+        let (mlc, clc, tlc) = MC.update model.language <|
+                LanguageChanger.SetLangs list
+            (tm, tcmd) = handleEvent { model | language = mlc } tlc
+        in  ( GameLobby tm
+            , Cmd.batch <| Cmd.map MLanguageChanger clc :: tcmd
+            )
         
 
 updateLang : GameLobbyInfo -> LangGlobal -> (GameLobby, Cmd GameLobbyMsg)
