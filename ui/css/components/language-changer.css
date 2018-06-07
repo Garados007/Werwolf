@@ -4,6 +4,8 @@
   border: 1px solid lightgray;
   border-radius: 1em;
   cursor: pointer;
+  max-width: 100%;
+  width: 22em;
 }
 .w-language-button + .w-language-button {
   margin-top: 0.4em;
