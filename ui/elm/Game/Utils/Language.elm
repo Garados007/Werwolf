@@ -13,6 +13,7 @@ module Game.Utils.Language exposing
     , getGameset
     , hasGameset
     , getCurLang
+    , getCurLangLocal
     , decodeSpecial
     , updateCurrentLang
     , updateUser
@@ -56,6 +57,7 @@ type alias LanguageLocal =
     { config : LangLibConfig
     , main : Maybe LanguageLibTile
     , game : Maybe LanguageLibTile
+    , curLang : String
     , gameset : Maybe String
     }
 
@@ -109,6 +111,7 @@ createLocal (LangGlobal info) game =
             )
             game
         )
+        pi.curLang
         game
 
 getGameset : LangLocal -> Maybe String
@@ -123,6 +126,9 @@ hasGameset (LangGlobal info) lang ruleset =
 
 getCurLang : LangGlobal -> String
 getCurLang (LangGlobal info) = (info ()).curLang
+
+getCurLangLocal : LangLocal -> String
+getCurLangLocal (LangLocal info) = (info ()).curLang
 
 updateUser : LangLocal -> List User -> LangLocal
 updateUser (LangLocal info) list =
