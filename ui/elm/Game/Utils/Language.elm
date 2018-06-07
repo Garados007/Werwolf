@@ -12,6 +12,8 @@ module Game.Utils.Language exposing
     , getVotingName
     , getGameset
     , hasGameset
+    , allGamesets
+    , hasLanguage
     , getCurLang
     , getCurLangLocal
     , decodeSpecial
@@ -24,6 +26,7 @@ import Json.Decode as Json exposing
     (Decoder,oneOf,string,dict,lazy,list,field,succeed,int,index)
 import Json.Decode.Pipeline exposing (required,optional)
 import Dict exposing (Dict)
+import Set exposing (Set)
 import Game.Types.Types exposing (..)
 
 type LanguageLibTile
@@ -123,6 +126,21 @@ hasGameset (LangGlobal info) lang ruleset =
     in Dict.get lang l.gameTexts
         |> Maybe.map (Dict.member ruleset)
         |> Maybe.withDefault False
+
+allGamesets : LangGlobal -> Set String
+allGamesets (LangGlobal info) =
+    let l = info ()
+    in Dict.values l.gameTexts
+        |> List.map Dict.keys
+        |> List.concat
+        |> Set.fromList
+
+{-| searches for any entry -}
+hasLanguage : LangGlobal -> String -> Bool
+hasLanguage (LangGlobal info) lang =
+    let l = info ()
+    in  (Dict.member lang l.texts) ||
+        (Dict.member lang l.gameTexts) 
 
 getCurLang : LangGlobal -> String
 getCurLang (LangGlobal info) = (info ()).curLang
