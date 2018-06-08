@@ -1,4 +1,4 @@
-module Game.Lobby.ModalWindow exposing (modal)
+module Game.Lobby.ModalWindow exposing (modal,modalNoClose)
 
 import Html exposing (Html,div,text)
 import Html.Attributes exposing (class)
@@ -16,6 +16,19 @@ modal close title content =
                     [ text title ]
                 , div [ class "w-modal-close", onClick close]
                     [ text "X" ]
+                ]
+            , div [ class "w-modal-content" ]
+                [ content ]
+            ]
+        ]
+
+modalNoClose : String -> Html msg -> Html msg
+modalNoClose title content =
+    div [ class "w-modal-outer" ]
+        [ div [ class "w-modal-box" ]
+            [ div [ class "w-modal-header" ] 
+                [ div [ class "w-modal-title"]
+                    [ text title ]
                 ]
             , div [ class "w-modal-content" ]
                 [ content ]
