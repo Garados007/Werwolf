@@ -499,7 +499,6 @@ updateGroup info change =
                 filterNewRound = List.filter
                     (\req -> case req of
                         RespConv (GetNewVotes _ _ _) -> True
-                        RespConv (GetChangedVotings _ _) -> True
                         RespConv (GetNewChatEntrys _ _) -> True
                         _ -> False
                     )
