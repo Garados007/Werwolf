@@ -62,7 +62,16 @@
         "opt-profileTimeFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (noch am selben Tag)",
         "opt-profileDateFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (länger als ein Tag her)",
         "opt-votingDateFormat": "Zeitpunkte des Erstellens, Startens oder Beendes von einzelnen Votings",
-        "opt-reset": "Alles Zurücksetzen"
+        "opt-reset": "Alles Zurücksetzen",
+        "err-network": "Netzwerkfehler",
+        "err-network-descr": "Die Verbindung zum Server wurde getrennt. Schau doch mal nach, ob deine Verbindung zum Internet noch steht!",
+        "err-network-link": "Seite neuladen",
+        "err-account": "Accountfehler",
+        "err-account-descr": "Deine Sitzungscookie ist abgelaufen oder ungültig. Von daher bist du nicht mehr angemeldet und kannst auf den Server nicht mehr zugreifen. Bitte versuche dich erneut anzumelden!",
+        "err-account-link": "Zur Anmeldeseite gehen",
+        "err-maintenance": "Wartungsmodus aktiv",
+        "err-maintenance-descr": "Der Server wird aktuell gewartet. Von daher werden alle Spiele für diese Dauer unterbrochen. Bitte versuche später ob der Server wieder aktiv ist.",
+        "err-maintenance-link": "Zum Status"
     },
     "pages": {
         "RoleDescription": {

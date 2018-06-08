@@ -9,6 +9,7 @@ import Game.Lobby.CreateGroup as CreateGroup exposing (..)
 import Game.Lobby.JoinGroup as JoinGroup exposing (..)
 import Game.Lobby.LanguageChanger as LanguageChanger exposing (..)
 import Game.Lobby.Options as Options exposing (..)
+import Game.Lobby.ErrorWindow as ErrorWindow exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -41,6 +42,7 @@ type alias GameLobbyInfo =
     , menu : GameMenuDef EventMsg
     , modal : ViewModal
     , langs : List LangInfo
+    , error : ErrorWindow
     }
 
 type GameLobbyMsg
@@ -266,6 +268,7 @@ init =
             , menu = mgm
             , modal = None
             , langs = []
+            , error = NoError
             }
         (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tlc ++ to
     in  ( GameLobby tm
@@ -308,12 +311,14 @@ view (GameLobby model) = div []
     , if model.showMenu
         then Html.map MGameMenu <| MC.view model.menu
         else div [] []
-    , case model.modal of
-        None -> div [] []
-        VMCreateGroup -> Html.map MCreateGroup <| MC.view model.createGroup
-        VMJoinGroup -> Html.map MJoinGroup <| MC.view model.joinGroup
-        VMOptions -> Html.map MOptions <| MC.view model.options
-        VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
+    , if model.error /= NoError 
+        then viewError (createLocal model.lang Nothing) model.error
+        else case model.modal of
+            None -> div [] []
+            VMCreateGroup -> Html.map MCreateGroup <| MC.view model.createGroup
+            VMJoinGroup -> Html.map MJoinGroup <| MC.view model.joinGroup
+            VMOptions -> Html.map MOptions <| MC.view model.options
+            VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
     ]
 
 stylesheet : String -> Html msg
@@ -507,6 +512,12 @@ updateConfig change (m, list, tasks) = case change of
             , Cmd.map MJoinGroup cjg :: list
             , tjg ++ tasks 
             )
+    CAccountInvalid ->
+        ( { m | error = AccountError }, list, tasks)
+    CNetworkError ->
+        ( { m | error = NetworkError }, list, tasks)
+    CMaintenance ->
+        ( { m | error = Maintenance }, list, tasks)
     _ -> (m, list, tasks)
 
 updateAllGames : Dict Int (GameViewDef EventMsg) -> GameViewMsg -> (Dict Int (GameViewDef EventMsg), Cmd GameLobbyMsg, List EventMsg)
@@ -533,7 +544,7 @@ updateAllGames dict msg =
 
 
 subscriptions : GameLobby -> Sub GameLobbyMsg
-subscriptions (GameLobby model) = Sub.batch <|
+subscriptions (GameLobby model) = if model.error /= NoError then Sub.none else Sub.batch <|
     (Sub.map MNetwork <| Network.subscriptions model.network) ::
     (Sub.map MGameSelector <| MC.subscriptions model.selector) ::
     (Sub.map MGameMenu <| MC.subscriptions model.menu) ::
