@@ -28,6 +28,7 @@ type Changes
     | CConfig (Maybe String)
     | CAccountInvalid
     | CNetworkError
+    | CMaintenance
     | CErrInvalidGroupKey
     
 type alias ChangeConfig =
@@ -143,6 +144,7 @@ concentrate resp =
                     in ChangeConfig rl rb
         RError e -> case e.key of
             "account" -> ChangeConfig [ CAccountInvalid ] False
+            "maintenance" -> ChangeConfig [ CMaintenance ] False
             "wrongId" -> case resp.info.class of
                 "control" -> case resp.info.method of
                     "joinGroup" -> case e.info of
