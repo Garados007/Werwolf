@@ -17,7 +17,7 @@ import Config exposing (..)
 import Game.Lobby.ModalWindow exposing (modal)
 
 import Html exposing (Html,div,text,a,img,input,node)
-import Html.Attributes exposing (class,attribute,href,value)
+import Html.Attributes exposing (class,attribute,href,value,selected)
 import Html.Events exposing (on,onClick)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -127,10 +127,9 @@ viewDateInput msg current = node "select"
         Html.Events.targetValue
     ] <| List.map
         (\(key,val) -> node "option"
-            ( if val == current
-                then [ value key, attribute "selected" "selected" ]
-                else [ value key ]
-            )
+            [ value key
+            , selected <| val == current 
+            ]
             [ text <| example val ]
         )
         <| Dict.toList all
