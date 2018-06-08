@@ -26,6 +26,7 @@ type Changes
     | CCreateOptions String CreateOptions
     | CRolesets String (List String)
     | CConfig (Maybe String)
+    | COwnId Int
     | CAccountInvalid
     | CNetworkError
     | CMaintenance
@@ -44,7 +45,7 @@ concentrate resp =
                 GetUserStats v ->
                     ChangeConfig [ CUserStat v ] False
                 GetOwnUserStat v ->
-                    ChangeConfig [ CUserStat v ] False
+                    ChangeConfig [ COwnId v.userId, CUserStat v ] False
                 GetGroup v ->
                     ChangeConfig [ CGroup v ] False
                 GetUser v ->

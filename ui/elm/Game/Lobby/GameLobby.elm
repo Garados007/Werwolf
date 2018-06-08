@@ -275,6 +275,7 @@ init =
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
                 [ RespGet <| GetConfig
+                , RespGet <| GetOwnUserStat
                 , RespGet <| GetMyGroupUser
                 ]
             , fetchUiLang lang_backup MainLang
@@ -472,6 +473,11 @@ updateConfig change (m, list, tasks) = case change of
                 ChangeLang conf.language ::
                 tasks
             Nothing -> tasks
+        )
+    COwnId id ->
+        ( { m | ownId = Just <| Maybe.withDefault id m.ownId }
+        , list
+        , tasks
         )
     CUser user ->
         if Dict.member user.group m.games
