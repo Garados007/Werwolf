@@ -409,7 +409,12 @@ update def msg (GameView model) = case msg of
                 Just g -> g
                 Nothing -> Debug.crash "GameView:update:CreateNewGame - no group is set, new Game cant be created"
             (nm,wcmd,wtask) = newGameModule handleNewGame (model.config, group)
-            (tm,tcmd,ttasks) = handleEvent def { model | newGame = Just nm } wtask
+            (tm,tcmd,ttasks) = handleEvent def { model | newGame = Just nm } 
+                <| (PNewGame <| NewGame.SetCreateOptions model.createOptions)
+                :: (PNewGame <| NewGame.SetInstalledTypes <| Maybe.withDefault [] model.installedTypes)
+                :: (PNewGame <| NewGame.SetUser model.user)
+                :: (PNewGame <| NewGame.SetRoleset model.rolesets)
+                :: wtask
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
             , List.concat ttasks
