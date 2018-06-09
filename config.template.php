@@ -20,6 +20,7 @@ define('MAINTENANCE', false);
 //Server Setting
 define('URI_HOST', 'http://localhost/');
 define('URI_PATH', 'werwolf/'); //if you leave this blank, then the root of the webspace is the root of this project
+define('MANUAL_BUILD', false); //false-server build it own files, true-manual build of files
 
 //Language Setting
 define('LANG_BACKUP', 'de'); //this is the backup language when none is setted
