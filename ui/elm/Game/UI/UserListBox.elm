@@ -20,7 +20,7 @@ import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 
 import Html exposing (Html,div,text,node,img)
-import Html.Attributes exposing (class,value,src,title)
+import Html.Attributes exposing (class,value,src,title,selected)
 import Html.Events exposing (on,onClick)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -110,11 +110,17 @@ viewChatSelector info =
             [ on "change" <| 
                 Json.map ChangeFilter Html.Events.targetValue
             ] <|
-            (::) (node "option" [ value "" ] 
+            (::) (node "option" 
+                [ value "" 
+                , selected <| info.filter == Nothing
+                ] 
                 [ text <| single info ["ui", "filter-all"] ]) <|
                 List.map
                     (\key ->
-                        node "option" [ value key ] 
+                        node "option" 
+                            [ value key 
+                            , selected <| Just key == info.filter
+                            ] 
                             [ text<| getChatName info.config.lang key ]
                     )
                     <| List.map .chatRoom

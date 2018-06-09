@@ -28,7 +28,7 @@ import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 
 import Html exposing (Html,div,select,option,node,text)
-import Html.Attributes exposing (class,title,value,attribute)
+import Html.Attributes exposing (class,title,value,attribute,selected)
 import Html.Events exposing (on,onClick)
 import Html.Lazy exposing (lazy)
 import Dict exposing (Dict)
@@ -211,10 +211,16 @@ view (ChatBox model) = divc "w-chat-box" <|
                 , on "change" <| 
                     Json.map ChangeFilter Html.Events.targetValue
                 ] <|
-                (::) (node "option" [ value "" ] [ text <| single model ["ui", "no-filter"] ]) <|
+                (::) (node "option" 
+                    [ value "" 
+                    , selected <| model.selected == Nothing
+                    ] [ text <| single model ["ui", "no-filter"] ]) <|
                     List.map
                         (\(id,key) ->
-                            node "option" [ value <| toString id ] 
+                            node "option" 
+                                [ value <| toString id 
+                                , selected <| model.selected == Just id
+                                ] 
                                 [ text <| getChatName model.config.lang key ]
                         )
                         <| Dict.toList <| Dict.map (expand .chatRoom) model.rooms
@@ -227,14 +233,11 @@ view (ChatBox model) = divc "w-chat-box" <|
                 List.map
                     (\(id,chat) ->
                         node "option"
-                            ( if Just id == model.targetChat
-                                then 
-                                    [ value <| toString id 
-                                    , attribute "selected" "selected"
-                                    ] 
-                                else [ value <| toString id ] 
-                            )
-                            <| [ text <| getChatName model.config.lang chat.chatRoom ]
+                            [ value <| toString id 
+                            , selected <| Just id == model.targetChat
+                            ] 
+                            [ text <| getChatName model.config.lang chat.chatRoom 
+                            ]
                     )
                     <| List.filter 
                         (\(id, chat) ->
