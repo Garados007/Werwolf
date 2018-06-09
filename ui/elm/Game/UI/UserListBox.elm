@@ -125,7 +125,20 @@ viewUser info ruleset user =
     div [ class "w-user-box" ]
         [ div [ class "w-user-icon-area" ]
             [ div [ class "w-user-icon" ]
-                [ text "icon"
+                [ img
+                    [ src <| "https://www.gravatar.com/avatar/" ++
+                        user.stats.gravatar ++ 
+                        "?d=identicon"
+                        -- "?d=monsterid"
+                        -- "?d=wavatar"
+                        -- "?d=robohash"
+                    , class "w-user-icon-gravatar"
+                    ] []
+                , div [ class "w-user-icon-specials" ] <|
+                    List.filterMap identity <|
+                    [
+
+                    ]
                 ]
             , div [ class "w-user-last-online" ]
                 [ text <| getTime info user.stats.lastOnline ]

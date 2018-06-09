@@ -288,6 +288,7 @@ class GetApi extends ApiBase {
     }
 
     private static $userNameBuffer = array();
+    private static $userEmailHashBuffer = array();
 
     private function setUserName($userJson) {
         $this->inclDb('JsonExport');
@@ -311,8 +312,13 @@ class GetApi extends ApiBase {
                 $this->getAccount();
                 self::$userNameBuffer[$id] =
                     AccountManager::GetAccountName($id);
+                self::$userEmailHashBuffer[$id] =
+                    md5(strtolower(trim(
+                        AccountManager::GetAccountEmail($id)
+                    )));
             }
             $userJson['name'] = self::$userNameBuffer[$id];
+            $userJson['gravatar'] = self::$userEmailHashBuffer[$id];
             return $userJson;
         }
     }

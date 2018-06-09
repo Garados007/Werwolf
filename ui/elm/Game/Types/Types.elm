@@ -6,6 +6,8 @@ type alias UserStat =
     { userId : Int 
     -- The User name
     , name : String
+    -- The hash sum for the gravatar image
+    , gravatar: String
     -- Unix Time of first game
     , firstGame : Maybe Int
     -- Unix Time of last game
