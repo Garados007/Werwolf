@@ -132,4 +132,43 @@ class UserStats extends JsonExport {
             )
         )->free();
     }
+
+    public static function getTopStats($filter) {
+        if (array_search($filter, [ 
+            'mostGames', 
+            'mostWinGames', 
+            'mostModGames', 
+            'topWinner',
+            'topMod' ])<0) return [];
+        $result = DB::executeFormatFile(
+            __DIR__ . '/sql/topStats.sql',
+            array(
+                "filter" => $filter
+            )
+        );
+        $list = array();
+        $set = $result->getResult();
+        while ($entry = $set->getEntry()) {
+            $userId = intval($entry["UserId"]);
+            if (isset(self::$cache[$userId]))
+                $list[] = self::$cache[$userId];
+            else {
+                $cur = new UserStats();
+                $cur->userId = $userId;
+                $cur->firstGame = intvaln($entry["FirstGame"]);
+                $cur->lastGame = intvaln($entry["LastGame"]);
+                $cur->gameCount = intval($entry["GameCount"]);
+                $cur->winningCount = intval($entry["WinningCount"]);
+                $cur->moderatedCount = intval($entry["ModeratorCount"]);
+                $cur->lastOnline = intval($entry["LastOnline"]);
+                $cur->aiId = intvaln($entry["AiId"]);
+                $cur->aiNameKey = $entry["AiNameKey"];
+                $cur->aiControlClass = $entry["AiControlClass"];
+                $list[] = $cur;
+                self::$cache[$userId] = $cur;
+            }
+        }
+        $result->free();
+        return $list;
+    }
 }

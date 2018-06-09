@@ -16,6 +16,8 @@ define('DB_LOG_QUERYS', false);  //for debug mode - logs all querys to a log fil
 //Runtime Setting
 define('RELEASE_MODE', false);
 define('MAINTENANCE', false);
+define('SCORE_MAX_ITEMS', 50); //maximum number of score entries
+define('SCORE_MIN_GAMES', 1); //minimum number of games need to view entry in top rankings
 
 //Server Setting
 define('URI_HOST', 'http://localhost/');

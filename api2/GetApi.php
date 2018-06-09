@@ -207,6 +207,16 @@ class GetApi extends ApiBase {
         return $this->wrapResult($result);
     }
 
+    public function topUser() {
+        if (($result = $this->getData(array(
+            'filter' => [ 'regex', '/^mostGames|mostWinGames|mostModGames|topWinner|topMod$/']
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclDb('UserStats');
+        $result = UserStats::getTopStats($this->formated['filter']);
+        return $this->wrapResult($result);
+    }
+
     private function filterUser($group, $user) {
         $this->inclDb('VisibleRole','User');
         if (is_array($user)) {
