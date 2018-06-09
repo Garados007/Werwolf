@@ -5,4 +5,5 @@ ui/module/cache/
 elm-stuff/
 logs/
 ui/elm/config.elm
+ui/css/test-*
 .vscode/
