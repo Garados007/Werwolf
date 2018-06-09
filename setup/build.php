@@ -105,7 +105,7 @@ $copy(__DIR__.'/../ui/module/cache/roles.js', __DIR__.'/../ui/roles/script.compr
 
 echo CT;
 //build index files
-$index = function ($target, $title) {
+$index = function ($target, $title,$start) {
     $content = '<!DOCTYPE HTML>'.PHP_EOL.
         '<html><head><meta charset="UTF-8"><title>'.$title.
         '</title><style>html,head,body { padding:0; margin:0; }'.
@@ -114,9 +114,9 @@ $index = function ($target, $title) {
         '/script.js"></script><link rel="stylesheet" '.
         'property="stylesheet" href="'.URI_HOST.URI_PATH.$target.
         '/style.css" /></head><body><script type="text/javascript">'.
-        'Elm.Game.Lobby.GameLobby.fullscreen()</script></body></html>';
+        $start.'.fullscreen()</script></body></html>';
     file_put_contents(__DIR__.'/../'.$target.'/index.php', $content);
     echo CT.'Index file /'.$target.'/index.php created';
 };
-$index('ui/game', 'Game Lobby');
-$index('ui/roles', 'Roles Help');
+$index('ui/game', 'Game Lobby','Elm.Game.Lobby.GameLobby');
+$index('ui/roles', 'Roles Help', 'Elm.Game.Pages.RoleDescription');
