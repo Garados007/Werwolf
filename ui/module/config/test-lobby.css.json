@@ -1,0 +1,11 @@
+[
+    { "set": "ui/module/config/test-game.css.json" },
+    { "file": "components/lobby.css", "compress": "css" },
+    { "file": "components/game-selector.css", "compress": "css" },
+    { "file": "components/game-menu.css", "compress": "css" },
+    { "file": "components/modal-window.css", "compress": "css" },
+    { "file": "components/create-group.css", "compress": "css" },
+    { "file": "components/options.css", "compress": "css" },
+    { "file": "components/language-changer.css", "compress": "css" },
+    { "file": "components/error.css", "compress": "css" }
+]

@@ -1,0 +1,12 @@
+[
+    { "file": "ui/css/components/main.css", "compress": "css" },
+    { "file": "ui/css/components/game-view.css", "compress": "css" },
+    { "file": "ui/css/components/user-list-box.css", "compress": "css" },
+    { "file": "ui/css/components/chat-post-tile.css", "compress": "css" },
+    { "file": "ui/css/components/chat-box.css", "compress": "css" },
+    { "file": "ui/css/components/chat-log.css", "compress": "css" },
+    { "file": "ui/css/components/chat-insert-box.css", "compress": "css" },
+    { "file": "ui/css/components/voting.css", "compress": "css" },
+    { "file": "ui/css/components/wait-finished.css", "compress": "css" },
+    { "file": "ui/css/components/new-game.css", "compress": "css" }
+]
