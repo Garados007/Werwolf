@@ -22,6 +22,7 @@ session_start();
 if (isset($_POST["login"]) && isset($_POST["user"])) {
 	$_SESSION["Id"] = intval($_POST["user"]);
 	$_SESSION["Name"] = $data[$_SESSION["Id"]];
+	$_SESSION["Email"] = $_SESSION["Name"] . '@testuser';
 	header("Location: /".URI_PATH."account/checked/");
 	exit;
 }
@@ -35,6 +36,7 @@ if (isset($_POST["create"]) && isset($_POST["newuser"])) {
 	$entry = $response->getResult()->getEntry();
 	$_SESSION["Id"] = intval($entry["Id"]);
 	$_SESSION["Name"] = strval($_POST["newuser"]);
+	$_SESSION["Email"] = $_SESSION["Name"] . '@testuser';
 	header("Location: /".URI_PATH."account/checked/");
 	exit;
 }

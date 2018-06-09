@@ -34,7 +34,8 @@ class AccountManager {
 			$data = array(
 				"login" => true, //the user is logged in
 				"id" => $_SESSION["Id"], //account id
-				"name" => $_SESSION["Name"] //user name
+				"name" => $_SESSION["Name"], //user name
+				"email" => $_SESSION["Email"] //user email
 			);
 		else $data = array(
 				"login" => false //the user is not logged in
@@ -69,6 +70,12 @@ class AccountManager {
 				if ($entry["Id"] == $id) return $entry["Name"];
 			}
 		}
+	}
+	//this function is called, when the backend needs the user email
+	public static function GetAccountEmail($id) {
+		$name = self::GetAccountName($id);
+		if ($name) $name .= '@testuser';
+		return $name;
 	}
 	//this function is called, when the setup runs and want to configure this module
 	public static function InitSystem() {
