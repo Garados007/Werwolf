@@ -1,9 +1,11 @@
-config.php
+.vscode/
 account/manager.php
-setup/version.txt
-ui/module/cache/
+config.php
 elm-stuff/
 logs/
-ui/elm/config.elm
 ui/css/test-*
-.vscode/
+ui/elm/config.elm
+ui/game
+ui/module/cache/
+ui/roles
+setup/version.txt
