@@ -86,15 +86,17 @@ echo '<br/>setup account manager plugin';
 AccountManager::InitSystem();
 echo '<br/>account manager initialized';
 			
-echo '<br/>create config.elm for ui script';
-include __DIR__ . '/../ui/elm/config.elm.php';
 
 
 
+/*
 echo '<br/><br/>init the import files for the ui';
 include_once dirname(__FILE__).'/../ui/module/ModuleWorker.php';
 ModuleWorker::prepairAllConfigs();
 echo '<br/>all import files initialized';
+*/
+
+include __DIR__ . '/build.php';
 
 			
 echo '<br/><br/>Checkup Finished. Everything is okay.';

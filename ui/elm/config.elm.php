@@ -26,6 +26,9 @@ build_year = <?php echo date("Y"); ?>
 build_version : String
 build_version = "<?php echo $v; ?>"
 
+run_build : Bool
+run_build = <?php echo isset($elm_build) && $elm_build ? 'True' : 'False' ; ?>
+
 <?php
 
 $content = ob_get_clean();

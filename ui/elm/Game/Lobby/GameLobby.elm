@@ -291,10 +291,8 @@ init =
         )
 
 view : GameLobby -> Html GameLobbyMsg
-view (GameLobby model) = div []
-    [ stylesheet <| absUrl "ui/css/test-lobby.css"
-    , stylesheet "https://fonts.googleapis.com/css?family=Kavivanar&subset=latin-ext"
-    , div [ class "w-lobby-selector" ]
+view (GameLobby model) = div [] <| viewStyles 
+    [ div [ class "w-lobby-selector" ]
         [ div [ class "w-lobby-selector-bar" ]
             [ Html.map MGameSelector <|
                 MC.view model.selector
@@ -321,6 +319,15 @@ view (GameLobby model) = div []
             VMOptions -> Html.map MOptions <| MC.view model.options
             VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
     ]
+
+viewStyles : List (Html msg) -> List (Html msg)
+viewStyles content =
+    if run_build
+    then content
+    else 
+        [ stylesheet <| absUrl "ui/css/test-lobby.css"
+        , stylesheet "https://fonts.googleapis.com/css?family=Kavivanar&subset=latin-ext"
+        ] ++ content
 
 stylesheet : String -> Html msg
 stylesheet url = node "link"

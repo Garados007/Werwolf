@@ -1,11 +1,11 @@
 [
-    { "set": "ui/module/config/test-game.css.json" },
-    { "file": "components/lobby.css", "compress": "css" },
-    { "file": "components/game-selector.css", "compress": "css" },
-    { "file": "components/game-menu.css", "compress": "css" },
-    { "file": "components/modal-window.css", "compress": "css" },
-    { "file": "components/create-group.css", "compress": "css" },
-    { "file": "components/options.css", "compress": "css" },
-    { "file": "components/language-changer.css", "compress": "css" },
-    { "file": "components/error.css", "compress": "css" }
+    { "set": "ui/module/config/test-game.css.json", "required": true },
+    { "file": "ui/css/components/lobby.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/game-selector.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/game-menu.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/modal-window.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/create-group.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/options.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/language-changer.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/error.css", "compress": "css", "required": true }
 ]
