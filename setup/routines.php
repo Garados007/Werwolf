@@ -90,11 +90,11 @@ echo '<br/>create config.elm for ui script';
 include __DIR__ . '/../ui/elm/config.elm.php';
 
 
-/*
+
 echo '<br/><br/>init the import files for the ui';
 include_once dirname(__FILE__).'/../ui/module/ModuleWorker.php';
 ModuleWorker::prepairAllConfigs();
 echo '<br/>all import files initialized';
-*/
+
 			
 echo '<br/><br/>Checkup Finished. Everything is okay.';
