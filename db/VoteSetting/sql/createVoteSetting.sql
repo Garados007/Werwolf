@@ -1,4 +1,4 @@
-INSERT INTO <?php echo DB_PREFIX; ?>VoteSetting
+REPLACE INTO <?php echo DB_PREFIX; ?>VoteSetting
 	(Chat, VoteKey, Created, VoteStart, VoteEnd, EnabledUser,
 		EnabledUserCount, TargetUser, TargetUserCount, ResultTarget) VALUES
 	(<?php echo $chat; ?>, '<?php echo $key; ?>', <?php echo time(); ?>,
