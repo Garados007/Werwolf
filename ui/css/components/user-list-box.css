@@ -48,6 +48,22 @@
 .w-user-role {
   display: inline-block;
   padding: 0.1em;
+  font-size: 1.2em;
 }
-
-
+.w-user-rolespecial {
+  height: 1.1em;
+  width: 1.1em;
+  position: relative;
+}
+.w-user-rolespecial > div {
+  width: 100%;
+  height: 100%;
+  background-position: top left;
+  background-size: 100% 100%;
+}
+.w-user-special-death {
+  background-image: url("../../img/lobby/icons8-tumbstone-52.png");
+}
+.w-user-special-ownuser {
+  background-image: url("../../img/lobby/icons8-star-48.png");
+}

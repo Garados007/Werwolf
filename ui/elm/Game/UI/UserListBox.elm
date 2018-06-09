@@ -36,6 +36,7 @@ type alias UserListBoxInfo =
     , filter: Maybe String
     , ruleset : Maybe String
     , time : Time
+    , ownUser : Int
     }
 
 type UserListBoxMsg
@@ -53,14 +54,15 @@ type UserListBoxMsg
 single : UserListBoxInfo -> List String -> String
 single info = getSingle info.config.lang
 
-init : LangConfiguration -> (UserListBox, Cmd UserListBoxMsg)
-init conf= 
+init : LangConfiguration -> Int -> (UserListBox, Cmd UserListBoxMsg)
+init conf ownId= 
     (UserListBox <| UserListBoxInfo 
         conf 
         [] 
         Dict.empty 
         Nothing
         Nothing 0
+        ownId
     , Cmd.none)
 
 view : UserListBox -> Html UserListBoxMsg
@@ -134,11 +136,6 @@ viewUser info ruleset user =
                         -- "?d=robohash"
                     , class "w-user-icon-gravatar"
                     ] []
-                , div [ class "w-user-icon-specials" ] <|
-                    List.filterMap identity <|
-                    [
-
-                    ]
                 ]
             , div [ class "w-user-last-online" ]
                 [ text <| getTime info user.stats.lastOnline ]
@@ -146,28 +143,51 @@ viewUser info ruleset user =
         , div [ class "w-user-info-area" ]
             [ div [ class "w-user-name" ]
                 [ text <| user.stats.name ]
-            , div [ class "w-user-roles" ] <| case user.player of
-                Nothing -> []
-                Just player -> List.map
-                    (\role -> div 
-                        [ class <| "w-user-role w-user-role-" 
-                            ++ role.roleKey
-                        , Html.Attributes.attribute 
-                            "data-role" role.roleKey
-                        , title <| single info [ "roles", role.roleKey]
-                        ]
-                        ( case ruleset of
-                            Nothing -> []
-                            Just rs ->
-                                [ img
-                                    [ src <| uri_host ++ uri_path ++
-                                        "ui/img/roles/" ++ rs ++
-                                        "/role-" ++ role.roleKey ++ ".png"
-                                    ] []
-                                ]
+            , div [ class "w-user-roles" ] <| 
+                let additionalRoles : List (Html msg)
+                    additionalRoles = List.filterMap 
+                        (Maybe.map (div [ class "w-user-role w-user-rolespecial" ] <<
+                            List.singleton)
                         )
-                    )
-                    player.roles
+                        [ case user.player of
+                            Just player ->
+                                if player.alive
+                                then Nothing
+                                else Just <| div 
+                                    [ class "w-user-special-death"
+                                    , title <| single info [ "ui", "player-death" ]
+                                    ] []
+                            Nothing -> Nothing
+                        , if info.ownUser == user.user
+                            then Just <| div 
+                                [ class "w-user-special-ownuser" 
+                                , title <| single info [ "ui", "player-own" ]
+                                ] []
+                            else Nothing
+                        ]
+                    showRoles : Role -> List (Html msg)
+                    showRoles = \role -> case ruleset of
+                        Nothing -> []
+                        Just rs ->
+                            [ img
+                                [ src <| uri_host ++ uri_path ++
+                                    "ui/img/roles/" ++ rs ++
+                                    "/role-" ++ role.roleKey ++ ".png"
+                                ] []
+                            ] 
+                in flip (++) additionalRoles <| case user.player of
+                    Nothing -> []
+                    Just player -> List.map
+                        (\role -> div 
+                            [ class <| "w-user-role w-user-role-" 
+                                ++ role.roleKey
+                            , Html.Attributes.attribute 
+                                "data-role" role.roleKey
+                            , title <| single info [ "roles", role.roleKey]
+                            ]
+                            <| showRoles role
+                        )
+                        player.roles
             ]
         ]
 

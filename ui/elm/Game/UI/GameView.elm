@@ -141,7 +141,7 @@ init (groupId, ownUserId) =
         own = perform (always <| Init groupId ownUserId) <| succeed ()
         config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing 
-        (userListBox, ulbCmd) = UserListBox.init config
+        (userListBox, ulbCmd) = UserListBox.init config ownUserId
         (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox (config, groupId)
         (voting, vCmd, vTasks) = votingModule handleVoting (config, ownUserId)
         info = 

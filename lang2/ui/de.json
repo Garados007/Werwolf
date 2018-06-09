@@ -39,7 +39,9 @@
         "create-newgame": "Erstelle neues Spiel",
         "day-count": "Tag:",
         "day-time": "Tageszeit:",
-        "day-phase": "Phase:"
+        "day-phase": "Phase:",
+        "player-death": "Spieler verstorben",
+        "player-own": "Eigener Spieler"
     },
     "lobby": {
         "nogame": "Du bist aktuell kein Mitglied einer Spielrunde. Tritt doch einer bei oder erstelle eine!",
