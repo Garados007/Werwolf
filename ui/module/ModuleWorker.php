@@ -2,14 +2,19 @@
 
 include_once dirname(__FILE__).'/../../config.php';
 
+if (!isset($console)) $console = false;
+if (!defined('CT'))
+	define ('CT', $console ? PHP_EOL : '<br/>');
+
 class ModuleWorker {
 	public static function prepairAllConfigs() {
+		global $console;
 		$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
 			dirname(__FILE__).'/config'));
 		$it->rewind();
 		while ($it->valid()) {
 			if (!$it->isDot() && $it->isFile() && $it->getExtension() == 'json') {
-				echo '<br/>setup '.$it->getFilename().' ...';
+				echo CT.'setup '.$it->getFilename().' ...';
 				ob_start();
 				$result = self::prepairConfig($it->getBasename('.json'));
 				$output = ob_get_contents();
@@ -32,7 +37,7 @@ class ModuleWorker {
 		for ($i = 0; $i<count($data); $i++) {
 			$path = dirname(__FILE__).'/../../'.$data[$i]["file"];
 			$code = "";
-			echo "<br/>- import ".$data[$i]["file"]." ...";
+			echo CT."- import ".$data[$i]["file"]." ...";
 			if (is_file($path)) {
 				ob_start();
 				$worker = true;
@@ -62,7 +67,7 @@ class ModuleWorker {
 
 	private static function exportCssLookup($configFile, $data) {
 		$output = "";
-		echo "<br/> - export css index ...";
+		echo CT."- export css index ...";
 		for ($i = 0; $i<count($data); $i++) {
 			$path = dirname(__FILE__).'/../../'.$data[$i]["file"];
 			$url = URI_HOST . URI_PATH . $data[$i]["file"];

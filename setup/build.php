@@ -1,11 +1,24 @@
 <?php
 
+if (!isset($argc)) $argc = 0;
+$console = $argc == 3 && $argv[2] == '-cmd';
+define ('CT', $console ? PHP_EOL : '<br/>');
+
 include_once __DIR__.'/../config.php';
 include_once __DIR__.'/../ui/module/ModuleWorker.php';
 
+//check config
+if ($console && MANUAL_BUILD) {
+    echo 'Manual build activated!'.CT.
+        'You cannot run this command in the manual build mode. Change the config.php and try it again!';
+    echo CT.CT.'If you want to see the manual build instructions, open the following url in your browser:';
+    echo CT."\t".URI_HOST.URI_PATH.'setup'.CT;
+    exit;
+}
+
 //Build elm config
 $elm_build = true;
-echo '<br/>create config.elm for ui script';
+echo CT.'create config.elm for ui script';
 include __DIR__ . '/../ui/elm/config.elm.php';
 
 //Build Elm
@@ -24,17 +37,18 @@ if (MANUAL_BUILD) {
             (RELEASE_MODE ? '' : ' --debug --docs '.implode(DIRECTORY_SEPARATOR, $doc)).
             '</code>';
     };
-    echo '<br/><br/>MANUAL BUILD ACTIVATED!';
-    echo '<br/><div style="margin:1em;padding:1em;border:1px solid red;border-radius:0.5em;font-family:sans-serif;">';
+    echo CT.CT.'MANUAL BUILD ACTIVATED!';
+    echo CT.'<div style="margin:1em;padding:1em;border:1px solid red;border-radius:0.5em;font-family:sans-serif;">';
     echo '<h3 style="color:red;">Manual build instruction</h3><ol>';
     echo '<li>goto project root <code'.$codestyle.'>cd "'.realpath(__DIR__ .'/../').'"</code></li>';
     echo '<li>run elm build commands '.
         $elmcom(['ui','elm','Game','Lobby','GameLobby.elm'], ['ui','game','script.js'], ['ui','game','doc.index.json']).
         $elmcom(['ui','elm','Game','Pages','RoleDescription.elm'],['ui','roles','script.js'],['ui','roles','doc.index.json']).
         '</li>';
+    echo '<li>run this build setup again</li>';
     echo '</ol><p>Alternativly you can run the normal build system on an alternative server and copy the target files manualy.</p>';
     echo '<code'.$codestyle.'>php setup'.DIRECTORY_SEPARATOR.'build.php</code>';
-    echo '</div><br/>';
+    echo '</div>'.CT;
 }
 else {
     $run = function ($method, $desc) {
@@ -42,9 +56,9 @@ else {
         $status = 0;
         echo $desc . ' ... ';
         exec($method, $output, $status);
-        echo $status.'<br/>';
-        echo implode('<br/>',$output);
-        echo '<br/>';
+        echo $status.CT;
+        echo implode(CT,$output);
+        echo CT;
     };
     $elmmake = function ($run, $source, $target, $doc) {
         $rp = function ($path) {
@@ -52,9 +66,9 @@ else {
         };
         $run('elm make '.realpath(__DIR__.'/../'.$source).' --yes --output '.$rp(__DIR__.'/../'.$target).
             (RELEASE_MODE ? '' : ' --debug --docs '.$rp(__DIR__.'/../'.$doc)).' 2>&1',
-            '</br>build elm file '.$source.' to '.$target);
+            CT.'build elm file '.$source.' to '.$target);
     };
-    echo '<br/>';
+    echo CT;
     $elmmake($run, 'ui/elm/Game/Lobby/GameLobby.elm', 'ui/game/script.js', 'ui/game/doc.index.json');
     $elmmake($run, 'ui/elm/Game/Pages/RoleDescription.elm', 'ui/roles/script.js', 'ui/roles/doc.index.json');
 }
@@ -62,26 +76,26 @@ chdir($cwd);
 
 //default elm config
 unset($elm_build);
-echo '<br/>create config.elm for ui script';
+echo CT.'create config.elm for ui script';
 include __DIR__ . '/../ui/elm/config.elm.php';
 
 //Build JS & CSS
-echo '<br/><br/>init the import files for the ui';
+echo CT.CT.'init the import files for the ui';
 ModuleWorker::prepairAllConfigs();
-echo '<br/>all import files initialized</br>';
+echo CT.'all import files initialized'.CT;
 
 //Copy target files
 $copy = function ($source, $target) {
     if (!is_file($source)) {
-        echo '<br/>Source file '.$source.' is missing! Cannot proceed process.';
+        echo CT.'Source file '.$source.' is missing! Cannot proceed process.';
         exit;
     }
     if (!is_dir(dirname($target))) mkdir(dirname($target), 0777, true);
     if (copy($source, $target) !== true) {
-        echo '<br/>Cannot copy '.$source.' to '.$target.'!';
+        echo CT.'Cannot copy '.$source.' to '.$target.'!';
         exit;
     }
-    echo '<br/>File copied: '.$source.' --> '.$target;
+    echo CT.'File copied: '.$source.' --> '.$target;
 };
 $copy(__DIR__.'/../ui/module/cache/test-game.css.index.css', __DIR__.'/../ui/css/test-game.css');
 $copy(__DIR__.'/../ui/module/cache/test-lobby.css.css', __DIR__.'/../ui/game/style.css');
@@ -89,7 +103,7 @@ $copy(__DIR__.'/../ui/module/cache/test-lobby.css.index.css', __DIR__.'/../ui/cs
 $copy(__DIR__.'/../ui/module/cache/game.js', __DIR__.'/../ui/game/script.compressed.js');
 $copy(__DIR__.'/../ui/module/cache/roles.js', __DIR__.'/../ui/roles/script.compressed.js');
 
-echo '<br/>';
+echo CT;
 //build index files
 $index = function ($target, $title) {
     $content = '<!DOCTYPE HTML>'.PHP_EOL.
@@ -102,7 +116,7 @@ $index = function ($target, $title) {
         '/style.css" /></head><body><script type="text/javascript">'.
         'Elm.Game.Lobby.GameLobby.fullscreen()</script></body></html>';
     file_put_contents(__DIR__.'/../'.$target.'/index.php', $content);
-    echo '<br/>Index file /'.$target.'/index.php created';
+    echo CT.'Index file /'.$target.'/index.php created';
 };
 $index('ui/game', 'Game Lobby');
 $index('ui/roles', 'Roles Help');
