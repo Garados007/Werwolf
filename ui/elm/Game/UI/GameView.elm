@@ -47,7 +47,7 @@ type alias GameViewInfo =
     , lastVotingChange : Int
     , lastVoteTime : Int
     , chats : Dict ChatId Chat
-    , lastChat : Dict ChatId Int
+    , lastChat : Int
     , user : List User
     , periods : List Request
     , entrys : Dict ChatId (Dict Int ChatEntry)
@@ -154,7 +154,7 @@ init (groupId, ownUserId) =
             , lastVotingChange = 0
             , lastVoteTime = 0
             , chats = Dict.empty
-            , lastChat = Dict.empty
+            , lastChat = 0
             , user = []
             , periods = []
             , entrys = Dict.empty
@@ -496,7 +496,7 @@ updateGroup info change =
                 filterPeriods = List.filter
                     (\req -> case req of
                         RespConv (GetNewVotes _ _ _) -> True
-                        RespConv (GetNewChatEntrys _ _) -> True
+                        RespConv (GetAllNewChatEntrys _ _) -> True
                         RespConv (GetChangedVotings _ _) -> True
                         _ -> False
                     )
@@ -504,7 +504,6 @@ updateGroup info change =
                 filterNewRound = List.filter
                     (\req -> case req of
                         RespConv (GetNewVotes _ _ _) -> True
-                        RespConv (GetNewChatEntrys _ _) -> True
                         _ -> False
                     )
                 samePhase : Group -> Group -> Bool
@@ -521,7 +520,7 @@ updateGroup info change =
                         , lastVotingChange = 0
                         , lastVoteTime = 0
                         , chats = Dict.empty
-                        , lastChat = Dict.empty
+                        , lastChat = 0
                         , entrys = Dict.empty
                         , votes = Dict.empty
                         , user = cleanUser info.user
@@ -540,7 +539,6 @@ updateGroup info change =
                             | group = Just group
                             , newGame = Nothing
                             , chats = Dict.empty
-                            , lastChat = Dict.empty
                             , entrys = Dict.empty
                             , votes = Dict.empty
                             }
@@ -553,6 +551,9 @@ updateGroup info change =
                             then Just <| RespConv <| LastOnline group.id
                             else Nothing
                         , requestChangedVotings group newModel.lastVotingChange
+                        , case group.currentGame of
+                            Just game -> Just <| requestChatEntrys game.id newModel.lastChat
+                            Nothing -> Nothing
                         ]
                 (rperiods, send) = case info.group of
                     Nothing -> ([], List.filterMap identity 
@@ -628,8 +629,6 @@ updateGroup info change =
             let 
                 finished = Maybe.withDefault True <| Maybe.map groupFinished info.group
                 old = Dict.get chat.id info.chats
-                oldTime = Maybe.withDefault 0 <| 
-                    Dict.get chat.id info.lastChat
                 time = max info.lastVotingChange <| 
                     getNewestVotingTime chat
                 dict : Dict VoteKey (Dict UserId Vote)
@@ -639,48 +638,34 @@ updateGroup info change =
             in ChangeVar
                 { info
                 | chats = Dict.insert chat.id chat info.chats
-                , lastChat = Dict.insert chat.id oldTime info.lastChat
                 , lastVotingChange = time
                 , entrys = Dict.insert chat.id Dict.empty info.entrys
                 , votes = Dict.insert chat.id dict info.votes
                 } 
-                (--if finished then [] else 
-                    List.append
-                    [ requestChatEntrys chat.id oldTime ]
-                    <| requestNewVotes chat info.lastVoteTime
+                ( requestNewVotes chat info.lastVoteTime
                 )
-                ( List.append
-                    ( if not finished then [] else Maybe.withDefault []
-                        <| Maybe.map 
-                            (List.singleton << 
-                                flip requestChatEntrys oldTime
-                                << .id) 
-                            old
-                    )
-                    <| Maybe.withDefault [] 
+                ( Maybe.withDefault [] 
                     <| Maybe.map (flip requestNewVotes info.lastVoteTime) old
                 )
                 []
         CChatEntry entry -> case Dict.get entry.chat info.entrys of
             Just dict ->
                 let
-                    oldTime = Dict.get entry.chat info.lastChat
-                    time = max entry.sendDate <| Maybe.withDefault 1 oldTime
                     nd = Dict.insert entry.id entry dict
+                    (pp,rp) = Debug.log "GameView:ChatEntry" <| if entry.id > info.lastChat
+                        then case Maybe.andThen .currentGame info.group of
+                            Just game ->
+                                ( [ requestChatEntrys game.id entry.id ]
+                                , [ requestChatEntrys game.id info.lastChat ]
+                                )
+                            Nothing -> ([], [])
+                        else ([], [])
                 in ChangeVar
                     { info
-                    | lastChat = Dict.insert entry.chat time info.lastChat
+                    | lastChat = max entry.id info.lastChat
                     , entrys = Dict.insert entry.chat nd info.entrys
                     }
-                    (if oldTime /= Just time
-                     then [ requestChatEntrys entry.chat time ]
-                     else []
-                    )
-                    (if oldTime /= Just time
-                     then [ requestChatEntrys entry.chat <| Maybe.withDefault 0 oldTime ]
-                     else []
-                    )
-                    []
+                    pp rp []
             Nothing -> ChangeVar info [] [] []
         CVote vote ->
             case Dict.get vote.setting info.votes of
@@ -806,11 +791,7 @@ getChanges_ChatBox old new = compact
     [ if old.entrys /= new.entrys
         then Just ( Cmd.none
             , List.singleton <| PChatBox <| ChatBox.AddChats <|
-                List.filter (\ce ->
-                    let time = Maybe.withDefault -1 <| 
-                            Dict.get ce.chat old.lastChat
-                    in ce.sendDate > time
-                ) <| List.concat <| 
+                List.filter (\ce -> ce.id > old.lastChat) <| List.concat <| 
                 List.map Dict.values <| Dict.values new.entrys
             )
         else Nothing
@@ -983,9 +964,9 @@ getNewestVotingTime chat = Maybe.withDefault 0 <| List.maximum <|
         )
         chat.voting
 
-requestChatEntrys : ChatId -> Int -> Request
-requestChatEntrys chatId lastChange =
-    RespConv <| GetNewChatEntrys chatId (lastChange - 1)
+requestChatEntrys : GameId -> Int -> Request
+requestChatEntrys gameId lastId =
+    RespConv <| GetAllNewChatEntrys gameId (lastId + 1)
 
 requestNewVotes : Chat -> Int -> List Request
 requestNewVotes chat lastChange = List.map
