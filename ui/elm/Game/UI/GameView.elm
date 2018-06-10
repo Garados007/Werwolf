@@ -652,7 +652,7 @@ updateGroup info change =
             Just dict ->
                 let
                     nd = Dict.insert entry.id entry dict
-                    (pp,rp) = Debug.log "GameView:ChatEntry" <| if entry.id > info.lastChat
+                    (pp,rp) = if entry.id > info.lastChat
                         then case Maybe.andThen .currentGame info.group of
                             Just game ->
                                 ( [ requestChatEntrys game.id entry.id ]
