@@ -62,6 +62,7 @@ type ResponseConv
     | GetUpdatedGroup GroupVersion
     | GetChangedVotings GameId Int --LastChange
     | GetNewChatEntrys ChatId Int --After
+    | GetAllNewChatEntrys GameId Int --AfterId
     | GetNewVotes ChatId VoteKey Int --LastChange
     
 type ResponseControl
@@ -176,6 +177,11 @@ encodeRequestInternal response =
                 GetNewChatEntrys chatId after ->
                     EncodedRequestInternal "conv" "getNewChatEntrys"
                         [ ("chat", EInt chatId)
+                        , ("after", EInt after)
+                        ]
+                GetAllNewChatEntrys gameId after ->
+                    EncodedRequestInternal "conv" "getAllNewChatEntrys"
+                        [ ("game", EInt gameId)
                         , ("after", EInt after)
                         ]
                 GetNewVotes chatId voteKey lastChange ->

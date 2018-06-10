@@ -41,6 +41,24 @@ class ChatEntry extends JsonExport {
 		$result->free();
 		return $list;
 	}
+
+	public static function loadNewEntrysFromGroup(array $chats, $minId) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/loadGroupNewEntrys.sql',
+			array(
+				"chat" => $chats,
+				"minId" => $minId
+			)
+		);
+		$list = array();
+		$set = $result->getResult();
+		while ($entry = $set->getEntry())
+			$list[] = new ChatEntry(intval($entry["Id"]),
+				intval($entry["Chat"]), intval($entry["User"]), 
+				$entry["Message"], intval($entry["SendDate"]));
+		$result->free();
+		return $list;
+	}
 	
 	public static function addEntry($chat, $user, $text) {
 		$time = time();

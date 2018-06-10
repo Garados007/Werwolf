@@ -118,6 +118,8 @@ decodeConv method =
             decSingle GetChangedVotings (list decodeVoting)
         "getNewChatEntrys" ->
             decSingle GetNewChatEntrys (list decodeChatEntry)
+        "getAllNewChatEntrys" ->
+            decSingle GetAllNewChatEntrys (list decodeChatEntry)
         "getNewVotes" ->
             decSingle GetNewVotes (list decodeVote)
         _ -> succeed Nothing

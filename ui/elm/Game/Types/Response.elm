@@ -42,6 +42,7 @@ type ResultConv
     | GetUpdatedGroup (Maybe Group)
     | GetChangedVotings (List Voting)
     | GetNewChatEntrys (List ChatEntry)
+    | GetAllNewChatEntrys (List ChatEntry)
     | GetNewVotes (List Vote)
 
 type ResultControl

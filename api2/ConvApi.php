@@ -126,6 +126,35 @@ class ConvApi extends ApiBase {
         return $this->wrapResult($result);
     }
 
+    public function getAllNewChatEntrys() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'game' => 'int',
+            'after' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclPerm();
+        $this->inclDb('ChatRoom', 'ChatEntry');
+        $rooms = array();
+        foreach (ChatRoom::getAllChatRoomIds($this->formated['game']) as $id) {
+            $chat = ChatRoom::create($id);
+            if ((Permission::canGetChatData(
+                $this->account['id'],
+                $chat->id
+            )) == true) {
+                $rooms[] = $chat->id;
+            }
+        }
+        if (count($rooms) === 0)
+            return $this->wrapError($this->errorId('user cannot read any chat in this game'));
+        $result = ChatEntry::loadNewEntrysFromGroup(
+            $rooms,
+            $this->formated['after']
+        );
+        return $this->wrapResult($result);
+    }
+
     public function getNewVotes() {
         if (($result = $this->getAccount()) !== true)
             return $this->wrapError($result);

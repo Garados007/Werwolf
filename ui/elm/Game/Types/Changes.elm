@@ -82,6 +82,8 @@ concentrate resp =
                     ChangeConfig (List.map CVoting v) False
                 GetNewChatEntrys v ->
                     ChangeConfig (List.map CChatEntry v) False
+                GetAllNewChatEntrys v ->
+                    ChangeConfig (List.map CChatEntry v) False
                 GetNewVotes v ->
                     ChangeConfig (List.map CVote v) False
         RControl r -> 
