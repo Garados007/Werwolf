@@ -11,7 +11,7 @@ import Game.Utils.Dates exposing (DateTimeFormat(..))
 import Config exposing (..)
 
 import Json.Decode as JD
-import Json.Decode.Pipeline exposing (decode,required)
+import Json.Decode.Pipeline exposing (decode,required,optional)
 import Json.Encode as JE
 import Dict exposing (Dict)
 import Result
@@ -22,6 +22,7 @@ type alias Configuration =
     , profileTimeFormat: DateTimeFormat
     , profileDateFormat: DateTimeFormat
     , votingDateFormat: DateTimeFormat
+    , manageGroupsDateFormat: DateTimeFormat
     }
 
 type alias LangConfiguration =
@@ -31,7 +32,7 @@ type alias LangConfiguration =
 
 empty : Configuration
 empty = Configuration lang_backup DD_MM_YYYY_H24_M_S
-    H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S
+    H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S DD_MM_YYYY_H24_M_S
 
 decodeConfig : String -> Configuration
 decodeConfig code = case JD.decodeString decoder code of
@@ -48,6 +49,7 @@ encodeConfig config = JE.encode 0 <| JE.object
     , ("profileTimeFormat", encodeTime config.profileTimeFormat)
     , ("profileDateFormat", encodeTime config.profileDateFormat)
     , ("votingDateFormat", encodeTime config.votingDateFormat)
+    , ("manageGroupsDateFormat", encodeTime config.manageGroupsDateFormat)
     ]
 
 decoder : JD.Decoder Configuration
@@ -59,6 +61,7 @@ decoder = JD.andThen
             |> required "profileTimeFormat" decodeTime
             |> required "profileDateFormat" decodeTime
             |> required "votingDateFormat" decodeTime
+            |> optional "manageGroupsDateFormat" decodeTime DD_MM_YYYY_H24_M_S
         _ -> JD.fail <| "not supported version " ++ (toString version)
     )
     (JD.field "version" JD.int)

@@ -129,6 +129,8 @@ handleJoinGroup event = case event of
 handleManageGroups : ManageGroupsEvent -> List EventMsg
 handleManageGroups event = case event of
     ManageGroups.Close -> [ ChangeModal None ]
+    ManageGroups.Focus group ->
+        [ ChangeModal None, EnterGroup group ]
 
 handleLanguageChanger : LanguageChangerEvent -> List EventMsg
 handleLanguageChanger event = case event of
@@ -169,7 +171,23 @@ handleEvent = changeWithAll2
             )
         EnterGroup id ->
             if Dict.member id model.games
-            then (model, Cmd.none)
+            then if Just id == model.curGame 
+                then (model, Cmd.none)
+                else
+                    let 
+                        (ns, scmd, stasks) = MC.update model.selector <|
+                                GameSelector.SetCurrent <| Just id
+                        (nmodel, eventCmd) = handleEvent
+                            { model
+                            | curGame = Just id
+                            , selector = ns
+                            }
+                            stasks
+                    in  ( nmodel
+                        , Cmd.batch <|
+                            Cmd.map MGameSelector scmd ::
+                            eventCmd
+                        )
             else
                 let (gameView, gcmd, gtasks) =
                         gameViewModule (handleGameView id)

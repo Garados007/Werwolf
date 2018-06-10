@@ -113,6 +113,10 @@ view (Options model) =
             , viewDateInput 
                 (configChanger <| \tf c -> { c | votingDateFormat = tf } )
                 conf.votingDateFormat
+            , div [] [ text <| gs model "opt-manageGroupsDateFormat" ]
+            , viewDateInput
+                (configChanger <| \tf c -> { c | manageGroupsDateFormat = tf } )
+                conf.manageGroupsDateFormat
             , div
                 [ class "w-options-reset"
                 , onClick <| configChanger reset ()

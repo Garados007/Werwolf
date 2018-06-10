@@ -64,6 +64,7 @@
         "opt-profileTimeFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (noch am selben Tag)",
         "opt-profileDateFormat": "Zeitpunkt in der Nutzerliste, wann dieser zuletzt online war. (länger als ein Tag her)",
         "opt-votingDateFormat": "Zeitpunkte des Erstellens, Startens oder Beendes von einzelnen Votings",
+        "opt-manageGroupsDateFormat": "Zeitformat in der Übersicht aller Gruppen (unter Menü > Gruppen verwalten)",
         "opt-reset": "Alles Zurücksetzen",
         "err-network": "Netzwerkfehler",
         "err-network-descr": "Die Verbindung zum Server wurde getrennt. Schau doch mal nach, ob deine Verbindung zum Internet noch steht!",
@@ -73,7 +74,19 @@
         "err-account-link": "Zur Anmeldeseite gehen",
         "err-maintenance": "Wartungsmodus aktiv",
         "err-maintenance-descr": "Der Server wird aktuell gewartet. Von daher werden alle Spiele für diese Dauer unterbrochen. Bitte versuche später ob der Server wieder aktiv ist.",
-        "err-maintenance-link": "Zum Status"
+        "err-maintenance-link": "Zum Status",
+        "mg-construct-date": "Erstellt:",
+        "mg-constructor": "Ersteller:",
+        "mg-last-date": "Letztes Spiel:",
+        "mg-never": "noch nie",
+        "mg-leader": "Leiter:",
+        "mg-member": "Mitspieler:",
+        "mg-current-game": "Aktuelles Spiel:",
+        "mg-no-game": "kein Spiel",
+        "mg-enter-key": "Passwort:",
+        "mg-focus-group": "Gruppe fokusieren",
+        "mg-view-user": "Nutzer anzeigen",
+        "mg-hide-user": "Nutzer verstecken"
     },
     "pages": {
         "RoleDescription": {

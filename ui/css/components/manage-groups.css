@@ -1,0 +1,63 @@
+.w-managegroup-group {
+  border: 1px solid lightgray;
+}
+.w-managegroup-group + .w-managegroup-group {
+  margin-top: 0.5em;
+}
+.w-managegroup-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  padding: 0.1em 0.5em;
+}
+.w-managegroup-info {
+  display: flex;
+  font-size: 0.75em;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  border-bottom: 1px solid lightgray;
+  margin: 0 0.5em;
+}
+.w-managegroup-info > div {
+  display: flex;
+  flex: 1 0 50%;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+}
+.w-managegroup-info > div > div {
+  flex: 1 0 50%;
+  white-space: nowrap;
+}
+.w-managegroup-password {
+  background-color: #eee;
+  text-align: center;
+  vertical-align: middle;
+}
+.w-managegroup-button {
+  display: inline-block;
+  border: 1px solid lightgray;
+  padding: 0.3em 0.5em;
+  border-radius: 1em;
+  margin: 0.3em;
+  font-size: 0.8em;
+  cursor: pointer;
+}
+.w-managegroup-users {
+  border-top: 1px solid lightgray;
+  margin: 0 0.5em;
+  display: flex;
+  flex-flow: row wrap;
+}
+.w-managegroup-user {
+  border: 1px solid lightgray;
+  margin: 0.5em;
+  padding: 0.5em;
+  display: flex;
+}
+.w-managegroup-user > div {
+  height: 1.5em;
+}
+.w-managegroup-user img {
+  height: 1.5em;
+  width: 1.5em;
+  margin-right: 0.75em;
+} 
