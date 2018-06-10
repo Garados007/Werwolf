@@ -37,7 +37,7 @@ class ModuleWorker {
 		for ($i = 0; $i<count($data); $i++) {
 			$path = dirname(__FILE__).'/../../'.$data[$i]["file"];
 			$code = "";
-			echo CT."- import ".$data[$i]["file"]." ...";
+			echo "- import ".$data[$i]["file"]." ...";
 			if (is_file($path)) {
 				ob_start();
 				$worker = true;
@@ -54,7 +54,7 @@ class ModuleWorker {
 				}
 			}
 			$output .= $code . PHP_EOL;
-			echo " ok.";
+			echo " ok.".CT;
 		}
 		if (!is_dir(dirname(__FILE__).'/cache'))
 			mkdir(dirname(__FILE__).'/cache', 0777, true);
@@ -67,7 +67,7 @@ class ModuleWorker {
 
 	private static function exportCssLookup($configFile, $data) {
 		$output = "";
-		echo CT."- export css index ...";
+		echo "- export css index ...";
 		for ($i = 0; $i<count($data); $i++) {
 			$path = dirname(__FILE__).'/../../'.$data[$i]["file"];
 			$url = URI_HOST . URI_PATH . $data[$i]["file"];
@@ -75,7 +75,7 @@ class ModuleWorker {
 		}
 		file_put_contents(dirname(__FILE__).'/cache/'.$configFile.'.index.css',
 			$output);
-		echo " ok.";
+		echo " ok.".CT;
 	}
 	
 	/**
