@@ -7,8 +7,8 @@ if (!file_exists(dirname(__FILE__).'/../config.php')) {
 
 include_once dirname(__FILE__).'/../config.php';
 
-if (RELEASE_MODE) {
-	echo 'System is in release mode. No changes are done. The check abort now.';
+if (!MAINTENANCE) {
+	echo 'System is not in maintenance mode. No changes are done. The check abort now.';
 	return;
 }
 
