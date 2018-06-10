@@ -3,6 +3,7 @@ module Game.Lobby.ManageGroups exposing
     , ManageGroupsMsg
         ( SetConfig
         , SetGroups
+        , SetUsers
         )
     , ManageGroupsEvent (..)
     , ManageGroupsDef
@@ -16,6 +17,7 @@ import Game.Utils.Language exposing (..)
 import Config exposing (..)
 import Game.Lobby.ModalWindow exposing (modal)
 import Game.Types.Types exposing (..)
+import Game.Utils.UserLookup as UserLookup exposing (UserLookup)
 
 import Html exposing (Html,div,text,a,img,input)
 import Html.Attributes exposing (class,attribute,href,value)
@@ -27,12 +29,14 @@ type ManageGroups = ManageGroups ManageGroupsInfo
 type alias ManageGroupsInfo =
     { config : LangConfiguration
     , groups : Dict Int Group
+    , users : UserLookup
     }
 
 type ManageGroupsMsg
     -- public Methods
     = SetConfig LangConfiguration
     | SetGroups (Dict Int Group)
+    | SetUsers UserLookup
     -- private Methods
     | OnClose
 
@@ -58,6 +62,7 @@ init () =
         { config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing
         , groups = Dict.empty
+        , users = UserLookup.empty
         }
     , Cmd.none
     , []
@@ -72,6 +77,11 @@ update def msg (ManageGroups model) = case msg of
         )
     SetGroups groups ->
         ( ManageGroups { model | groups = groups }
+        , Cmd.none
+        , []
+        )
+    SetUsers users ->
+        ( ManageGroups { model | users = users }
         , Cmd.none
         , []
         )

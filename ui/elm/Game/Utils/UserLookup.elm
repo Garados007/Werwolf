@@ -90,7 +90,7 @@ putChanges changes (UserLookup dict) =
         insertAll = List.foldl insert 
         clean : UserLookupInfo -> UserLookupInfo
         clean = Dict.filter
-            (\_ entry -> (entry.stat == Nothing) || (Set.isEmpty entry.groups) )
+            (\_ entry -> not <| (entry.stat == Nothing) || (Set.isEmpty entry.groups) )
     in UserLookup <| clean <| insertAll dict changes
 
 getUser : UserLookup -> List UserStat

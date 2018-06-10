@@ -18,6 +18,7 @@ import Game.Types.Types exposing (..)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Game.Utils.LangLoader exposing (..)
+import Game.Utils.UserLookup as UserLookup exposing (UserLookup)
 import Config exposing (..)
 
 import Html exposing (Html, div, node, program, text)
@@ -46,6 +47,7 @@ type alias GameLobbyInfo =
     , modal : ViewModal
     , langs : List LangInfo
     , error : ErrorWindow
+    , users : UserLookup
     }
 
 type GameLobbyMsg
@@ -280,6 +282,7 @@ init =
             , modal = None
             , langs = []
             , error = NoError
+            , users = UserLookup.empty
             }
         (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tmg ++ tlc ++ to
     in  ( GameLobby tm
@@ -359,13 +362,22 @@ update msg (GameLobby model) = case msg of
             let (nm, ncmd) = Network.update wmsg model.network
                 (ng, gcmd, gtasks) = updateAllGames model.games <|
                     Manage changes.changes
-                nmodel = { model | network = nm, games = ng }
+                users = UserLookup.putChanges changes.changes model.users
+                (mmg, cmg, tmg) = MC.update model.manageGroups <|
+                    ManageGroups.SetUsers users
+                nmodel = { model 
+                    | network = nm
+                    , games = ng 
+                    , users = users
+                    , manageGroups = mmg
+                    }
                 (nnmodel, cmd, ctasks) = List.foldr
                     updateConfig (nmodel, [], []) changes.changes
-                (tm, tcmd) = handleEvent nnmodel <| gtasks ++ ctasks
+                (tm, tcmd) = handleEvent nnmodel <| gtasks ++ tmg ++ ctasks
             in  ( GameLobby tm
                 , Cmd.batch <|
                     [ Cmd.map MNetwork ncmd 
+                    , Cmd.map MManageGroups cmg
                     , gcmd
                     ] ++ cmd ++ tcmd
                 )
