@@ -62,6 +62,27 @@ class User extends JsonExport {
 		$result->free();
 		return $list;
 	}
+
+	public static function loadSingle($user, $group) {
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/loadSingle.sql',
+			array(
+				"user" => $user,
+				"group" => $group
+			)
+		);
+		$res = null;
+		echo DB::getError();
+		$set = $result->getResult();
+		if ($entry = $set->getEntry()) {
+			$res = new User(
+				intval($entry["GroupId"]), 
+				intval($entry["UserId"]), 
+				intvaln($entry["Player"]));
+		}
+		$result->free();
+		return $res;
+	}
 	
 	public static function createUser($group, $user) {
 		$result = DB::executeFormatFile(
@@ -77,13 +98,16 @@ class User extends JsonExport {
 	
 	public function remove() {
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/removeUser.sql',
+			dirname(__FILE__).'/sql/deleteUser.sql',
 			array(
 				"group" => $this->group,
 				"user" => $this->user
 			)
 		);
+		$result->getResult()->free();
+		$entry = $result->getResult()->getEntry();
 		$result->free();
+		return intval($entry['count']) == 0;
 	}
 	
 	public function setPlayer($player) {
