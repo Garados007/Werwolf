@@ -15,6 +15,7 @@
 body {
     background-color: #6c3213;
 }
+.w-newgame-submit,
 .w-newgame-cleader-submit,
 .w-newgame-options-header-item,
 .w-newgame-box select,
@@ -72,6 +73,7 @@ body {
 .w-box-header {
     border-color: #c35b22;
 }
+.w-newgame-submit,
 .w-newgame-cleader-submit,
 .w-newgame-options-header-item,
 .w-chat-view-votes,
@@ -92,6 +94,7 @@ body {
     border-color: #ff7a33 !important;
 }
 /*color*/
+.w-newgame-submit,
 .w-newgame-box input:not(.w-newgame-enterkey-code),
 .w-newgame-cleader-submit,
 .w-newgame-options-header-item,
