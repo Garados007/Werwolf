@@ -43,7 +43,6 @@ type NewGameMsg
     | SetUser (List User)
     | SetRoleset (Dict String (List String))
     -- private msg
-    | InitConfig
     | ChangeCurrentType String
     | ShowPage Pages
     | OnUpdate (List String) OValue
@@ -53,8 +52,7 @@ type NewGameMsg
     | OnCreateGame
 
 type NewGameEvent
-    = RequestInstalledTypes
-    | FetchLangSet String
+    = FetchLangSet String
     | ChangeLeader Int Int --group user
     | CreateGame NewGameConfig
 
@@ -88,7 +86,7 @@ init (config, group) =
     ( NewGame <| NewGameInfo
         config Nothing Nothing group PCommon Dict.empty 
         Dict.empty [] Nothing Dict.empty Dict.empty
-    , Task.perform (always InitConfig) <| Task.succeed ()
+    , Cmd.none
     , []
     )
 
@@ -406,8 +404,6 @@ update def msg (NewGame info) = case msg of
         )
     SetRoleset roleset ->
         (NewGame { info | rolesets = roleset }, Cmd.none, [])
-    InitConfig ->
-        (NewGame info, Cmd.none, event def RequestInstalledTypes)
     ChangeCurrentType nct ->
         ( NewGame { info | currentType = Just nct, selRoles = Dict.empty }
         , Cmd.none
