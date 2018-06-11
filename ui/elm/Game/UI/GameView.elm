@@ -113,7 +113,6 @@ type EventMsg
     = SendMes Request
     | ViewUser
     | ViewVotes
-    | PushInstalledTypes
     | FetchLangSet String
     | PChatBox ChatBoxMsg
     | PUserListBox UserListBoxMsg
@@ -201,7 +200,6 @@ handleVoting event = case event of
 
 handleNewGame : NewGameEvent -> List EventMsg
 handleNewGame event = case event of
-    NewGame.RequestInstalledTypes -> [ PushInstalledTypes ]
     NewGame.FetchLangSet ruleset -> [ FetchLangSet ruleset ]
     NewGame.ChangeLeader group target -> 
         [ SendMes <| RespControl <| ChangeLeader group target ]
@@ -226,23 +224,6 @@ handleEvent def = changeWithAll3
             , Cmd.none
             , []
             )
-        PushInstalledTypes -> case info.newGame of
-            Nothing -> (info, Cmd.none, [])
-            Just newGame -> case info.installedTypes of
-                Just it ->
-                    let (nm, ncmd, ntasks) = MC.update newGame <|
-                            NewGame.SetInstalledTypes it
-                        (tm, tcmd, tt) = handleEvent def
-                            { info | newGame = Just nm } ntasks
-                    in  ( tm
-                        , Cmd.batch <| Cmd.map WrapNewGame ncmd :: tcmd
-                        , List.concat tt
-                        )
-                Nothing ->
-                    ( info
-                    , Cmd.none
-                    , MC.event def <| Send <| RespInfo InstalledGameTypes
-                    )
         FetchLangSet ruleset ->
             ( info
             , Cmd.none
@@ -417,7 +398,10 @@ update def msg (GameView model) = case msg of
                 :: wtask
         in  ( GameView tm
             , Cmd.batch <| (Cmd.map WrapNewGame wcmd) :: tcmd
-            , List.concat ttasks
+            , (++) (List.concat ttasks) <|
+                if model.installedTypes == Nothing
+                then MC.event def <| Send <| RespInfo InstalledGameTypes
+                else []
             )
     Init groupId ownUserId ->
         ( GameView model
