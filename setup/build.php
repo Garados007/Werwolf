@@ -107,7 +107,9 @@ echo CT;
 //build index files
 $index = function ($target, $title,$start) {
     $content = '<!DOCTYPE HTML>'.PHP_EOL.
-        '<html><head><meta charset="UTF-8"><title>'.$title.
+        '<html><head><meta charset="UTF-8">'.'
+        <meta name="viewport" content="width=device-width, '.
+        'initial-scale=1.0 /"><title>'.$title.
         '</title><style>html,head,body { padding:0; margin:0; }'.
         'body { font-family: calibri, helvetica, arial, sans-serif; }</style>'.
         '<script type="text/javascript" src="'.URI_HOST.URI_PATH.$target.
