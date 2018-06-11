@@ -23,6 +23,7 @@ type alias Configuration =
     , profileDateFormat: DateTimeFormat
     , votingDateFormat: DateTimeFormat
     , manageGroupsDateFormat: DateTimeFormat
+    , theme: String
     }
 
 type alias LangConfiguration =
@@ -32,7 +33,8 @@ type alias LangConfiguration =
 
 empty : Configuration
 empty = Configuration lang_backup DD_MM_YYYY_H24_M_S
-    H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S DD_MM_YYYY_H24_M_S
+    H24_M DD_MM_YYYY DD_MM_YYYY_H24_M_S DD_MM_YYYY_H24_M_S 
+    "default"
 
 decodeConfig : String -> Configuration
 decodeConfig code = case JD.decodeString decoder code of
@@ -50,6 +52,7 @@ encodeConfig config = JE.encode 0 <| JE.object
     , ("profileDateFormat", encodeTime config.profileDateFormat)
     , ("votingDateFormat", encodeTime config.votingDateFormat)
     , ("manageGroupsDateFormat", encodeTime config.manageGroupsDateFormat)
+    , ("theme", JE.string config.theme)
     ]
 
 decoder : JD.Decoder Configuration
@@ -62,6 +65,7 @@ decoder = JD.andThen
             |> required "profileDateFormat" decodeTime
             |> required "votingDateFormat" decodeTime
             |> optional "manageGroupsDateFormat" decodeTime DD_MM_YYYY_H24_M_S
+            |> optional "theme" JD.string "default"
         _ -> JD.fail <| "not supported version " ++ (toString version)
     )
     (JD.field "version" JD.int)

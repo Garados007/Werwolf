@@ -5,6 +5,8 @@ include_once __DIR__ . '/../../config.php';
 $v = json_decode(file_get_contents(__DIR__ .'/../../setup/versions.json'), true);
 $v = $v[count($v) - 1];
 
+$t = json_decode(file_get_contents(__DIR__.'/../css/themes/list.json'), true);
+
 ob_start();
 
 ?>
@@ -28,6 +30,10 @@ build_version = "<?php echo $v; ?>"
 
 run_build : Bool
 run_build = <?php echo isset($elm_build) && $elm_build ? 'True' : 'False' ; ?>
+
+
+themes : List String
+themes = <?php echo json_encode($t); ?>
 
 <?php
 

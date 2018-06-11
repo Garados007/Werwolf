@@ -117,6 +117,13 @@ view (Options model) =
             , viewDateInput
                 (configChanger <| \tf c -> { c | manageGroupsDateFormat = tf } )
                 conf.manageGroupsDateFormat
+            , div [ class "w-options-header" ]
+                [ text <| gs model "opt-style" ]
+            , div [] [ text <| gs model "opt-theme" ]
+            , viewListInput
+                (configChanger <| \tf c -> { c | theme = tf } )
+                conf.theme
+                themes
             , div
                 [ class "w-options-reset"
                 , onClick <| configChanger reset ()
@@ -137,6 +144,18 @@ viewDateInput msg current = node "select"
             [ text <| example val ]
         )
         <| Dict.toList all
+
+viewListInput : (String -> OptionsMsg) -> String -> List String -> Html OptionsMsg
+viewListInput msg current list = node "select"
+    [ on "change" <| Json.map msg Html.Events.targetValue
+    ] <| List.map
+        (\entry -> node "option"
+            [ value entry
+            , selected <| entry == current
+            ]
+            [ text entry ]
+        )
+        list
 
 example : DateTimeFormat -> String
 example = flip convert 1514761199000.0

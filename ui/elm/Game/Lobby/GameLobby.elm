@@ -352,6 +352,7 @@ view (GameLobby model) = div [] <| viewStyles
             VMManageGroups -> Html.map MManageGroups <| MC.view model.manageGroups
             VMOptions -> Html.map MOptions <| MC.view model.options
             VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
+    , stylesheet <| uri_host ++ uri_path ++ "ui/css/themes/" ++ model.config.theme ++ ".css"
     ]
 
 viewStyles : List (Html msg) -> List (Html msg)

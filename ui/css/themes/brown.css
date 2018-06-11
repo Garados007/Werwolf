@@ -1,0 +1,104 @@
+/*background-color*/
+.w-language-button.selected,
+.w-managegroup-password,
+.w-voting,
+.w-voting-game-control,
+.chat-post-tile,
+.w-user-box-outer,
+.w-gameselector-tabs {
+    background-color: #301203;
+}
+.w-modal-box,
+.w-menu-box,
+body {
+    background-color: #6c3213;
+}
+.w-options-box select,
+.w-chat-target,
+.w-chat-filter,
+.w-user-select-chat select,
+.w-language-button,
+.w-managegroup-button,
+.w-modal-header,
+.chat-insert-box-button,
+.w-voting-bar-fill,
+.w-voting-end,
+.w-voting-select-user,
+.w-voting-next-round,
+.w-chat-phase-status,
+.w-box-header,
+.w-gameselector-nav > div,
+.w-gameselector-button,
+.w-gameselector-button:before,
+.w-gameselector-button:after {
+    background-color: #c35b22;
+}
+/*border-color*/
+.w-options-box select,
+.w-chat-filter,
+.w-chat-target,
+.w-user-select-chat select {
+    border: 1px solid #ff7a33 !important;
+}
+.w-language-button.selected{
+    border: none;
+}
+.w-options-reset,
+.w-options-header,
+.w-managegroup-user,
+.w-managegroup-users,
+.w-managegroup-info,
+.w-managegroup-group,
+.w-joingroup-submit,
+.w-creategroup-submit,
+.w-voting-bar,
+.w-voting-control,
+.w-voting,
+.w-voting-game-control,
+.chat-post-tile,
+.w-user-box-outer,
+.w-box-header {
+    border-color: #c35b22;
+}
+.w-language-button,
+.w-managegroup-button,
+.w-menu-splitter,
+.w-menu-title > div,
+.chat-insert-box-button,
+.w-voting-end,
+.w-voting-select-user,
+.w-voting-next-round,
+.w-chat-phase-status div,
+.w-gameselector-nav,
+.w-gameselector-button,
+.w-gameselector-button:before,
+.w-gameselector-button:after {
+    border-color: #ff7a33 !important;
+}
+/*color*/
+.w-options-box select,
+.w-chat-filter,
+.w-chat-target,
+.w-user-select-chat select,
+.w-language-button,
+.w-managegroup-button,
+.w-modal-header,
+.w-voting-end,
+.w-voting-select-user,
+.w-voting-next-round,
+body {
+    color: #301203;
+}
+.w-language-button.selected,
+.w-modal-box,
+.w-menu-box,
+.w-voting,
+.w-voting-game-control,
+.chat-post-tile,
+.w-user-box-outer {
+    color: #ff7a33;
+}
+/*other*/
+.w-game-selector-tabarea {
+    z-index: 5;
+}

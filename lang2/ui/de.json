@@ -66,6 +66,8 @@
         "opt-votingDateFormat": "Zeitpunkte des Erstellens, Startens oder Beendes von einzelnen Votings",
         "opt-manageGroupsDateFormat": "Zeitformat in der Übersicht aller Gruppen (unter Menü > Gruppen verwalten)",
         "opt-reset": "Alles Zurücksetzen",
+        "opt-style": "Anzeige: Stile",
+        "opt-theme": "Aktuelles Thema",
         "err-network": "Netzwerkfehler",
         "err-network-descr": "Die Verbindung zum Server wurde getrennt. Schau doch mal nach, ob deine Verbindung zum Internet noch steht!",
         "err-network-link": "Seite neuladen",
