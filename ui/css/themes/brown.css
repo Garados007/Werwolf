@@ -1,4 +1,5 @@
 /*background-color*/
+.w-newgame-enterkey-code,
 .w-language-button.selected,
 .w-managegroup-password,
 .w-voting,
@@ -10,9 +11,16 @@
 }
 .w-modal-box,
 .w-menu-box,
+.w-box-panel,
 body {
     background-color: #6c3213;
 }
+.w-newgame-cleader-submit,
+.w-newgame-options-header-item,
+.w-newgame-box select,
+.w-newgame-box input:not(.w-newgame-enterkey-code),
+.w-chat-view-votes,
+.w-chat-view-user,
 .w-options-box select,
 .w-chat-target,
 .w-chat-filter,
@@ -34,15 +42,19 @@ body {
     background-color: #c35b22;
 }
 /*border-color*/
+.w-newgame-box input:not(.w-newgame-enterkey-code),
+.w-newgame-box select,
 .w-options-box select,
 .w-chat-filter,
 .w-chat-target,
 .w-user-select-chat select {
     border: 1px solid #ff7a33 !important;
 }
+.w-newgame-enterkey-code,
 .w-language-button.selected{
     border: none;
 }
+.w-newgame-options-page,
 .w-options-reset,
 .w-options-header,
 .w-managegroup-user,
@@ -60,6 +72,10 @@ body {
 .w-box-header {
     border-color: #c35b22;
 }
+.w-newgame-cleader-submit,
+.w-newgame-options-header-item,
+.w-chat-view-votes,
+.w-chat-view-user,
 .w-language-button,
 .w-managegroup-button,
 .w-menu-splitter,
@@ -76,6 +92,10 @@ body {
     border-color: #ff7a33 !important;
 }
 /*color*/
+.w-newgame-box input:not(.w-newgame-enterkey-code),
+.w-newgame-cleader-submit,
+.w-newgame-options-header-item,
+.w-newgame-box select,
 .w-options-box select,
 .w-chat-filter,
 .w-chat-target,
@@ -89,6 +109,8 @@ body {
 body {
     color: #301203;
 }
+.w-newgame-enterkey-code,
+.w-newgame-box,
 .w-language-button.selected,
 .w-modal-box,
 .w-menu-box,
