@@ -42,6 +42,19 @@ class Permission {
 
     //endregion
 
+    //region leave group
+
+    public static function canLeaveGroup($userid, $group) {
+        $user = User::loadSingle($userid, $group);
+        if ($user === null)
+            return self::errorId("user is not a member of this group");
+        if ($user->player !== null)
+            return self::errorStatus("game is running");
+        return true;
+    }
+
+    //endregion
+
     //region start new game
 
     public static function canStartNewGame($userid, $groupId) {

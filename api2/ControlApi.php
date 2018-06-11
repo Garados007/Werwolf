@@ -268,4 +268,32 @@ class ControlApi extends ApiBase {
         );
         return $this->wrapResult($conf->config);
     }
+
+    public function leaveGroup() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'group' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canLeaveGroup(
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+        
+        $this->inclDb('User');
+        $user = User::loadSingle(
+            $this->account['id'],
+            $this->formated['group']
+        );
+        if ($user !== null)
+            $result = $user->remove();
+        
+        if ($result !== true)
+            return $this->wrapError(
+                $this->error('wrongStatus', 'game is running')
+            );
+        return $this->wrapResult(true);
+    }
 }

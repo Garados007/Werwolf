@@ -104,7 +104,8 @@ class User extends JsonExport {
 				"user" => $this->user
 			)
 		);
-		$result->getResult()->free();
+		echo DB::getError();
+		$result->getResult();
 		$entry = $result->getResult()->getEntry();
 		$result->free();
 		return intval($entry['count']) == 0;
