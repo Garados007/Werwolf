@@ -108,7 +108,12 @@ class User extends JsonExport {
 		$result->getResult();
 		$entry = $result->getResult()->getEntry();
 		$result->free();
-		return intval($entry['count']) == 0;
+		$success = intval($entry['count']) == 0;
+		if ($success) {
+			include_once __DIR__ . '/../Group/Group.php';
+			Group::forceValidation($this->group);
+		}
+		return $success;
 	}
 	
 	public function setPlayer($player) {

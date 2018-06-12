@@ -26,9 +26,7 @@ class Group extends JsonExport {
 
 	private function __construct() {}
 
-	public static function create($id) {
-		if (isset(self::$cache[$id]))
-			return self::$cache[$id];
+	private static function createInternal($id) {
 		$cur = new Group();
 
 		$cur->jsonNames = array(
@@ -54,10 +52,35 @@ class Group extends JsonExport {
 		}
 		else $cur = null;
 		$result->flush();
+		return $cur;
+	}
+
+	public static function create($id) {
+		if (isset(self::$cache[$id]))
+			return self::$cache[$id];
+
+		$cur = self::createInternal($id);
+
 		if ($cur !== null && $cur->currentGame !== null)
 			$cur->currentGame = GameGroup::create($cur->currentGame);
 
 		return self::$cache[$id] = $cur;
+	}
+
+	public static function forceValidation($id) {
+		if (!isset(self::$cache[$id])) return;
+		$cache = self::$cache[$id];
+		$cur = self::createInternal($id);
+
+		if ($cur === null) {
+			self::$cache[$id] = null;
+			$cache->id = null; //invalidate cached entry
+			return;
+		}
+
+		foreach ($cur->jsonNames as $name)
+			$cache->$name = $cur->$name;
+
 	}
 	
 	public static function getIdFromKey($key) {
