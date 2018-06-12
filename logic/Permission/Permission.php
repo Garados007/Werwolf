@@ -50,6 +50,11 @@ class Permission {
             return self::errorId("user is not a member of this group");
         if ($user->player !== null)
             return self::errorStatus("game is running");
+        $g = Group::create($group);
+        if ($g->leader != $userid) return true;
+        $users = User::loadAllUserByGroup($group);
+        if (count($users) > 1)
+            return self::errorStatus("user is leader of non empty group");
         return true;
     }
 
