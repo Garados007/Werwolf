@@ -31,6 +31,7 @@ type Changes
     | CNetworkError
     | CMaintenance
     | CErrInvalidGroupKey
+    | CGroupLeaved Int
     
 type alias ChangeConfig =
     { changes: List Changes
@@ -155,6 +156,16 @@ concentrate resp =
                         _ -> handleError resp
                     _ -> handleError resp
                 _ -> handleError resp
+            "wrongStatus" -> case resp.info.class of
+                "conv" -> case resp.info.method of
+                    "getUpdatedGroup" -> case e.info of
+                        "user is not in the group" -> handleLeaved resp
+                        _ -> handleError resp
+                    "lastOnline" ->  case e.info of
+                        "user is not in the group" -> handleLeaved resp
+                        _ -> handleError resp
+                    _ -> handleError resp
+                _ -> handleError resp
             _ -> handleError resp
 
 handleError : Response -> ChangeConfig
@@ -162,3 +173,17 @@ handleError resp =
     let d = log "server error" resp
         r = ChangeConfig [] False
     in  always r d
+
+handleLeaved : Response -> ChangeConfig
+handleLeaved resp =
+    let t = Dict.get "group" resp.info.request
+        dv = Maybe.andThen
+            (Result.toMaybe << decodeValue int) t
+    in case dv of
+        Just group -> ChangeConfig [ CGroupLeaved group ] False
+        Nothing -> ChangeConfig [] False
+
+debug : Int -> a -> a
+debug num value =
+    let d = log ((++) "d" <| toString num) value
+    in always value d

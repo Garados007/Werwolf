@@ -590,6 +590,36 @@ updateConfig change (m, list, tasks) = case change of
         ( { m | error = NetworkError }, list, tasks)
     CMaintenance ->
         ( { m | error = Maintenance }, list, tasks)
+    CGroupLeaved id ->
+        let game = Dict.get id m.games
+            tgv = case game of
+                Just g -> (\(m,c,t)->t) <| MC.update g GameView.Disposing
+                Nothing -> []
+            groups = Dict.remove id m.groups
+            games = Dict.remove id m.games
+            curGame = if Just id == m.curGame
+                then List.head <| Dict.keys groups
+                else m.curGame
+            (mgs, cgs, tgs) = MC.update m.selector <|
+                GameSelector.SetGames <| Dict.map (\_ -> .name) groups
+            (mgs2, cgs2, tgs2) = MC.update mgs <|
+                GameSelector.SetCurrent curGame
+            (mmg, cmg, tmg) = MC.update m.manageGroups <|
+                ManageGroups.SetGroups groups
+            mm = { m 
+                | groups = groups
+                , games = games
+                , curGame = curGame
+                , selector = mgs2
+                , manageGroups = mmg
+                }
+        in  ( mm
+            , Cmd.map MGameSelector cgs ::
+                Cmd.map MGameSelector cgs2 ::
+                Cmd.map MManageGroups cmg ::
+                list
+            , tgv ++ tgs ++ tgs2 ++ tmg ++ tasks
+            )
     _ -> (m, list, tasks)
 
 updateAllGames : Dict Int (GameViewDef EventMsg) -> GameViewMsg -> (Dict Int (GameViewDef EventMsg), Cmd GameLobbyMsg, List EventMsg)
