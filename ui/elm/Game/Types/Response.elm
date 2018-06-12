@@ -56,6 +56,7 @@ type ResultControl
     | FinishVoting
     | Vote_ Vote
     | SetConfig String
+    | LeaveGroup
 
 type ResultInfo
     = InstalledGameTypes (List String)

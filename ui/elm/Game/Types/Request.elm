@@ -76,6 +76,7 @@ type ResponseControl
     | FinishVoting ChatId VoteKey
     | Vote ChatId VoteKey PlayerId
     | SetConfig String
+    | LeaveGroup GroupId
 
 type ResponseInfo
     = InstalledGameTypes
@@ -242,6 +243,10 @@ encodeRequestInternal response =
                 SetConfig config ->
                     EncodedRequestInternal "control" "setConfig"
                         [ ("config", EString config)
+                        ]
+                LeaveGroup group ->
+                    EncodedRequestInternal "control" "leaveGroup"
+                        [ ("group", EInt group)
                         ]
         RespInfo resp ->
             case resp of

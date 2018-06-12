@@ -148,6 +148,8 @@ decodeControl method =
             decSingle Vote_ decodeVote
         "setConfig" ->
             decSingle SetConfig string
+        "leaveGroup" ->
+            decSingle (always LeaveGroup) bool
         _ -> succeed Nothing
 
 decodeInfo : String -> Decoder (Maybe ResultInfo)

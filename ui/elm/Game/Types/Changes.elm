@@ -109,6 +109,13 @@ concentrate resp =
                     ChangeConfig [ CVote v ] False
                 SetConfig c ->
                     ChangeConfig [ CConfig <| Just c ] False
+                LeaveGroup ->
+                    let t = Dict.get "group" resp.info.request
+                        dv = Maybe.andThen 
+                            (Result.toMaybe << decodeValue int) t
+                    in case dv of
+                        Just d -> ChangeConfig [ CGroupLeaved d ] False
+                        Nothing -> ChangeConfig [] False
         RInfo r ->  
             case r of
                 InstalledGameTypes v ->
