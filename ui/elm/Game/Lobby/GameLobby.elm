@@ -131,6 +131,8 @@ handleManageGroups event = case event of
     ManageGroups.Close -> [ ChangeModal None ]
     ManageGroups.Focus group ->
         [ ChangeModal None, EnterGroup group ]
+    ManageGroups.Leave group ->
+        [ Send <| RespControl <| LeaveGroup group]
 
 handleLanguageChanger : LanguageChangerEvent -> List EventMsg
 handleLanguageChanger event = case event of
@@ -536,20 +538,19 @@ updateConfig change (m, list, tasks) = case change of
             Nothing -> tasks
         )
     COwnId id ->
-        ( { m | ownId = Just <| Maybe.withDefault id m.ownId }
-        , list
-        , tasks
-        )
+        pushOwnId
+        { m | ownId = Just <| Maybe.withDefault id m.ownId }
+        list
+        tasks
     CUser user ->
         if Dict.member user.group m.games
         then (m, list, tasks)
-        else
-            ( { m | ownId = Just <| Maybe.withDefault user.user m.ownId }
-            , list
-            , if Dict.member user.group m.games 
+        else pushOwnId
+            { m | ownId = Just <| Maybe.withDefault user.user m.ownId }
+            list
+            <| if Dict.member user.group m.games 
                 then tasks
                 else EnterGroup user.group :: tasks
-            )
     CGroup group ->
         let groups : Dict Int Group
             groups =  Dict.insert group.id group m.groups
@@ -621,6 +622,17 @@ updateConfig change (m, list, tasks) = case change of
             , tgv ++ tgs ++ tgs2 ++ tmg ++ tasks
             )
     _ -> (m, list, tasks)
+
+pushOwnId : GameLobbyInfo -> List (Cmd GameLobbyMsg) -> List EventMsg -> (GameLobbyInfo, List (Cmd GameLobbyMsg), List EventMsg)
+pushOwnId m list tasks = 
+    let (mmg, cmg, tmg) = case m.ownId of
+            Just id -> MC.update m.manageGroups <|
+                ManageGroups.SetOwnId id
+            Nothing -> (m.manageGroups, Cmd.none, [])
+    in  ( { m | manageGroups = mmg }
+        , Cmd.map MManageGroups cmg :: list
+        , tmg ++ tasks
+        )
 
 updateAllGames : Dict Int (GameViewDef EventMsg) -> GameViewMsg -> (Dict Int (GameViewDef EventMsg), Cmd GameLobbyMsg, List EventMsg)
 updateAllGames dict msg =

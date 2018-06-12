@@ -4,6 +4,7 @@ module Game.Lobby.ManageGroups exposing
         ( SetConfig
         , SetGroups
         , SetUsers
+        , SetOwnId
         )
     , ManageGroupsEvent (..)
     , ManageGroupsDef
@@ -32,6 +33,7 @@ type alias ManageGroupsInfo =
     , groups : Dict Int Group
     , users : UserLookup
     , viewUser : Dict Int Bool
+    , ownUser : Maybe Int
     }
 
 type ManageGroupsMsg
@@ -39,14 +41,17 @@ type ManageGroupsMsg
     = SetConfig LangConfiguration
     | SetGroups (Dict Int Group)
     | SetUsers UserLookup
+    | SetOwnId Int
     -- private Methods
     | OnClose
     | ToggleUser Int
     | OnFocus Int
+    | OnLeave Int
 
 type ManageGroupsEvent
     = Close
     | Focus Int
+    | Leave Int
 
 type alias ManageGroupsDef a = ModuleConfig ManageGroups ManageGroupsMsg
     () ManageGroupsEvent a
@@ -69,6 +74,7 @@ init () =
         , groups = Dict.empty
         , users = UserLookup.empty
         , viewUser = Dict.empty
+        , ownUser = Nothing
         }
     , Cmd.none
     , []
@@ -88,6 +94,11 @@ update def msg (ManageGroups model) = case msg of
         )
     SetUsers users ->
         ( ManageGroups { model | users = users }
+        , Cmd.none
+        , []
+        )
+    SetOwnId id ->
+        ( ManageGroups { model | ownUser = Just id }
         , Cmd.none
         , []
         )
@@ -111,6 +122,10 @@ update def msg (ManageGroups model) = case msg of
         , Cmd.none
         , event def <| Focus group
         )
+    OnLeave group ->
+        ( ManageGroups model
+        , Cmd.none
+        , event def <| Leave group)
 
 view : ManageGroups -> Html ManageGroupsMsg
 view (ManageGroups model) = 
@@ -200,6 +215,13 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                 then "mg-hide-user"
                 else "mg-view-user" 
             ]
+        , if canLeave info group
+            then div
+                [ class "w-managegroup-button"
+                , onClick (OnLeave group.id) 
+                ]
+                [ text <| single info "mg-leave-group" ]
+            else text ""
         ]
     , if Maybe.withDefault False <| Dict.get group.id info.viewUser
         then div [ class "w-managegroup-users" ] <|
@@ -220,6 +242,15 @@ viewGroup info group = div [ class "w-managegroup-group" ]
             <| UserLookup.getGroupUser group.id info.users
         else text ""
     ]
+
+canLeave : ManageGroupsInfo -> Group -> Bool
+canLeave info group =
+    if group.currentGame /= Nothing
+    then False
+    else if Just group.leader /= info.ownUser
+        then True
+        else (>) 2 <| List.length <| 
+            UserLookup.getGroupUser group.id info.users
 
 subscriptions : ManageGroups -> Sub ManageGroupsMsg
 subscriptions (ManageGroups model) =

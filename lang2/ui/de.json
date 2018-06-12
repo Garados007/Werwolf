@@ -88,7 +88,8 @@
         "mg-enter-key": "Passwort:",
         "mg-focus-group": "Gruppe fokusieren",
         "mg-view-user": "Nutzer anzeigen",
-        "mg-hide-user": "Nutzer verstecken"
+        "mg-hide-user": "Nutzer verstecken",
+        "mg-leave-group": "Gruppe verlassen"
     },
     "pages": {
         "RoleDescription": {
