@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>UserStats (
 	ModeratorCount INT UNSIGNED NOT NULL DEFAULT 0,
 	LastOnline INT UNSIGNED NOT NULL,
 	AIId INT UNSIGNED,
+	TotalBanCount INT UNSIGNED NOT NULL DEFAULT 0,
+	TotalBanDays INT UNSIGNED NOT NULL DEFAULT 0,
+	PermaBanCount INT UNSIGNED NOT NULL DEFAULT 0,
+	SpokenBanCount INT UNSIGNED NOT NULL DEFAULT 0,
 
 	FOREIGN KEY (AIId) REFERENCES <?php echo DB_PREFIX; ?>AIInfo(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
@@ -173,4 +177,17 @@ CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>UserConfig (
 	User INT NOT NULL PRIMARY KEY,
 	Config TEXT NOT NULL,
 	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId)
+) CHARACTER SET latin1 COLLATE latin1_general_cs;
+
+CREATE TABLE IF NOT EXISTS <?php echo DB_PREFIX; ?>BanInfo (
+	User INT NOT NULL,
+	Spoker INT NOT NULL,
+	GroupId INT UNSIGNED NOT NULL,
+	StartDate INT NOT NULL,
+	EndDate INT,
+	Comment TEXT NOT NULL,
+	PRIMARY KEY (User, Spoker, GroupId),
+	FOREIGN KEY (User) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId),
+	FOREIGN KEY (Spoker) REFERENCES <?php echo DB_PREFIX; ?>UserStats(UserId),
+	FOREIGN KEY (GroupId) REFERENCES <?php echo DB_PREFIX; ?>Groups(Id)
 ) CHARACTER SET latin1 COLLATE latin1_general_cs;
