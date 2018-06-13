@@ -24,18 +24,29 @@ class UserStats extends JsonExport {
     public $aiNameKey;
     //control class of the ai
     public $aiControlClass;
+    //total ammount of bans
+    public $totalBanCount;
+    //total sum of full days of all bans
+    public $totalBanDays;
+    //total count of perma bans
+    public $permaBanCount;
+    //total count of spoken bans to others
+    public $spokenBanCount;
 
     private static $cache = array();
-    private function __construct(){}
+    private function __construct() {
+        $this->jsonNames = array('userId', 'firstGame', 'lastGame',
+            'gameCount', 'winningCount', 'moderatedCount', 'lastOnline',
+            'aiId', 'aiNameKey', 'aiControlClass',
+            'totalBanCount', 'totalBanDays', 'permaBanCount', 'spokenBanCount'
+        );
+    }
 
     public static function create($userId) {
 		if (isset(self::$cache[$userId]))
 			return self::$cache[$userId];
         $cur = new UserStats();
         
-        $cur->jsonNames = array('userId', 'firstGame', 'lastGame',
-            'gameCount', 'winningCount', 'moderatedCount', 'lastOnline',
-            'aiId', 'aiNameKey', 'aiControlClass');
         $result = DB::executeFormatFile(
             __DIR__ . '/sql/loadStats.sql',
             array(
@@ -43,16 +54,7 @@ class UserStats extends JsonExport {
             )
         );
         if ($entry = $result->getResult()->getEntry()) {
-            $cur->userId = intval($entry["UserId"]);
-            $cur->firstGame = intvaln($entry["FirstGame"]);
-            $cur->lastGame = intvaln($entry["LastGame"]);
-            $cur->gameCount = intval($entry["GameCount"]);
-            $cur->winningCount = intval($entry["WinningCount"]);
-            $cur->moderatedCount = intval($entry["ModeratorCount"]);
-            $cur->lastOnline = intval($entry["LastOnline"]);
-            $cur->aiId = intvaln($entry["AiId"]);
-            $cur->aiNameKey = $entry["AiNameKey"];
-            $cur->aiControlClass = $entry["AiControlClass"];
+            self::readStatData($cur, $entry);
         }
 		else {
 			$result->free();
@@ -154,21 +156,29 @@ class UserStats extends JsonExport {
                 $list[] = self::$cache[$userId];
             else {
                 $cur = new UserStats();
-                $cur->userId = $userId;
-                $cur->firstGame = intvaln($entry["FirstGame"]);
-                $cur->lastGame = intvaln($entry["LastGame"]);
-                $cur->gameCount = intval($entry["GameCount"]);
-                $cur->winningCount = intval($entry["WinningCount"]);
-                $cur->moderatedCount = intval($entry["ModeratorCount"]);
-                $cur->lastOnline = intval($entry["LastOnline"]);
-                $cur->aiId = intvaln($entry["AiId"]);
-                $cur->aiNameKey = $entry["AiNameKey"];
-                $cur->aiControlClass = $entry["AiControlClass"];
+                self::readStatData($cur, $entry);
                 $list[] = $cur;
                 self::$cache[$userId] = $cur;
             }
         }
         $result->free();
         return $list;
+    }
+
+    private function readStatData(&$cur, &$entry) {
+        $cur->userId = intval($entry["UserId"]);
+        $cur->firstGame = intvaln($entry["FirstGame"]);
+        $cur->lastGame = intvaln($entry["LastGame"]);
+        $cur->gameCount = intval($entry["GameCount"]);
+        $cur->winningCount = intval($entry["WinningCount"]);
+        $cur->moderatedCount = intval($entry["ModeratorCount"]);
+        $cur->lastOnline = intval($entry["LastOnline"]);
+        $cur->aiId = intvaln($entry["AiId"]);
+        $cur->aiNameKey = $entry["AiNameKey"];
+        $cur->aiControlClass = $entry["AiControlClass"];
+        $cur->totalBanCount = intval($entry['TotalBanCount']);
+        $cur->totalBanDays = intval($entry['TotalBanDays']);
+        $cur->permaBanCount = intval($entry['PermaBanCount']);
+        $cur->spokenBanCount = intval($entry['SpokenBanCount']);
     }
 }

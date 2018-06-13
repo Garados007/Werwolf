@@ -1,11 +1,12 @@
 SELECT UserId, FirstGame, LastGame, GameCount, WinningCount, ModeratorCount,
-    LastOnline, AiId, NameKey as AiNameKey, ControlClass as AiControlClass
+    LastOnline, AiId, NameKey as AiNameKey, ControlClass as AiControlClass,
+    TotalBanCount, TotalBanDays, PermaBanCount, SpokenBanCount
 FROM <?php echo DB_PREFIX; ?>UserStats s
 LEFT OUTER JOIN <?php echo DB_PREFIX; ?>AIInfo a ON (s.AIId = a.Id)
 
 <?php switch ($filter) { 
      case "mostGames": ?>
-ORDER BY GameCount Desc, WiiningCount Desc, ModeratorCount Desc
+ORDER BY GameCount Desc, WinningCount Desc, ModeratorCount Desc
 <?php break; 
     case "mostWinGames": ?>
 ORDER BY WinningCount Desc, GameCount Desc, ModeratorCount Desc
