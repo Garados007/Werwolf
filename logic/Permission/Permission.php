@@ -326,4 +326,25 @@ class Permission {
     }
 
     //endregion
+
+    //region ban user
+
+    public static function canBan($user, $spoker, $group) {
+        $gpr = Group::create($group);
+        if ($gpr === null)
+            return self::errorStatus('group doesn\'t exists');
+        $upr = User::loadSingle($user, $group);
+        if ($upr === null)
+            return self::errorStatus('target user is not in group');
+        $spr = User::loadSingle($spoker, $group);
+        if ($spr === null)
+            return self::errorStatus('spoker is not in group');
+        if ($user == $spoker)
+            return self::errorStatus('spoker and user are same');
+        if ($gpr->leader !== $spoker)
+            return self::errorStatus('spoker is not the leader of this group');
+        return true;
+    }
+
+    //endregion
 }

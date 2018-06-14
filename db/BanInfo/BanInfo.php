@@ -1,6 +1,7 @@
 <?php
 
 include_once dirname(__FILE__).'/../db.php';
+include_once dirname(__FILE__).'/../User/User.php';
 include_once dirname(__FILE__).'/../JsonExport/JsonExport.php';
 
 class BanInfo extends JsonExport {
@@ -27,7 +28,7 @@ class BanInfo extends JsonExport {
 		$this->comment = $comment;
 	}
 
-	private function loadEntry($entry) {
+	private static function loadEntry($entry) {
 		return new BanInfo(
 			intval($entry['User']),
 			intval($entry['Spoker']),
@@ -49,7 +50,7 @@ class BanInfo extends JsonExport {
 		);
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = loadEntry($entry);
+			$list[] = self::loadEntry($entry);
 		}
 		$result->free();
 		return $list;
@@ -65,7 +66,7 @@ class BanInfo extends JsonExport {
 		);
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = loadEntry($entry);
+			$list[] = self::loadEntry($entry);
 		}
 		$result->free();
 		return $list;
@@ -81,7 +82,7 @@ class BanInfo extends JsonExport {
 		);
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = loadEntry($entry);
+			$list[] = self::loadEntry($entry);
 		}
 		$result->free();
 		return $list;
@@ -98,7 +99,7 @@ class BanInfo extends JsonExport {
 		);
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = loadEntry($entry);
+			$list[] = self::loadEntry($entry);
 		}
 		$result->free();
 		return $list;
@@ -116,7 +117,7 @@ class BanInfo extends JsonExport {
 		);
 		$set = $result->getResult();
 		while ($entry = $set->getEntry()) {
-			$list[] = loadEntry($entry);
+			$list[] = self::loadEntry($entry);
 		}
 		$result->free();
 		return $list;
@@ -134,9 +135,34 @@ class BanInfo extends JsonExport {
 		$res = null;
 		$set = $result->getResult();
 		if ($entry = $set->getEntry()) {
-			$res = loadEntry($entry);
+			$res = self::loadEntry($entry);
 		}
 		$result->free();
 		return $res;
+	}
+
+	//if $comment == null then this command would kick instead of ban
+	//$end == null means perma ban, is_int($end) == true means temporary ban
+	public static function addBan($user, $spoker, $group, $end, $comment) {
+		$profile = User::loadSingle($user, $group);
+		if ($profile === null) 
+			return self::getSpecific($user, $group);
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/addBan.sql',
+			array(
+				'user' => $user,
+				'spoker' => $spoker,
+				'group' => $group,
+				'end' => $end,
+				'comment' => $comment,
+				'kick' => $comment === null,
+				'player' => $profile->player !== null ? 
+					$profile->player->id : null
+			)
+		);
+		echo DB::getError();
+		$result->free();
+		echo DB::getError();
+		return self::getSpecific($user, $group);
 	}
 }

@@ -296,4 +296,58 @@ class ControlApi extends ApiBase {
             );
         return $this->wrapResult(true);
     }
+
+    public function banUser() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'user' => 'int',
+            'group' => 'int',
+            'end' => 'int',
+            'comment' => ['regex', '/^.{5,1000}$/']
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canBan(
+            $this->formated['user'],
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+
+        $this->inclDb('BanInfo');
+        $ban = BanInfo::addBan(
+            $this->formated['user'],
+            $this->account['id'],
+            $this->formated['group'],
+            $this->formated['end'] > 0 ? $this->formated['end'] : null,
+            $this->formated['comment']
+        );
+        return $this->wrapResult($ban);
+    }
+
+    public function kickUser() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'user' => 'int',
+            'group' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canBan(
+            $this->formated['user'],
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+
+        $this->inclDb('BanInfo');
+        $ban = BanInfo::addBan(
+            $this->formated['user'],
+            $this->account['id'],
+            $this->formated['group'],
+            null, //end
+            null //comment
+        );
+        return $this->wrapResult(true);
+    }
 }
