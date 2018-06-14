@@ -311,7 +311,7 @@ class RoleHandler {
         $chat->voting = array();
     }
 
-    private function checkTermination($force = false) {
+    public function checkTermination($force = false) {
         //check if they are more then one fraction left
         $nonEmptyFractions = array();
         foreach ($this->config->fraction as $fraction) {

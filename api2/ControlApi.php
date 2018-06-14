@@ -314,7 +314,7 @@ class ControlApi extends ApiBase {
             $this->formated['group']
         )) !== true) return $this->wrapError($result);
 
-        $this->inclDb('BanInfo');
+        $this->inclDb('BanInfo', 'Group');
         $ban = BanInfo::addBan(
             $this->formated['user'],
             $this->account['id'],
@@ -322,6 +322,14 @@ class ControlApi extends ApiBase {
             $this->formated['end'] > 0 ? $this->formated['end'] : null,
             $this->formated['comment']
         );
+        
+        $group = Group::create($this->formated['group']);
+        if ($group->currentGame !== null) {
+            $this->inclRolH();
+            $roleH = new RoleHandler($group->currentGame);
+            $roleH->checkTermination();
+        }
+
         return $this->wrapResult($ban);
     }
 
@@ -340,7 +348,7 @@ class ControlApi extends ApiBase {
             $this->formated['group']
         )) !== true) return $this->wrapError($result);
 
-        $this->inclDb('BanInfo');
+        $this->inclDb('BanInfo', 'Group', 'GameGroup');
         $ban = BanInfo::addBan(
             $this->formated['user'],
             $this->account['id'],
@@ -348,6 +356,14 @@ class ControlApi extends ApiBase {
             null, //end
             null //comment
         );
+
+        $group = Group::create($this->formated['group']);
+        if ($group->currentGame !== null) {
+            $this->inclRolH();
+            $roleH = new RoleHandler($group->currentGame);
+            $roleH->checkTermination();
+        }
+
         return $this->wrapResult(true);
     }
 }
