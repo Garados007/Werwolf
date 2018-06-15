@@ -1,5 +1,5 @@
 DELETE FROM <?php echo DB_PREFIX; ?>BanInfo
-WHERE (User, GroupId) = (<?php echo $user; ?>, <?php echo $group; ?>)
+WHERE (User, GroupId) = (<?php echo $user; ?>, <?php echo $group; ?>);
 
 UPDATE <?php echo DB_PREFIX; ?>UserStats
 SET TotalBanDays=TotalBanDays+<?php echo $days?>,

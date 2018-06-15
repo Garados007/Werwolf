@@ -172,7 +172,7 @@ class BanInfo extends JsonExport {
 			floor(($this->endDate - $this->startDate) / 86400);
 		$cost = floor(($now - $this->startDate) / 86400);
 		$result = DB::executeFormatFile(
-			dirname(__FILE__).'/sql/addBan.sql',
+			dirname(__FILE__).'/sql/revoke.sql',
 			array(
 				'user' => $this->user,
 				'group' => $this->group,

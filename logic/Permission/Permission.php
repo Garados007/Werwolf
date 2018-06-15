@@ -350,5 +350,16 @@ class Permission {
         return true;
     }
 
+    public static function canRevoke($user, $self, $group) {
+        $ban = BanInfo::getSpecific($user, $group);
+        if ($ban === null)
+            return self::errorId('user is not banned in this group');
+        if ($ban->spoker == $self) return true;
+        $grp = Group::create($group);
+        if ($grp->leader !== $self)
+            return self::errorStatus('you are not the leader of this group');
+        return true;
+    }
+
     //endregion
 }

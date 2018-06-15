@@ -366,4 +366,28 @@ class ControlApi extends ApiBase {
 
         return $this->wrapResult(true);
     }
+
+    public function revokeBan() {
+        if (($result = $this->getAccount()) !== true)
+            return $this->wrapError($result);
+        if (($result = $this->getData(array(
+            'user' => 'int',
+            'group' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclPerm();
+        if (($result = Permission::canRevoke(
+            $this->formated['user'],
+            $this->account['id'],
+            $this->formated['group']
+        )) !== true) return $this->wrapError($result);
+
+        $this->inclDb('BanInfo');
+        $ban = BanInfo::getSpecific(
+            $this->formated['user'], 
+            $this->formated['group']
+        );
+        $ban->revoke();
+        return $this->wrapResult($ban);
+    }
 }
