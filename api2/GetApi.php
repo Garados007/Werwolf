@@ -209,7 +209,16 @@ class GetApi extends ApiBase {
 
     public function topUser() {
         if (($result = $this->getData(array(
-            'filter' => [ 'regex', '/^mostGames|mostWinGames|mostModGames|topWinner|topMod$/']
+            'filter' => [ 'regex', '/^'.implode('|', array(
+                'mostGames',
+                'mostWinGames',
+                'mostModGames',
+                'topWinner',
+                'topMod',
+                'mostBanned',
+                'longestBanned',
+                'mostPermaBanned'
+            )).'$/']
         ))) !== true)
             return $this->wrapError($result);
         $this->inclDb('UserStats');

@@ -27,6 +27,18 @@ ORDER BY ModeratorCount/GameCount Desc, GameCount Desc, WinningCount Desc
      case "mostWinGames": ?>
 WHERE FALSE
 <?php break; 
+     case "mostBanned": ?>
+WHERE TotalBanCount > 0
+ORDER BY TotalBanCount Desc, TotalBanDays Desc, PermaBanCount Desc
+<?php break; 
+     case "longestBanned": ?>
+WHERE TotalBanDays > 0
+ORDER BY TotalBanDays Desc, TotalBanCount Desc, PermaBanCount Desc
+<?php break; 
+     case "mostPermaBanned": ?>
+WHERE PermaBanCount > 0
+ORDER BY PermaBanCount Desc, TotalBanCount Desc, TotalBanDays Desc
+<?php break; 
     } ?>
 
 LIMIT <?php echo SCORE_MAX_ITEMS; ?>

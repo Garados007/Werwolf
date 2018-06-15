@@ -141,7 +141,11 @@ class UserStats extends JsonExport {
             'mostWinGames', 
             'mostModGames', 
             'topWinner',
-            'topMod' ])<0) return [];
+            'topMod',
+            'mostBanned',
+            'longestBanned',
+            'mostPermaBanned' 
+            ])<0) return [];
         $result = DB::executeFormatFile(
             __DIR__ . '/sql/topStats.sql',
             array(
