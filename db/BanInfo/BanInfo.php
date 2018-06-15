@@ -165,4 +165,23 @@ class BanInfo extends JsonExport {
 		echo DB::getError();
 		return self::getSpecific($user, $group);
 	}
+
+	public function revoke() {
+		$now = time();
+		$paid = $this->endDate === null ? 0 :
+			floor(($this->endDate - $this->startDate) / 86400);
+		$cost = floor(($now - $this->startDate) / 86400);
+		$result = DB::executeFormatFile(
+			dirname(__FILE__).'/sql/addBan.sql',
+			array(
+				'user' => $this->user,
+				'group' => $this->group,
+				'days' => $cost - $paid,
+				'perma' => $this->endDate === null
+			)
+		);
+		echo DB::getError();
+		$result->free();
+		$this->endDate = $now;
+	}
 }
