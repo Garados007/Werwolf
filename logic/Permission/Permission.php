@@ -6,6 +6,7 @@ include_once __DIR__ . '/../../db/Group/Group.php';
 include_once __DIR__ . '/../../db/Role/Role.php';
 include_once __DIR__ . '/../../db/User/User.php';
 include_once __DIR__ . '/../../db/VoteSetting/VoteSetting.php';
+include_once __DIR__ . '/../../db/BanInfo/BanInfo.php';
 include_once __DIR__ . '/../Role/RoleHandler.php';
 
 class Permission {
@@ -37,6 +38,9 @@ class Permission {
         foreach (User::loadAllUserByGroup($id) as $user)
             if ($user->user == $userid)
                 return self::errorStatus("user is already in group");
+        $ban = BanInfo::getSpecific($userid, $id);
+        if ($ban !== null)
+            return self::errorStatus("user is banned from this group");
         return true;
     }
 
