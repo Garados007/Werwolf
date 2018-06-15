@@ -1,0 +1,91 @@
+{
+    "day": [
+        "skip",
+        "major",
+        "villge",
+        "kill"
+    ],
+    "night": [
+        "skip",
+        "cupid",
+        "amorou",
+        "seeres",
+        "werewo",
+        "witch",
+        "kill"
+    ],
+    "roles": [
+        "werewolf",
+        "vic_wolf",
+        "villager",
+        "fvillage",
+        "vic_vill",
+        "major",
+        "seeress",
+        "cupid",
+        "amorous",
+        "witch",
+        "witch_hp",
+        "witch_kp",
+        "vic_witc",
+        "litlgirl",
+        "storytel"
+    ],
+    "start": "night",
+    "chats": [
+        "main",
+        "werewolf",
+        "village",
+        "seeress",
+        "kill",
+        "cupid",
+        "amorous",
+        "witch"
+    ],
+    "chat_exceptions": [
+        "main"
+    ],
+    "leader_roles": [ "storytel" ],
+    "rolesets": [
+        {
+            "key": "villager",
+            "roles": [ "villager", "fvillage" ]
+        },
+        {
+            "key": "werewolf",
+            "roles": [ "villager", "werewolf" ]
+        },
+        {
+            "key": "seeress",
+            "roles": [ "villager", "seeress" ]
+        },
+        {
+            "key": "amorous",
+            "roles": [ "villager", "amorous" ]
+        },
+        {
+            "key": "witch",
+            "roles": [ "villager", "witch", "witch_hp", "witch_kp" ]
+        },
+        {
+            "key": "littlegirl",
+            "roles": [ "villager", "litlgirl" ]
+        }
+    ],
+    "fraction": [
+        {
+            "key": "villager",
+            "roles": [
+                "fvillage", 
+                "seeress", 
+                "cupid", 
+                "witch", 
+                "litlgirl"
+            ]
+        },
+        {
+            "key": "wolf",
+            "roles": [ "werewolf" ]
+        }
+    ]
+}
