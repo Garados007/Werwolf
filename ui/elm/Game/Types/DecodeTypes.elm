@@ -19,6 +19,10 @@ decodeUserStat =
         |> required "aiId" (nullable int)
         |> required "aiNameKey" (nullable string)
         |> required "aiControlClass" (nullable string)
+        |> required "totalBanCount" int
+        |> required "totalBanDays" int
+        |> required "permaBanCount" int
+        |> required "spokenBanCount" int
 
 decodeGroup : Decoder Group
 decodeGroup =

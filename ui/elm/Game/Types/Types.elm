@@ -26,6 +26,14 @@ type alias UserStat =
     , aiNameKey : Maybe String
     -- AI Control Class (currently unused)
     , aiControlClass : Maybe String
+    -- total count of all bans
+    , totalBanCount : Int
+    -- total count of complete banned days
+    , totalBanDays : Int
+    -- count of all active perma bans
+    , permaBanCount : Int
+    -- count of all spoken bans
+    , spokenBanCount : Int
     }
 
 -- global information about a group
