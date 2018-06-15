@@ -226,6 +226,59 @@ class GetApi extends ApiBase {
         return $this->wrapResult($result);
     }
 
+    public function getAllBansOfUser() {
+        if (($result = $this->getData(array(
+            'user' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclDb('BanInfo');
+        return $this->wrapResult(
+            BanInfo::getAllBansOfUser(
+                $this->formated['user']
+            )
+        );
+    }
+
+    public function getNewestBans() {
+        $this->inclDb('BanInfo');
+        return $this->wrapResult(
+            BanInfo::getNewestBans()
+        );
+    }
+
+    public function getOldestBans() {
+        $this->inclDb('BanInfo');
+        return $this->wrapResult(
+            BanInfo::getOldestBans()
+        );
+    }
+
+    public function getUserSpokenBans() {
+        if (($result = $this->getData(array(
+            'user' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclDb('BanInfo');
+        return $this->wrapResult(
+            BanInfo::getUserSpokenBans(
+                $this->formated['user']
+            )
+        );
+    }
+
+    public function getBansFromGroup() {
+        if (($result = $this->getData(array(
+            'group' => 'int'
+        ))) !== true)
+            return $this->wrapError($result);
+        $this->inclDb('BanInfo');
+        return $this->wrapResult(
+            BanInfo::getBansFromGroup(
+                $this->formated['group']
+            )
+        );
+    }
+
     private function filterUser($group, $user) {
         $this->inclDb('VisibleRole','User');
         if (is_array($user)) {

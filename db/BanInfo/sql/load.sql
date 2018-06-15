@@ -11,14 +11,14 @@ ORDER BY StartDate ASC, EndDate ASC
     case "newest": ?>
 
 WHERE EndDate IS NULL OR EndDate >= <?php echo time(); ?>
-ORDER BY StartDate DESC, EndDate ASC
+ ORDER BY StartDate DESC, EndDate ASC
 LIMIT <?php echo SCORE_MAX_ITEMS; ?>
 
 <?php break;
     case "oldest": ?>
 
 WHERE EndDate IS NULL OR EndDate >= <?php echo time(); ?>
-ORDER BY StartDate ASC, EndDate ASC
+ ORDER BY StartDate ASC, EndDate ASC
 LIMIT <?php echo SCORE_MAX_ITEMS; ?>
 
 <?php break;
