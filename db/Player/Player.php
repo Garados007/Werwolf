@@ -102,6 +102,13 @@ class Player extends JsonExport {
 				return $this->roles[$i];
 		return null;
 	}
+
+	public function getRoleKeys() {
+		$result = array();
+		for ($i = 0; $i<count($this->roles); $i++)
+			$result[] = $this->roles[$i]->roleKey;
+		return $result;
+	}
 	
 	public function hasRole($key) {
 		for ($i = 0; $i<count($this->roles); $i++)

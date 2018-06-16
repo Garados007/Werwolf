@@ -465,6 +465,7 @@ class RoleHandler {
                 $roles[] = $role->roleKey;
         }
         if (!is_array($roles)) $roles = array($roles);
+        $roles = array_intersect($targets->getRoleKeys(), $roles);
         VisibleRole::addRoles($user, $targets, $roles);
     }
 

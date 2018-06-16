@@ -175,5 +175,18 @@ class RoleBase {
     protected function addRoleVisibility($user, $targets, $roles) {
         $this->roleHandler->addRoleVisibility($user, $targets, $roles);
     }
+
+    /**
+     * filter the score table. Result contains only top player objects
+     */
+    protected function filterTopScore($score) {
+        $list = array();
+        if (count($score) === 0) return $list;
+        for ($i = 0; $i<count($result); ++$i)
+            if ($result[$i][1] == $result[0][1])
+                $list[] = Player::create($result[$i][0]);
+            else break;
+        return $list;
+    }
     //endregion
 }
