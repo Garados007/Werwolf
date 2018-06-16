@@ -188,5 +188,20 @@ class RoleBase {
             else break;
         return $list;
     }
+
+    /**
+     * filter from a player list that one with or without
+     * a specific role
+     */
+    protected function filterPlayer($players, $role, $include = true) {
+        $result = array();
+        for ($i = 0; $i<count($players); ++$i) {
+            if (!($players[$i]] instanceof Player))
+                $players[$i] = Player::create($players[$i]);
+            if ((!$players[$i].hasRole($role)) ^ $include)
+                $result[] = $player[$i];
+        }
+        return $result;
+    }
     //endregion
 }
