@@ -13,6 +13,10 @@ WHERE Player IN (
 	RoleKey = '<?php echo $role; ?>' AND
 	RoleIndex > @ind;
 
+DELETE FROM <?php echo DB_PREFIX; ?>VisibleRoles
+WHERE Target=<?php echo $player; ?> AND
+	RoleKey='<?php echo $role; ?>';
+
 DELETE FROM <?php echo DB_PREFIX; ?>Roles
 WHERE Player = <?php echo $player; ?> AND
 	RoleKey = '<?php echo $role; ?>';
