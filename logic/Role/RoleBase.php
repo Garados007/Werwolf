@@ -100,6 +100,17 @@ class RoleBase {
     }
 
     /**
+     * This functions is called, when a voting is declared to stop.
+     * The result is a descending sorted list of a Tuple (Target Id, Count
+     * of votes).
+     * Voter is a list of list (outer key: target id, outer value: list,
+     * inner values: voter ids)
+     */
+    public function onVotingStops2($room, $name, array $result, array $voter) {
+        self::onVotingStops($room, $name, $result);
+    }
+
+    /**
      * This funtion is called when a single game starts. Its used
      * to initialize some variables.
      */
@@ -190,16 +201,20 @@ class RoleBase {
     }
 
     /**
-     * filter from a player list that one with or without
-     * a specific role
+     * filter the player list. after filtering every player
+     * has all roles in $include and no role in $exclude
      */
-    protected function filterPlayer($players, $role, $include = true) {
+    protected function filterPlayer($players, $include, $exclude) {
         $result = array();
         for ($i = 0; $i<count($players); ++$i) {
             if (!($players[$i]] instanceof Player))
                 $players[$i] = Player::create($players[$i]);
-            if ((!$players[$i].hasRole($role)) ^ $include)
-                $result[] = $player[$i];
+            $use = true;
+            foreach ($include as $role)
+                if (!$players[$i].hasRole($role)) $use = false;
+            foreach ($exclude as $role)
+                if ($players[$i].hasRole($role)) $use = false;
+            if ($use) $result[] = $player[$i];
         }
         return $result;
     }

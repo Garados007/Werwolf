@@ -262,6 +262,13 @@ class RoleHandler {
     public function finishSingleVoting(VoteSetting $voting) {
         //fetch votes
         $votes = VoteEntry::getVotesBySetting($voting);
+        //fetch voter
+        $voter = array();
+        foreach ($votes as $vote) {
+            if (!isset($voter[$vote->target]))
+                $voter[$vote->target] = array();
+            $voter[$vote->target][] = $vote->voter;
+        }
         //fetch raw list
         $rawList = array();
         foreach ($votes as $vote)
@@ -287,10 +294,11 @@ class RoleHandler {
         //propagate the winner
         $this->createAllControler();
         foreach ($this->controler as $cont)
-            $cont->onVotingStops(
+            $cont->onVotingStops2(
                 ChatRoom::create($voting->chat)->chatRoom,
                 $voting->voteKey,
-                $transList
+                $transList,
+                $voter
             ); //call on voting stops
         //check for finish game
         $this->checkTermination();
