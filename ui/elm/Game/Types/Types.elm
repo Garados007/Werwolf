@@ -193,3 +193,19 @@ type alias Vote =
     -- the Unix time when this vote was given
     , date : Int
     }
+
+-- contains information about a single ban
+type alias BanInfo =
+    -- the user that was banned
+    { user : Int
+    -- the spoker who has banned the user
+    , spoker : Int
+    -- the group in which the user is banned
+    , group : Int
+    -- the date when this ban was created and starts
+    , startDate : Int
+    -- the end date of this ban or Nothing if its infinitive
+    , endDate : Maybe Int
+    -- the reason why the user was banned for
+    , comment : String
+    }
