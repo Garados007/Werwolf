@@ -207,7 +207,7 @@ class RoleBase {
     protected function filterPlayer($players, $include, $exclude) {
         $result = array();
         for ($i = 0; $i<count($players); ++$i) {
-            if (!($players[$i]] instanceof Player))
+            if (!($players[$i] instanceof Player))
                 $players[$i] = Player::create($players[$i]);
             $use = true;
             foreach ($include as $role)

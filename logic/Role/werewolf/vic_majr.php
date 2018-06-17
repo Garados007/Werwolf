@@ -2,7 +2,7 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class werwolf_vic_majr extends RoleBase {
+class werewolf_vic_majr extends RoleBase {
     public function __construct() {
         $this->roleName = 'vic_majr';
         $this->canStartNewRound = false;

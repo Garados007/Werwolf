@@ -2,7 +2,7 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class werwolf_VictimBase extends RoleBase {
+class werewolf_VictimBase extends RoleBase {
     public function __construct() {
     }
 
