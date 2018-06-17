@@ -117,3 +117,13 @@ decodeVote =
         |> required "voter" int
         |> required "target" int
         |> required "date" int
+
+decodeBanInfo : Decoder BanInfo
+decodeBanInfo =
+    decode BanInfo
+        |> required "user" int
+        |> required "spoker" int
+        |> required "group" int
+        |> required "startDate" int
+        |> required "endDate" (maybe int)
+        |> required "comment" string

@@ -2,6 +2,7 @@ module Game.Types.Response exposing (..)
 
 import Game.Types.Types exposing (..)
 import Game.Types.CreateOptions exposing (..)
+import Game.Types.Request exposing (TopUserFilter, allTopUserFilter)
 import Dict exposing (Dict)
 import Json.Encode exposing (Value)
 
@@ -36,6 +37,12 @@ type ResultGet
     | GetChatEntrys (List ChatEntry)
     | GetVotes (List Vote)
     | GetConfig (Maybe String)
+    | TopUser (List UserStat)
+    | GetAllBansOfUser (List BanInfo)
+    | GetNewestBans (List BanInfo)
+    | GetOldestBans (List BanInfo)
+    | GetUserSpokenBans (List BanInfo)
+    | GetBansFromGroup (List BanInfo)
 
 type ResultConv
     = LastOnline (List (Int, Int))

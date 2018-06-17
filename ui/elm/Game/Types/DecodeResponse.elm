@@ -105,6 +105,18 @@ decodeGet method =
             decSingle GetVotes (list decodeVote)
         "getConfig" ->
             decSingle GetConfig (maybe string)
+        "topUser" ->
+            decSingle TopUser (list decodeUserStat)
+        "getAllBansOfUser" ->
+            decSingle GetAllBansOfUser (list decodeBanInfo)
+        "getNewestBans" ->
+            decSingle GetNewestBans (list decodeBanInfo)
+        "getOldestBans" ->
+            decSingle GetOldestBans (list decodeBanInfo)
+        "getUserSpokenBans" ->
+            decSingle GetUserSpokenBans (list decodeBanInfo)
+        "getBansFromGroup" ->
+            decSingle GetBansFromGroup (list decodeBanInfo)
         _ -> succeed Nothing
 
 decodeConv : String -> Decoder (Maybe ResultConv)

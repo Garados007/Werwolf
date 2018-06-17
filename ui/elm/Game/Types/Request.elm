@@ -1,6 +1,7 @@
 module Game.Types.Request exposing
     ( UserId, GroupId, ChatId, GameId, VoteKey, PlayerId
     , GroupVersion, NewGameConfig
+    , TopUserFilter (..)
     , Response (..)
     , ResponseGet (..)
     , ResponseConv (..)
@@ -10,6 +11,7 @@ module Game.Types.Request exposing
     , EncodedRequest
     , encodeJson
     , encodeRequest
+    , allTopUserFilter
     )
 
 import Json.Encode exposing (Value, object, string, int, list, encode)
@@ -37,6 +39,16 @@ type alias NewGameConfig =
     , config : Value
     }
 
+type TopUserFilter
+    = TFMostGames
+    | TFMostWinGames
+    | TFMostModGames
+    | TFTopWinner
+    | TFTopMod
+    | TFMostBanned
+    | TFLongestBanned
+    | TFMostPermaBanned
+
 type Response
     = RespGet ResponseGet
     | RespConv ResponseConv
@@ -56,6 +68,12 @@ type ResponseGet
     | GetChatEntrys ChatId
     | GetVotes ChatId VoteKey
     | GetConfig
+    | TopUser TopUserFilter
+    | GetAllBansOfUser UserId
+    | GetNewestBans
+    | GetOldestBans
+    | GetUserSpokenBans UserId
+    | GetBansFromGroup GroupId
 
 type ResponseConv
     = LastOnline GroupId
@@ -101,6 +119,18 @@ type alias EncodedRequest =
 type EncodedValue
     = EInt Int
     | EString String
+
+allTopUserFilter : Dict String TopUserFilter
+allTopUserFilter = Dict.fromList
+    [ ( "mostGames", TFMostGames )
+    , ( "mostWinGames", TFMostWinGames )
+    , ( "mostModGames", TFMostModGames )
+    , ( "topWinner", TFTopWinner )
+    , ( "topMod", TFTopMod )
+    , ( "mostBanned", TFMostBanned )
+    , ( "longestBanned", TFLongestBanned )
+    , ( "mostPermaBanned", TFMostPermaBanned )
+    ]
 
 encodeRequestInternal : Response -> EncodedRequestInternal
 encodeRequestInternal response =
@@ -150,6 +180,34 @@ encodeRequestInternal response =
                 GetConfig ->
                     EncodedRequestInternal "get" "getConfig"
                         []
+                TopUser filter ->
+                    EncodedRequestInternal "get" "topUser"
+                        [ ("filter", EString <|
+                            Maybe.withDefault "" <| 
+                            List.head <|
+                            List.filterMap
+                            (\(k,v) -> if v == filter then Just k else Nothing)
+                            <| Dict.toList allTopUserFilter
+                        )
+                        ]
+                GetAllBansOfUser user ->
+                    EncodedRequestInternal "get" "getAllBansOfUser"
+                        [ ("user", EInt user)
+                        ]
+                GetNewestBans ->
+                    EncodedRequestInternal "get" "getNewestBans"
+                        []
+                GetOldestBans ->
+                    EncodedRequestInternal "get" "getOldestBans"
+                        []
+                GetUserSpokenBans user ->
+                    EncodedRequestInternal "get" "getUserSpokenBans"
+                        [ ("user", EInt user)
+                        ]
+                GetBansFromGroup group ->
+                    EncodedRequestInternal "get" "getBansFromGroup"
+                        [ ("group", EInt group)
+                        ]
         RespConv resp ->
             case resp of
                 LastOnline groupId ->
