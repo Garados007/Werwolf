@@ -62,15 +62,15 @@
             "roles": [ "villager", "seeress" ]
         },
         {
-            "key": "amorous",
-            "roles": [ "villager", "amorous" ]
+            "key": "cupid",
+            "roles": [ "villager", "cupid" ]
         },
         {
             "key": "witch",
             "roles": [ "villager", "witch", "witch_hp", "witch_kp" ]
         },
         {
-            "key": "littlegirl",
+            "key": "litlgirl",
             "roles": [ "villager", "litlgirl" ]
         }
     ],

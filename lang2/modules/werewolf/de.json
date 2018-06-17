@@ -1,0 +1,76 @@
+{
+    "roles": {
+        "amorous": "Verliebten",
+        "cupid": "Amor",
+        "fvillage": "normaler Dorfbewohner",
+        "hunter": "Jäger",
+        "litlgirl": "Blinzelmädchen",
+        "major": "Hauptmann",
+        "seeress": "Seherin",
+        "storytel": "Erzähler",
+        "vic_hunt": "Opfer",
+        "vic_majr": "Opfer",
+        "vic_vill": "Opfer der Dorfauswahl",
+        "vic_witc": "Opfer der Hexen",
+        "vic_wolf": "Opfer der Werwölfe",
+        "villager": "Dorfbewohner",
+        "werewolf": "Werwolf",
+        "witch_hp": "Heiltrank (Hexe)",
+        "witch_kp": "Todestrank (Hexe)",
+        "witch": "Hexe"
+    },
+    "chat-names": {
+        "amorous": "Verliebtenchat",
+        "cupid": "Amorchat",
+        "kill": "Todeschat",
+        "main": "Hauptchat",
+        "seeress": "Seherchat",
+        "village": "Dorfchat",
+        "werewolf": "Wolfschat",
+        "witch": "Hexenchat"
+    },
+    "voting-names": {
+        "cupid": {
+            "love": "1. Verliebter",
+            "love2": "2. Verliebter"
+        },
+        "kill": {
+            "hunt": "weiteres Opfer",
+            "majr": "neuer Hauptmann"
+        },
+        "seeress": {
+            "view": "Rollen aufdecken"
+        },
+        "village": {
+            "kill": "Dorfwahl",
+            "majkill": "Stichwahl",
+            "major": "Hauptmann"
+        },
+        "werewolf": {
+            "kill": "Opfer"
+        },
+        "witch": {
+            "hp": "Heiltrank",
+            "kp": "Todestrank"
+        }
+    },
+    "new-option": {
+        "add-set": "Weitere Einstellungen",
+        "hide-roles": "Verstecke Rollen von Besiegten"
+    },
+    "phase-time": {
+        "n": "Nacht",
+        "d": "Tag"
+    },
+    "phase": {
+        "d:major": "Wahl des Hauptmanns",
+        "d:villge": "Dorfauswahl",
+        "d:kill": "Todesliste",
+        "n:cupid": "Amorphase",
+        "n:amorou": "Verliebtenphase",
+        "n:seeres": "Seherphase",
+        "n:werewo": "Wolfsphase",
+        "n:witch": "Hexenphase",
+        "n:kill": "Todesliste"
+    }
+}
