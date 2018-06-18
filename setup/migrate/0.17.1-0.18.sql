@@ -7,3 +7,7 @@ ALTER TABLE <?php echo DB_PREFIX; ?>UserStats
         AFTER TotalBanDays,
     ADD SpokenBanCount INT UNSIGNED NOT NULL DEFAULT 0
         AFTER PermaBanCount;
+
+UPDATE <?php echo DB_PREFIX; ?>Games
+SET RuleSet='test'
+WHERE RuleSet='main';
