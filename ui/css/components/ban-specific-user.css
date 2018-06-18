@@ -37,3 +37,9 @@
   cursor: pointer;
   text-align: center;
 }
+.w-banuser-box textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 1em;
+  resize: none;
+}

@@ -21,6 +21,7 @@ import Html.Events exposing (onInput,onClick,on)
 import Time exposing (Time)
 import Date
 import Json.Decode as Json
+import Regex exposing (regex,HowMany(All))
 
 type BanSpecificUser = BanSpecificUser BanSpecificUserInfo
 
@@ -28,6 +29,7 @@ type alias BanSpecificUserInfo =
     { config : LangConfiguration
     , ban : BanMode
     , now : Time
+    , comment : String
     }
 
 type BanSpecificUserMsg
@@ -38,6 +40,7 @@ type BanSpecificUserMsg
     | OnChangeMode BanMode
     | NewTime Time
     | OnCreate
+    | OnInput String
 
 type BanSpecificUserEvent
     = Close
@@ -73,6 +76,7 @@ init () =
             createLocal (newGlobal lang_backup) Nothing
         , ban = Kick
         , now = 0
+        , comment = ""
         }
     , Cmd.none
     , []
@@ -105,6 +109,11 @@ update def msg (BanSpecificUser model) = case msg of
         , Cmd.none
         , []
         )
+    OnInput text ->
+        ( BanSpecificUser { model | comment = text }
+        , Cmd.none
+        , []
+        )
 
 single : BanSpecificUserInfo -> String -> String
 single info key = getSingle info.config.lang [ "lobby", key ]
@@ -119,11 +128,22 @@ view (BanSpecificUser model) =
                 TimeBan unit duration -> viewTimeBan model unit duration
                 DateBan d m y h min -> viewDateBan model d m y h min
                 Perma -> viewPerma model
-            , div
-                [ class "w-banuser-create"
-                , onClick OnCreate
-                ]
-                [ text <| single model "bsu-create" ]
+            , if model.ban /= Kick
+                then node "textarea"
+                    [ onInput OnInput
+                    , attribute "placeholder" <|
+                        single model "bsu-description"
+                    , attribute "pattern" "^.{5,1000}$"
+                    ]
+                    [ text model.comment ]
+                else text ""
+            , if (model.ban == Kick) || (Regex.contains (regex "^.{5,1000}$") model.comment)
+                then div
+                    [ class "w-banuser-create"
+                    , onClick OnCreate
+                    ]
+                    [ text <| single model "bsu-create" ]
+                else text ""
             ]
 
 viewRadios : BanSpecificUserInfo -> Html BanSpecificUserMsg

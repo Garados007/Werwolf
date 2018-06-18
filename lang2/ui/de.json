@@ -107,7 +107,8 @@
         "bsu-hour": "Stunde",
         "bsu-minute": "Minute",
         "bsu-info-perma": "Dieser Nutzer wird permanent gebannt und kann ihr nicht wieder beitreten, bis jemand den Bann wieder auflöst.",
-        "bsu-create": "Erstelle Bann"
+        "bsu-create": "Erstelle Bann",
+        "bsu-description": "Beschreibung"
     },
     "pages": {
         "RoleDescription": {
