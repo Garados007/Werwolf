@@ -91,7 +91,23 @@
         "mg-view-user": "Nutzer anzeigen",
         "mg-hide-user": "Nutzer verstecken",
         "mg-leave-group": "Gruppe verlassen",
-        "mg-do-ban": "Nutzer aus der Gruppe bannen/kicken"
+        "mg-do-ban": "Nutzer aus der Gruppe bannen/kicken",
+        "ban-specific-user": "Nutzer bannen oder kicken",
+        "bsu-kick": "kicken",
+        "bsu-timeban": "Dauer bannen",
+        "bsu-dateban": "Zeitpunkt bannen",
+        "bsu-perma": "permanent bannen",
+        "bsu-info-kick": "Der Nutzer wird aus der Gruppe rausgeworfen, kann dieser aber wieder sofort beitreten, sofern er das Passwort kennt.",
+        "bsu-timeunit-m": "Minuten",
+        "bsu-timeunit-h": "Stunden",
+        "bsu-timeunit-d": "Tage",
+        "bsu-day": "Tag",
+        "bsu-month": "Monat",
+        "bsu-year": "Jahr",
+        "bsu-hour": "Stunde",
+        "bsu-minute": "Minute",
+        "bsu-info-perma": "Dieser Nutzer wird permanent gebannt und kann ihr nicht wieder beitreten, bis jemand den Bann wieder auflöst.",
+        "bsu-create": "Erstelle Bann"
     },
     "pages": {
         "RoleDescription": {

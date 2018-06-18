@@ -1,0 +1,39 @@
+.w-banuser-radios {
+  text-align: center;
+}
+.w-ban-user-conf,
+.w-banuser-conf {
+  margin: 1em 0;
+}
+.w-ban-user-conf.kick,
+.w-ban-user-conf.dateban > div > div:first-child,
+.w-ban-user-conf.perma {
+  font-size: 0.8em;
+}
+.w-banuser-conf.timeban,
+.w-banuser-conf.timeban > div,
+.w-ban-user-conf.dateban {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+.w-banuser-conf.timeban > div {
+  flex-grow: 1;
+}
+.w-banuser-conf.timeban > div > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+.w-ban-user-conf.dateban input {
+  max-width: 6em;
+  text-align: center;
+}
+.w-ban-user-conf.dateban > div {
+  margin: 0.25em;
+}
+.w-banuser-create {
+  border: 1px solid lightgray;
+  padding: 0.3em 0.7em;
+  cursor: pointer;
+  text-align: center;
+}
