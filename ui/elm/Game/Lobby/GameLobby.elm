@@ -11,6 +11,7 @@ import Game.Lobby.ManageGroups as ManageGroups exposing (..)
 import Game.Lobby.LanguageChanger as LanguageChanger exposing (..)
 import Game.Lobby.Options as Options exposing (..)
 import Game.Lobby.ErrorWindow as ErrorWindow exposing (..)
+import Game.Lobby.BanSpecificUser as BanSpecificUser exposing (..)
 import Game.Utils.Network as Network exposing (..)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (..)
@@ -37,6 +38,7 @@ type alias GameLobbyInfo =
     , manageGroups : ManageGroupsDef EventMsg
     , language : LanguageChangerDef EventMsg
     , options : OptionsDef EventMsg
+    , banUser : BanSpecificUserDef EventMsg
     , config : Configuration
     , lang : LangGlobal
     , curGame : Maybe Int
@@ -60,6 +62,7 @@ type GameLobbyMsg
     | MOptions OptionsMsg
     | MGameSelector GameSelectorMsg
     | MGameMenu GameMenuMsg
+    | MBanSpecificUser BanSpecificUserMsg
     | MainLang String (Maybe String)
     | ModuleLang String String (Maybe String)
     | LangList (List LangInfo)
@@ -83,6 +86,7 @@ type ViewModal
     | VMManageGroups
     | VMLanguageChanger
     | VMOptions
+    | VMBanSpecificUser
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -125,6 +129,10 @@ handleJoinGroup : JoinGroupEvent -> List EventMsg
 handleJoinGroup event = case event of
     JoinGroup.Close -> [ ChangeModal None ]
     JoinGroup.Join key -> [ Send <| RespControl <| JoinGroup key ]
+
+handleBanSpecificUser : BanSpecificUserEvent -> List EventMsg
+handleBanSpecificUser event = case event of
+    BanSpecificUser.Close -> [ ChangeModal None ]
 
 handleManageGroups : ManageGroupsEvent -> List EventMsg
 handleManageGroups event = case event of
@@ -283,6 +291,7 @@ init =
         (mmg, cmg, tmg) = manageGroupsModule handleManageGroups
         (mlc, clc, tlc) = languageChangerModule handleLanguageChanger
         (mo, co, to) = optionsModule handleOptions
+        (mbs, cbs, tbs) = banSpecificUserModule handleBanSpecificUser
         model = 
             { network = network
             , games = Dict.empty
@@ -292,6 +301,7 @@ init =
             , manageGroups = mmg
             , language = mlc
             , options = mo
+            , banUser = mbs
             , config = empty
             , lang = newGlobal lang_backup
             , curGame = Nothing
@@ -304,7 +314,7 @@ init =
             , error = NoError
             , users = UserLookup.empty
             }
-        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tmg ++ tlc ++ to
+        (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tmg ++ tlc ++ to ++ tbs
     in  ( GameLobby tm
         , Cmd.batch <|
             [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
@@ -322,6 +332,7 @@ init =
             , Cmd.map MManageGroups cmg
             , Cmd.map MLanguageChanger clc
             , Cmd.map MOptions co
+            , Cmd.map MBanSpecificUser cbs
             ] ++ tcmd
         )
 
@@ -354,6 +365,7 @@ view (GameLobby model) = div [] <| viewStyles
             VMManageGroups -> Html.map MManageGroups <| MC.view model.manageGroups
             VMOptions -> Html.map MOptions <| MC.view model.options
             VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
+            VMBanSpecificUser -> Html.map MBanSpecificUser <| MC.view model.banUser
     , stylesheet <| uri_host ++ uri_path ++ "ui/css/themes/" ++ model.config.theme ++ ".css"
     ]
 
@@ -432,6 +444,11 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | joinGroup = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MJoinGroup wcmd :: tcmd)
+    MBanSpecificUser wmsg ->
+        let (wm, wcmd, wtasks) = MC.update model.banUser wmsg
+            nmodel = { model | banUser = wm }
+            (tm, tcmd) = handleEvent nmodel wtasks
+        in  (GameLobby tm, Cmd.batch <| Cmd.map MBanSpecificUser wcmd :: tcmd)
     MManageGroups wmsg ->
         let (wm, wcmd, wtasks) = MC.update model.manageGroups wmsg
             nmodel = { model | manageGroups = wm }
@@ -497,6 +514,8 @@ pushLangConfig lconfig model =
             LanguageChanger.SetConfig lconfig
         (mo, co, to) = MC.update model.options <|
             Options.SetConfig lconfig
+        (mbs, cbs, tbs) = MC.update model.banUser <|
+            BanSpecificUser.SetConfig lconfig
     in  ( { model
             | selector = mgs
             , menu = mgm
@@ -505,6 +524,7 @@ pushLangConfig lconfig model =
             , manageGroups = mmg
             , language = mlc
             , options = mo
+            , banUser = mbs
             }
         , Cmd.batch
             [ Cmd.map MGameSelector cgs
@@ -514,6 +534,7 @@ pushLangConfig lconfig model =
             , Cmd.map MManageGroups cmg
             , Cmd.map MLanguageChanger clc
             , Cmd.map MOptions co
+            , Cmd.map MBanSpecificUser cbs
             ]
         , List.concat
             [ tgs
@@ -523,6 +544,7 @@ pushLangConfig lconfig model =
             , tmg
             , tlc
             , to
+            , tbs
             ]
         )
 
@@ -674,6 +696,7 @@ subscriptions (GameLobby model) = if model.error /= NoError then Sub.none else S
     (Sub.map MManageGroups <| MC.subscriptions model.manageGroups) ::
     (Sub.map MLanguageChanger <| MC.subscriptions model.language) ::
     (Sub.map MOptions <| MC.subscriptions model.options) ::
+    (Sub.map MBanSpecificUser <| MC.subscriptions model.banUser) ::
     (List.map 
         (\(k,v) -> 
             Sub.map (MGameView k) <| MC.subscriptions v
