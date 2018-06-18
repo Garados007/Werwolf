@@ -2,9 +2,9 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class main_villager extends RoleBase {
+class test_wolf extends RoleBase {
     public function __construct() {
-        $this->roleName = 'villager';
+        $this->roleName = 'wolf';
         $this->canStartNewRound = false;
         $this->canStartVotings = false;
         $this->canStopVotings = false;
@@ -12,10 +12,10 @@ class main_villager extends RoleBase {
     }
 
     public function onStartRound(RoundInfo $round) {
-        if ($round->phase == 'd:vote') {
-            $this->setRoomPermission('village', true, true, true);
-            $this->informVoting('village', 'kill', 
-                $this->getPlayer('villager', true));
+        if ($round->phase == 'n:wolfvo') {
+            $this->setRoomPermission('wolfkill', true, true, true);
+            $this->informVoting('wolfkill', 'kill', 
+                $this->getPlayer('fvillage', true));
         }
     }
 
@@ -24,7 +24,7 @@ class main_villager extends RoleBase {
     }
 
     public function needToExecuteRound(RoundInfo $round) {
-        return $round->phase == 'd:vote';
+        return $round->phase == 'n:wolfvo';
     }
 
     public function isWinner($winnerRole, PlayerInfo $player) {
@@ -32,7 +32,7 @@ class main_villager extends RoleBase {
     }
 
     public function canVote($room, $name) {
-        return $room == 'village' && $name == 'kill';
+        return $room == 'wolfkill' && $name == 'kill';
     }
 
     public function onVotingCreated($room, $name) {
@@ -44,7 +44,7 @@ class main_villager extends RoleBase {
     }
 
     public function onVotingStops($room, $name, array $result) {
-        if ($room == 'village' && ($name == 'kill' || $name == 'kill2')) {
+        if ($room == 'wolfkill' && $name == 'kill') {
             if (count($result) == 0) return;
             if (count($result) > 1 && $result[0][1] == $result[1][1]) {
                 $targets = array();
@@ -52,23 +52,17 @@ class main_villager extends RoleBase {
                     if ($result[$i][1] == $result[0][1])
                         $targets[] = Player::create($result[$i][0]);
                     else break;
-                $this->informVoting('village', 'kill2', $targets);
+                $this->informVoting('village', 'kill', $targets);
             }
             else {
                 $player = Player::create($result[0][0]);
-                $player->kill(false);
+                $player->kill(true);
             }
         }
     }
 
     public function onGameStarts(RoundInfo $round) {
         parent::onGameStarts($round);
-        $this->setRoomPermission(array(
-            "main"
-        ), true, true, true);
-        $this->setRoomPermission(array(
-            "story"
-        ), true, false, true);
     }
 
     public function onGameEnds(RoundInfo $round, array $teams) {

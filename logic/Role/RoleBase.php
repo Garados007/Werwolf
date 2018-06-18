@@ -100,6 +100,17 @@ class RoleBase {
     }
 
     /**
+     * This functions is called, when a voting is declared to stop.
+     * The result is a descending sorted list of a Tuple (Target Id, Count
+     * of votes).
+     * Voter is a list of list (outer key: target id, outer value: list,
+     * inner values: voter ids)
+     */
+    public function onVotingStops2($room, $name, array $result, array $voter) {
+        self::onVotingStops($room, $name, $result);
+    }
+
+    /**
      * This funtion is called when a single game starts. Its used
      * to initialize some variables.
      */
@@ -174,6 +185,38 @@ class RoleBase {
      */
     protected function addRoleVisibility($user, $targets, $roles) {
         $this->roleHandler->addRoleVisibility($user, $targets, $roles);
+    }
+
+    /**
+     * filter the score table. Result contains only top player objects
+     */
+    protected function filterTopScore($score) {
+        $list = array();
+        if (count($score) === 0) return $list;
+        for ($i = 0; $i<count($result); ++$i)
+            if ($result[$i][1] == $result[0][1])
+                $list[] = Player::create($result[$i][0]);
+            else break;
+        return $list;
+    }
+
+    /**
+     * filter the player list. after filtering every player
+     * has all roles in $include and no role in $exclude
+     */
+    protected function filterPlayer($players, $include, $exclude) {
+        $result = array();
+        for ($i = 0; $i<count($players); ++$i) {
+            if (!($players[$i] instanceof Player))
+                $players[$i] = Player::create($players[$i]);
+            $use = true;
+            foreach ($include as $role)
+                if (!$players[$i].hasRole($role)) $use = false;
+            foreach ($exclude as $role)
+                if ($players[$i].hasRole($role)) $use = false;
+            if ($use) $result[] = $player[$i];
+        }
+        return $result;
     }
     //endregion
 }

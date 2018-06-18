@@ -2,9 +2,9 @@
 
 include_once __DIR__ . '/../RoleBase.php';
 
-class main_wolf extends RoleBase {
+class werewolf_werewolf extends RoleBase {
     public function __construct() {
-        $this->roleName = 'wolf';
+        $this->roleName = 'werwolf';
         $this->canStartNewRound = false;
         $this->canStartVotings = false;
         $this->canStopVotings = false;
@@ -12,10 +12,11 @@ class main_wolf extends RoleBase {
     }
 
     public function onStartRound(RoundInfo $round) {
-        if ($round->phase == 'n:wolfvo') {
-            $this->setRoomPermission('wolfkill', true, true, true);
-            $this->informVoting('wolfkill', 'kill', 
-                $this->getPlayer('fvillage', true));
+        if ($round->phase == 'n:werewo') {
+            $this->setRoomPermission('werewolf', true, true, true);
+            $this->informVoting('werewolf', 'kill', 
+                $this->getPlayer('villager', true)
+            );
         }
     }
 
@@ -24,7 +25,8 @@ class main_wolf extends RoleBase {
     }
 
     public function needToExecuteRound(RoundInfo $round) {
-        return $round->phase == 'n:wolfvo';
+        return $round->phase == 'n:werewo' &&
+            count($this->getPlayer('werewolf', true)) > 0;
     }
 
     public function isWinner($winnerRole, PlayerInfo $player) {
@@ -32,7 +34,7 @@ class main_wolf extends RoleBase {
     }
 
     public function canVote($room, $name) {
-        return $room == 'wolfkill' && $name == 'kill';
+        return $room == 'werewolf' && $name == 'kill';
     }
 
     public function onVotingCreated($room, $name) {
@@ -44,19 +46,23 @@ class main_wolf extends RoleBase {
     }
 
     public function onVotingStops($room, $name, array $result) {
-        if ($room == 'wolfkill' && $name == 'kill') {
+        if ($room == 'werewolf' && $name == 'kill') {
+            $result = $this->filterTopScore($result);
             if (count($result) == 0) return;
-            if (count($result) > 1 && $result[0][1] == $result[1][1]) {
-                $targets = array();
-                for ($i = 0; $i<count($result); ++$i)
-                    if ($result[$i][1] == $result[0][1])
-                        $targets[] = Player::create($result[$i][0]);
-                    else break;
-                $this->informVoting('village', 'kill', $targets);
+            if (count($result) > 1) {
+                $this->informVoting('werwolf', 'kill', $result);
             }
             else {
-                $player = Player::create($result[0][0]);
-                $player->kill(true);
+                $player = $result[0];
+                $player->addRole('vic_wolf');
+                $this->addRoleVisibility(
+                    array_merge(
+                        $this->getPlayer('storytel'),
+                        $this->getPlayer('witch')
+                    ),
+                    $player,
+                    null
+                );
             }
         }
     }
