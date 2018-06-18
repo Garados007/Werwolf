@@ -585,6 +585,13 @@ updateConfig change (m, list, tasks) = case change of
             , Cmd.map MJoinGroup cjg :: list
             , tjg ++ tasks 
             )
+    CErrJoinBannedFromGroup ->
+        let (mjg, cjg, tjg) = MC.update m.joinGroup <|
+                JoinGroup.UserBanned
+        in  ( { m | joinGroup = mjg }
+            , Cmd.map MJoinGroup cjg :: list
+            , tjg ++ tasks
+            )
     CAccountInvalid ->
         ( { m | error = AccountError }, list, tasks)
     CNetworkError ->

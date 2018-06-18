@@ -58,6 +58,7 @@
         "join-group-key": "Passwort für den Beitritt in die neue Gruppe:",
         "on-join-group": "Gruppe beitreten",
         "key-not-exists": "Leider konnte keine Gruppe mit diesen Schlüssel gefunden werden.",
+        "user-banned": "Du wurdest in dieser Gruppe gebannt und darfst nicht beitreten!",
         "invalid-key-pattern": "Es wurde kein gültiger Schlüssel eingegeben.",
         "opt-datetime": "Anzeige: Zeit- und Datumsformate",
         "opt-chatDateFormat": "Zeitpunkt des Absendens eines Chatbeitrags",

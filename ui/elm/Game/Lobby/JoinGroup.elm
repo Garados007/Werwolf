@@ -3,6 +3,7 @@ module Game.Lobby.JoinGroup exposing
     , JoinGroupMsg
         ( SetConfig
         , InvalidKey
+        , UserBanned
         )
     , JoinGroupEvent (..)
     , JoinGroupDef
@@ -28,12 +29,14 @@ type alias JoinGroupInfo =
     { config : LangConfiguration
     , key : String
     , invalid : Bool
+    , banned : Bool
     }
 
 type JoinGroupMsg
     -- public Methods
     = SetConfig LangConfiguration
     | InvalidKey
+    | UserBanned
     -- private Methods
     | OnClose
     | OnChangeKey String
@@ -63,6 +66,7 @@ init () =
             createLocal (newGlobal lang_backup) Nothing
         , key = ""
         , invalid = False
+        , banned = False
         }
     , Cmd.none
     , []
@@ -80,13 +84,18 @@ update def msg (JoinGroup model) = case msg of
         , Cmd.none
         , []
         )
+    UserBanned ->
+        ( JoinGroup { model | banned = True }
+        , Cmd.none
+        , []
+        )
     OnClose ->
         ( JoinGroup model
         , Cmd.none
         , event def Close
         )
     OnChangeKey key ->
-        ( JoinGroup { model | key = key, invalid = False }
+        ( JoinGroup { model | key = key, invalid = False, banned = False }
         , Cmd.none
         , []
         )
@@ -106,9 +115,11 @@ view : JoinGroup -> Html JoinGroupMsg
 view (JoinGroup model) = 
     let invKey = if model.invalid
             then "key-not-exists"
-            else if Regex.contains (regex keypattern) model.key
-                then ""
-                else "invalid-key-pattern"
+            else if model.banned
+                then "user-banned"
+                else if Regex.contains (regex keypattern) model.key
+                    then ""
+                    else "invalid-key-pattern"
     in modal OnClose (getSingle model.config.lang ["lobby", "join-group" ]) <|
         div [ class "w-joingroup-box" ] 
             [ text <| getSingle model.config.lang ["lobby", "join-group-key"]
