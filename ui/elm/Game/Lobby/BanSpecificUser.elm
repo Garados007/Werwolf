@@ -2,6 +2,7 @@ module Game.Lobby.BanSpecificUser exposing
     ( BanSpecificUser
     , BanSpecificUserMsg
         ( SetConfig
+        , SetUser
         )
     , BanSpecificUserEvent (..)
     , BanSpecificUserDef
@@ -14,6 +15,7 @@ import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
 import Game.Lobby.ModalWindow exposing (modal)
+import Game.Types.Request exposing (..)
 
 import Html exposing (Html,div,text,a,img,input,node)
 import Html.Attributes exposing (class,attribute,href,value,type_,checked,selected)
@@ -25,16 +27,21 @@ import Regex exposing (regex,HowMany(All))
 
 type BanSpecificUser = BanSpecificUser BanSpecificUserInfo
 
+type alias Request = Game.Types.Request.Response
+
 type alias BanSpecificUserInfo =
     { config : LangConfiguration
     , ban : BanMode
     , now : Time
     , comment : String
+    , user : Int
+    , group : Int
     }
 
 type BanSpecificUserMsg
     -- public Methods
     = SetConfig LangConfiguration
+    | SetUser Int Int --user group
     -- private Methods
     | OnClose
     | OnChangeMode BanMode
@@ -44,6 +51,7 @@ type BanSpecificUserMsg
 
 type BanSpecificUserEvent
     = Close
+    | Create Request
 
 type BanTypeUnit
     = BTUMinute
@@ -77,6 +85,8 @@ init () =
         , ban = Kick
         , now = 0
         , comment = ""
+        , user = 0
+        , group = 0
         }
     , Cmd.none
     , []
@@ -86,6 +96,16 @@ update : BanSpecificUserDef a -> BanSpecificUserMsg -> BanSpecificUser -> (BanSp
 update def msg (BanSpecificUser model) = case msg of
     SetConfig config ->
         ( BanSpecificUser { model | config = config }
+        , Cmd.none
+        , []
+        )
+    SetUser user group ->
+        ( BanSpecificUser 
+            { model 
+            | user = user
+            , group = group 
+            , comment = ""
+            }
         , Cmd.none
         , []
         )
@@ -107,13 +127,33 @@ update def msg (BanSpecificUser model) = case msg of
     OnCreate ->
         ( BanSpecificUser model
         , Cmd.none
-        , []
+        , event def <| Create <| Debug.log "BanSpecificUser:OnCreate" <| getRequest model
         )
     OnInput text ->
         ( BanSpecificUser { model | comment = text }
         , Cmd.none
         , []
         )
+
+getRequest : BanSpecificUserInfo -> Request
+getRequest info = RespControl <| case info.ban of
+    Kick -> KickUser info.user info.group
+    TimeBan unit time ->
+        let fact = case unit of
+                BTUMinute -> Time.minute
+                BTUHour -> Time.hour
+                BTUDays -> 24 * Time.hour
+            target = info.now + (fact * time)
+        in BanUser info.user info.group (round <| target / 1000) info.comment
+    DateBan d m y h min ->
+        let str = (toString y) ++ "-" ++ (toString m) ++ "-" ++
+                (toString d) ++ "T" ++ (toString h) ++ ":" ++
+                (toString min)
+            date = case Date.fromString str of
+                Ok d -> Date.toTime d
+                Err e -> Debug.crash <| "BanSpecificUser:getRequest - cannot transform date: " ++ e
+        in BanUser info.user info.group (round <| date / 1000) info.comment
+    Perma -> BanUser info.user info.group -1 info.comment
 
 single : BanSpecificUserInfo -> String -> String
 single info key = getSingle info.config.lang [ "lobby", key ]
@@ -216,11 +256,11 @@ viewTimeBan info unit duration =
         
 viewDateBan : BanSpecificUserInfo -> Int -> Int -> Int -> Int -> Int -> Html BanSpecificUserMsg
 viewDateBan info day month year hour minute =
-    let inp : Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
-        inp = \val max event ->
+    let inp : Int -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
+        inp = \val min max event ->
             input
                 [ type_ "number"
-                , attribute "min" "0"
+                , attribute "min" <| toString min
                 , attribute "max" <| toString max
                 , value <| toString val
                 , onInput <| OnChangeMode << event << (\v -> case String.toInt v of
@@ -228,19 +268,29 @@ viewDateBan info day month year hour minute =
                         Err _ -> val
                     )
                 ] []
-        part : String -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
-        part = \labelKey val max event ->
+        part : String -> Int -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
+        part = \labelKey val min max event ->
             div []
                 [ div [] [ text <| single info labelKey ]
-                , div [] [ inp val max event ]
+                , div [] [ inp val min max event ]
                 ]
     in div [ class "w-ban-user-conf dateban" ]
-        [ part "bsu-day" day 31 <| \v -> DateBan v month year hour minute
-        , part "bsu-month" month 12 <| \v -> DateBan day v year hour minute
-        , part "bsu-year" year 2100 <| \v -> DateBan day month v hour minute
-        , part "bsu-hour" hour 24 <| \v -> DateBan day month year v minute
-        , part "bsu-minute" minute 60 <| \v -> DateBan day month year hour v
+        [ part "bsu-day" day 1 (dayMax month year) <| \v -> DateBan v month year hour minute
+        , part "bsu-month" month 1 12 <| \v -> DateBan (min day <| dayMax v year) v year hour minute
+        , part "bsu-year" year 2018 2100 <| \v -> DateBan (min day <| dayMax month v) month v hour minute
+        , part "bsu-hour" hour 0 23 <| \v -> DateBan day month year v minute
+        , part "bsu-minute" minute 0 59 <| \v -> DateBan day month year hour v
         ]
+
+dayMax : Int -> Int -> Int
+dayMax month year =
+    if month == 2
+    then if (year % 4 == 0) && ((year % 100 /= 0) || (year % 400 == 0))
+        then 29
+        else 28
+    else if xor (month <= 7) (month % 2 == 0)
+        then 31
+        else 30
 
 viewPerma : BanSpecificUserInfo -> Html BanSpecificUserMsg
 viewPerma info = div [ class "w-ban-user-conf perma"] 

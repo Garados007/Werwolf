@@ -78,6 +78,7 @@ type EventMsg
     | ChangeModal ViewModal
     | UpdateConfig Configuration
     | ChangeLang String
+    | SetBanInfo Int Int -- user group
 
 type ViewModal
     = None
@@ -133,6 +134,8 @@ handleJoinGroup event = case event of
 handleBanSpecificUser : BanSpecificUserEvent -> List EventMsg
 handleBanSpecificUser event = case event of
     BanSpecificUser.Close -> [ ChangeModal None ]
+    BanSpecificUser.Create req ->
+        [ Send req, ChangeModal None ]
 
 handleManageGroups : ManageGroupsEvent -> List EventMsg
 handleManageGroups event = case event of
@@ -142,7 +145,7 @@ handleManageGroups event = case event of
     ManageGroups.Leave group ->
         [ Send <| RespControl <| LeaveGroup group]
     ManageGroups.DoBan group user ->
-        [ ChangeModal VMBanSpecificUser ]
+        [ ChangeModal VMBanSpecificUser, SetBanInfo user group ]
 
 handleLanguageChanger : LanguageChangerEvent -> List EventMsg
 handleLanguageChanger event = case event of
@@ -239,6 +242,11 @@ handleEvent = changeWithAll2
             ( { model | showMenu = state }, Cmd.none)
         ChangeModal modal ->
             ( { model | modal = modal }, Cmd.none)
+        SetBanInfo user group ->
+            let (mbs, cbs, tbs) = MC.update model.banUser <|
+                    BanSpecificUser.SetUser user group
+                (nm, ecmd) = handleEvent { model | banUser = mbs } tbs
+            in  ( nm, Cmd.batch <| Cmd.map MBanSpecificUser cbs :: ecmd)
         UpdateConfig conf ->
             let (ng, gcmd, gtasks) = updateAllGames model.games
                     <| GameView.SetConfig conf
