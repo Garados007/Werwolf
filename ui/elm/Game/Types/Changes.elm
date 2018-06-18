@@ -129,6 +129,12 @@ concentrate resp =
                     in case dv of
                         Just d -> ChangeConfig [ CGroupLeaved d ] False
                         Nothing -> ChangeConfig [] False
+                BanUser ban ->
+                    ChangeConfig [ CBanInfo ban ] False
+                KickUser ->
+                    ChangeConfig [] False
+                RevokeBan ban ->
+                    ChangeConfig [ CBanInfo ban ] False 
         RInfo r ->  
             case r of
                 InstalledGameTypes v ->

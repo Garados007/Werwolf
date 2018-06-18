@@ -95,6 +95,9 @@ type ResponseControl
     | Vote ChatId VoteKey PlayerId
     | SetConfig String
     | LeaveGroup GroupId
+    | BanUser UserId GroupId Int String
+    | KickUser UserId GroupId
+    | RevokeBan UserId GroupId
 
 type ResponseInfo
     = InstalledGameTypes
@@ -305,6 +308,23 @@ encodeRequestInternal response =
                 LeaveGroup group ->
                     EncodedRequestInternal "control" "leaveGroup"
                         [ ("group", EInt group)
+                        ]
+                BanUser user group end comment ->
+                    EncodedRequestInternal "control" "banUser"
+                        [ ("user", EInt user)
+                        , ("group", EInt group)
+                        , ("end", EInt end)
+                        , ("comment", EString comment)
+                        ]
+                KickUser user group ->
+                    EncodedRequestInternal "control" "kickUser"
+                        [ ("user", EInt user)
+                        , ("group", EInt group)
+                        ]
+                RevokeBan user group ->
+                    EncodedRequestInternal "control" "revokeBan"
+                        [ ("user", EInt user)
+                        , ("group", EInt group)
                         ]
         RespInfo resp ->
             case resp of

@@ -162,6 +162,12 @@ decodeControl method =
             decSingle SetConfig string
         "leaveGroup" ->
             decSingle (always LeaveGroup) bool
+        "banUser" ->
+            decSingle BanUser decodeBanInfo
+        "kickUser" ->
+            decSingle (always KickUser) bool
+        "revokeBan" ->
+            decSingle RevokeBan decodeBanInfo
         _ -> succeed Nothing
 
 decodeInfo : String -> Decoder (Maybe ResultInfo)

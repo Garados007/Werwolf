@@ -64,6 +64,9 @@ type ResultControl
     | Vote_ Vote
     | SetConfig String
     | LeaveGroup
+    | BanUser BanInfo
+    | KickUser
+    | RevokeBan BanInfo
 
 type ResultInfo
     = InstalledGameTypes (List String)
