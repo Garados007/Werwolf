@@ -61,3 +61,8 @@
   width: 1.5em;
   margin-right: 0.75em;
 } 
+.w-managegroup-ban {
+  padding: 0 0.5em 0 1em;
+  color: red;
+  cursor: pointer;
+}

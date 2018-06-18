@@ -141,6 +141,8 @@ handleManageGroups event = case event of
         [ ChangeModal None, EnterGroup group ]
     ManageGroups.Leave group ->
         [ Send <| RespControl <| LeaveGroup group]
+    ManageGroups.DoBan group user ->
+        [ ChangeModal VMBanSpecificUser ]
 
 handleLanguageChanger : LanguageChangerEvent -> List EventMsg
 handleLanguageChanger event = case event of

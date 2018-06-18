@@ -90,7 +90,8 @@
         "mg-focus-group": "Gruppe fokusieren",
         "mg-view-user": "Nutzer anzeigen",
         "mg-hide-user": "Nutzer verstecken",
-        "mg-leave-group": "Gruppe verlassen"
+        "mg-leave-group": "Gruppe verlassen",
+        "mg-do-ban": "Nutzer aus der Gruppe bannen/kicken"
     },
     "pages": {
         "RoleDescription": {

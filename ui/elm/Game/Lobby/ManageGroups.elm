@@ -47,11 +47,13 @@ type ManageGroupsMsg
     | ToggleUser Int
     | OnFocus Int
     | OnLeave Int
+    | OnDoBan Int Int
 
 type ManageGroupsEvent
     = Close
     | Focus Int
     | Leave Int
+    | DoBan Int Int
 
 type alias ManageGroupsDef a = ModuleConfig ManageGroups ManageGroupsMsg
     () ManageGroupsEvent a
@@ -125,7 +127,13 @@ update def msg (ManageGroups model) = case msg of
     OnLeave group ->
         ( ManageGroups model
         , Cmd.none
-        , event def <| Leave group)
+        , event def <| Leave group
+        )
+    OnDoBan group user ->
+        ( ManageGroups model
+        , Cmd.none
+        , event def <| DoBan group user
+        )
 
 view : ManageGroups -> Html ManageGroupsMsg
 view (ManageGroups model) = 
@@ -237,6 +245,14 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                                 -- "?d=robohash"]
                             ] []
                         , divs <| text user.name
+                        , if canBan info group user
+                            then div 
+                                [ class "w-managegroup-ban" 
+                                , attribute "title" <| single info "mg-do-ban"
+                                , onClick (OnDoBan group.id user.userId)
+                                ]
+                                [ text "X" ]
+                            else text ""
                         ]
                 )
             <| UserLookup.getGroupUser group.id info.users
@@ -251,6 +267,11 @@ canLeave info group =
         then True
         else (>) 2 <| List.length <| 
             UserLookup.getGroupUser group.id info.users
+
+canBan : ManageGroupsInfo -> Group -> UserStat -> Bool
+canBan info group user =
+    (Just user.userId /= info.ownUser) &&
+    (Just group.leader == info.ownUser)
 
 subscriptions : ManageGroups -> Sub ManageGroupsMsg
 subscriptions (ManageGroups model) =
