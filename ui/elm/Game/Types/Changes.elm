@@ -27,10 +27,12 @@ type Changes
     | CRolesets String (List String)
     | CConfig (Maybe String)
     | COwnId Int
+    | CBanInfo BanInfo
     | CAccountInvalid
     | CNetworkError
     | CMaintenance
     | CErrInvalidGroupKey
+    | CErrJoinBannedFromGroup
     | CGroupLeaved Int
     
 type alias ChangeConfig =
@@ -65,6 +67,17 @@ concentrate resp =
                     ChangeConfig (List.map CVote v) False
                 GetConfig c ->
                     ChangeConfig [ CConfig c ] False
+                TopUser v -> ChangeConfig [] False
+                GetAllBansOfUser v -> 
+                    ChangeConfig (List.map CBanInfo v) False
+                GetNewestBans v -> 
+                    ChangeConfig (List.map CBanInfo v) False
+                GetOldestBans v -> 
+                    ChangeConfig (List.map CBanInfo v) False
+                GetUserSpokenBans v -> 
+                    ChangeConfig (List.map CBanInfo v) False
+                GetBansFromGroup v -> 
+                    ChangeConfig (List.map CBanInfo v) False
         RConv r -> 
             case r of
                 LastOnline v ->
@@ -170,6 +183,11 @@ concentrate resp =
                         _ -> handleError resp
                     "lastOnline" ->  case e.info of
                         "user is not in the group" -> handleLeaved resp
+                        _ -> handleError resp
+                    _ -> handleError resp
+                "control" -> case resp.info.method of
+                    "joinGroup" -> case e.info of
+                        "user is banned from this group" -> ChangeConfig [ CErrJoinBannedFromGroup ] False
                         _ -> handleError resp
                     _ -> handleError resp
                 _ -> handleError resp
