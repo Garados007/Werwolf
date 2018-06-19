@@ -41,7 +41,8 @@
   font-size: 0.8em;
   cursor: pointer;
 }
-.w-managegroup-users {
+.w-managegroup-users,
+.w-managegroup-banned {
   border-top: 1px solid lightgray;
   margin: 0 0.5em;
   display: flex;
@@ -63,6 +64,77 @@
 } 
 .w-managegroup-ban {
   padding: 0 0.5em 0 1em;
+  color: red;
+  cursor: pointer;
+}
+.w-managegroup-baninfo {
+  border: 1px solid lightgray;
+  padding: 0.25em;
+  margin: 0.5em;
+  display: flex;
+  flex-direction: column;
+}
+.w-managegroup-ban-details,
+.w-managegroup-ban-spoker {
+  display: flex;
+  flex-direction: row;
+}
+.w-managegroup-ban-spoker {
+  font-size: 0.75em;
+}
+.w-managegroup-ban-spoker > div:first-child {
+  margin-right: 0.5em;
+}
+.w-managegroup-ban-timeinfo {
+  display: table;
+  font-size: 0.65em;
+  width: 100%;
+  white-space: nowrap;
+}
+.w-managegroup-ban-timeinfo > div {
+  display: table-cell;
+  width: 50%;
+}
+.w-managegroup-ban-timeinfo > div:nth-child(2) {
+  width: 1px;
+  padding: 0 0.5em;
+}
+.w-managegroup-ban-timeinfo > div:first-child {
+  text-align: left;
+}
+.w-managegroup-ban-timeinfo > div:last-child {
+  text-align: right;
+}
+.w-managegroup-ban-timebar {
+  height: 0.5em;
+  position: relative;
+  border: 1px solid lightgray;
+}
+.w-managegroup-ban-timefill {
+  height: 100%;
+  background-color: lightgray;
+}
+.w-managegroup-ban-icon img {
+  width: 2.5em;
+  height: 2.5em; 
+  margin: 0 0.5em 0 0;
+}
+.w-managegroup-nobans {
+  padding: 0.25em;
+}
+.w-managegroup-ban-detaillist {
+  flex-grow: 1;
+}
+.w-managegroup-ban-user {
+  display: table;
+  width: 100%;
+}
+.w-managegroup-ban-user > div {
+  display: table-cell;
+}
+.w-managegroup-unban {
+  width: 1px;
+  padding: 0 0.5em;
   color: red;
   cursor: pointer;
 }

@@ -1,3 +1,7 @@
+
+DELETE FROM <?php echo DB_PREFIX; ?>BanInfo
+WHERE IFNULL(EndDate < <?php echo time(); ?>, FALSE);
+
 <?php if (!$kick) { ?>
 
 INSERT INTO <?php echo DB_PREFIX; ?>BanInfo
@@ -88,5 +92,3 @@ WHERE Id=<?php echo $player; ?>;
 DELETE FROM <?php echo DB_PREFIX; ?>User
 WHERE UserId=<?php echo $user; ?> AND GroupId=<?php echo $group; ?>;
 
-DELETE FROM <?php echo DB_PREFIX; ?>BanInfo
-WHERE IFNULL(EndDate < <?php echo time(); ?>, FALSE);

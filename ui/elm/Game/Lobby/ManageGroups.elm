@@ -5,6 +5,7 @@ module Game.Lobby.ManageGroups exposing
         , SetGroups
         , SetUsers
         , SetOwnId
+        , AddBan
         )
     , ManageGroupsEvent (..)
     , ManageGroupsDef
@@ -22,9 +23,11 @@ import Game.Types.Types exposing (..)
 import Game.Utils.UserLookup as UserLookup exposing (UserLookup)
 
 import Html exposing (Html,div,text,a,img,input)
-import Html.Attributes exposing (class,attribute,href,value,src)
+import Html.Attributes exposing (class,attribute,href,value,src,style)
 import Html.Events exposing (onClick)
 import Dict exposing (Dict)
+import Char
+import Time exposing (Time)
 
 type ManageGroups = ManageGroups ManageGroupsInfo
 
@@ -34,6 +37,9 @@ type alias ManageGroupsInfo =
     , users : UserLookup
     , viewUser : Dict Int Bool
     , ownUser : Maybe Int
+    , bans : Dict Int (Dict Int BanInfo)
+    , banOpened : Dict Int Bool
+    , now : Time
     }
 
 type ManageGroupsMsg
@@ -42,18 +48,25 @@ type ManageGroupsMsg
     | SetGroups (Dict Int Group)
     | SetUsers UserLookup
     | SetOwnId Int
+    | AddBan BanInfo
     -- private Methods
     | OnClose
     | ToggleUser Int
     | OnFocus Int
     | OnLeave Int
     | OnDoBan Int Int
+    | OnToggleBan Int
+    | NewTime Time
+    | Refresh Int
+    | OnUnban Int Int
 
 type ManageGroupsEvent
     = Close
     | Focus Int
     | Leave Int
     | DoBan Int Int
+    | FetchBans Int
+    | Unban Int Int
 
 type alias ManageGroupsDef a = ModuleConfig ManageGroups ManageGroupsMsg
     () ManageGroupsEvent a
@@ -77,6 +90,9 @@ init () =
         , users = UserLookup.empty
         , viewUser = Dict.empty
         , ownUser = Nothing
+        , bans = Dict.empty
+        , banOpened = Dict.empty
+        , now = 0
         }
     , Cmd.none
     , []
@@ -90,7 +106,24 @@ update def msg (ManageGroups model) = case msg of
         , []
         )
     SetGroups groups ->
-        ( ManageGroups { model | groups = groups }
+        ( ManageGroups 
+            { model 
+            | groups = groups 
+            , bans = Dict.merge
+                (\_ _ d -> d)
+                (\k _ v d -> Dict.insert k v d)
+                (\_ _ d -> d)
+                groups
+                model.bans
+                Dict.empty
+            , banOpened = Dict.merge
+                (\_ _ d -> d)
+                (\k _ v d -> Dict.insert k v d)
+                (\_ _ d -> d)
+                groups
+                model.banOpened
+                Dict.empty
+            }
         , Cmd.none
         , []
         )
@@ -101,6 +134,26 @@ update def msg (ManageGroups model) = case msg of
         )
     SetOwnId id ->
         ( ManageGroups { model | ownUser = Just id }
+        , Cmd.none
+        , []
+        )
+    AddBan ban ->
+        ( ManageGroups
+            { model
+            | bans = if isDelete ban model.now
+                then case Dict.get ban.group model.bans of
+                    Just d -> 
+                        let nd = Dict.remove ban.user d
+                        in if Dict.isEmpty nd
+                            then Dict.remove ban.group model.bans
+                            else Dict.insert ban.group nd model.bans
+                    Nothing -> model.bans
+                else case Dict.get ban.group model.bans of
+                    Just d -> Dict.insert ban.group
+                        (Dict.insert ban.user ban d) model.bans
+                    Nothing -> Dict.insert ban.group
+                        (Dict.insert ban.user ban Dict.empty) model.bans
+            }
         , Cmd.none
         , []
         )
@@ -134,6 +187,49 @@ update def msg (ManageGroups model) = case msg of
         , Cmd.none
         , event def <| DoBan group user
         )
+    OnToggleBan group ->
+        let old = Dict.get group model.banOpened
+        in  ( ManageGroups
+                { model
+                | banOpened = flip (Dict.insert group) model.banOpened <|
+                    not <| Maybe.withDefault False old
+                , bans = if old == Just True
+                    then Dict.remove group model.bans
+                    else model.bans
+                }
+            , Cmd.none
+            , if old /= Just True
+                then MC.event def <| FetchBans group
+                else []
+            )
+    Refresh group ->
+        ( ManageGroups
+            { model
+            | bans = Dict.remove group model.bans
+            }
+        , Cmd.none
+        , MC.event def <| FetchBans group
+        )
+    NewTime time ->
+        ( ManageGroups 
+            { model
+            | now = time 
+            , bans = flip Dict.map model.bans <|
+                \_ -> Dict.filter <| \_ -> not << flip isDelete model.now
+            }
+        , Cmd.none
+        , []
+        )
+    OnUnban group user ->
+        ( ManageGroups model
+        , Cmd.none
+        , MC.event def <| Unban group user
+        )
+
+isDelete : BanInfo -> Time -> Bool
+isDelete ban now = case ban.endDate of
+    Nothing -> False
+    Just d -> (toFloat d) * 1000 <= now
 
 view : ManageGroups -> Html ManageGroupsMsg
 view (ManageGroups model) = 
@@ -223,6 +319,22 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                 then "mg-hide-user"
                 else "mg-view-user" 
             ]
+        , div
+            [ class "w-managegroup-button"
+            , onClick (OnToggleBan group.id)
+            ]
+            [ text <| single info <|
+                if Maybe.withDefault False <| Dict.get group.id info.banOpened
+                then "mg-hide-ban"
+                else "mg-view-ban" 
+            ]
+        , if Dict.get group.id info.banOpened == Just True
+            then div
+                [ class "w-managegroup-button"
+                , onClick (Refresh group.id)
+                ]
+                [ text <| single info "mg-refresh-ban"]
+            else text ""
         , if canLeave info group
             then div
                 [ class "w-managegroup-button"
@@ -257,7 +369,91 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                 )
             <| UserLookup.getGroupUser group.id info.users
         else text ""
+    , if Maybe.withDefault False <| Dict.get group.id info.banOpened
+        then div [ class "w-managegroup-banned" ] <|
+            let bans = List.map (viewBan info group) <|
+                    Dict.values <|
+                    Maybe.withDefault Dict.empty <|
+                    Dict.get group.id info.bans
+            in if List.isEmpty bans
+                then [ div [ class "w-managegroup-nobans"]
+                        [ text <| single info "mg-no-bans" ]
+                    ]
+                else bans
+        else text ""
     ]
+
+viewBan : ManageGroupsInfo -> Group -> BanInfo -> Html ManageGroupsMsg
+viewBan info group ban = 
+    let buser = UserLookup.getSingleUser ban.user info.users
+    in div 
+        [ class "w-managegroup-baninfo" 
+        , attribute "title" ban.comment
+        ]
+        [ div [ class "w-managegroup-ban-details" ]
+            [ div [ class "w-managegroup-ban-icon" ]
+                [ img
+                    [ src <| case buser of 
+                        Just u -> "https://www.gravatar.com/avatar/" ++
+                            u.gravatar ++ 
+                            "?d=identicon"
+                            -- "?d=monsterid"
+                            -- "?d=wavatar"
+                            -- "?d=robohash"
+                        Nothing -> "https://www.gravatar.com/avatar/?d=mp"
+                    ] []
+                ]
+            , div [ class "w-managegroup-ban-detaillist" ]
+                [ div [ class "w-managegroup-ban-user" ]
+                    [ divs <| text <| user info ban.user 
+                    , case info.ownUser of
+                        Nothing -> text ""
+                        Just id ->
+                            if (id == ban.spoker) || (id == group.leader)
+                            then div 
+                                [ class "w-managegroup-unban" 
+                                , onClick (OnUnban ban.group ban.user)
+                                , attribute "title" <|
+                                    single info "mg-revoke"
+                                ]
+                                [ text "X" ]
+                            else text ""
+                    ]
+                , div [ class "w-managegroup-ban-spoker" ]
+                    [ divs <| text <| single info "mg-spoker"
+                    , divs <| text <| user info ban.spoker
+                    ]
+                ]
+            ]
+        , div [ class "w-managegroup-ban-timing" ]
+            [ div [ class "w-managegroup-ban-timeinfo" ]
+                [ divs <| text <| time info ban.startDate
+                , divs <| text "-"
+                , case ban.endDate of
+                    Just d -> divs <| text <| time info d
+                    Nothing -> divs <| text <| 
+                        flip String.cons "" <| Char.fromCode 8734
+                ]
+            , if ban.endDate == Nothing then text "" else div
+                [ class "w-managegroup-ban-timebar" ]
+                [ div
+                    [ class "w-managegroup-ban-timefill"
+                    , style 
+                        [ ("width", (toString <| timePos info.now ban) ++ "%")
+                        ]
+                    ] []
+                ]
+            ]
+        ]
+
+timePos : Time -> BanInfo -> Float
+timePos now ban = case ban.endDate of
+    Just end ->
+        let st = (toFloat ban.startDate) * 1000
+            et = (toFloat end) * 1000
+        in max 0 <| min 100 <| 100 * (now - st) / (et - st)
+    Nothing -> 0
+
 
 canLeave : ManageGroupsInfo -> Group -> Bool
 canLeave info group =
@@ -275,4 +471,6 @@ canBan info group user =
 
 subscriptions : ManageGroups -> Sub ManageGroupsMsg
 subscriptions (ManageGroups model) =
-    Sub.none
+    if model.now == 0
+    then Time.every Time.second NewTime
+    else Time.every Time.minute NewTime

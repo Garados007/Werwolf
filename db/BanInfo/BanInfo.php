@@ -182,6 +182,6 @@ class BanInfo extends JsonExport {
 		);
 		echo DB::getError();
 		$result->free();
-		$this->endDate = $now;
+		$this->endDate = 0;
 	}
 }

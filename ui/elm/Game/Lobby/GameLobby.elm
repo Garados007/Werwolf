@@ -146,6 +146,10 @@ handleManageGroups event = case event of
         [ Send <| RespControl <| LeaveGroup group]
     ManageGroups.DoBan group user ->
         [ ChangeModal VMBanSpecificUser, SetBanInfo user group ]
+    ManageGroups.FetchBans group ->
+        [ Send <| RespGet <| GetBansFromGroup group ]
+    ManageGroups.Unban group user ->
+        [ Send <| RespControl <| RevokeBan user group ]
 
 handleLanguageChanger : LanguageChangerEvent -> List EventMsg
 handleLanguageChanger event = case event of
@@ -623,6 +627,13 @@ updateConfig change (m, list, tasks) = case change of
         in  ( { m | joinGroup = mjg }
             , Cmd.map MJoinGroup cjg :: list
             , tjg ++ tasks
+            )
+    CBanInfo ban ->
+        let (mmg, cmg, tmg) = MC.update m.manageGroups <|
+                ManageGroups.AddBan ban
+        in  ( { m | manageGroups = mmg }
+            , Cmd.map MManageGroups cmg :: list
+            , tmg ++ tasks
             )
     CAccountInvalid ->
         ( { m | error = AccountError }, list, tasks)
