@@ -15,6 +15,7 @@
 body {
     background-color: #6c3213;
 }
+.w-managegroup-ban-timefill,
 .w-newgame-submit,
 .w-newgame-cleader-submit,
 .w-newgame-options-header-item,
@@ -55,6 +56,8 @@ body {
 .w-language-button.selected{
     border: none;
 }
+.w-finished-box,
+.w-menu-button:hover,
 .w-newgame-options-page,
 .w-options-reset,
 .w-options-header,
@@ -71,6 +74,9 @@ body {
 .w-voting-game-control,
 .chat-post-tile,
 .w-user-box-outer,
+.w-managegroup-banned,
+.w-managegroup-baninfo,
+.w-managegroup-ban-timebar,
 .w-box-header {
     border-color: #c35b22;
 }
