@@ -239,7 +239,7 @@ view (ManageGroups model) =
             Dict.values model.groups
 
 single : ManageGroupsInfo -> String -> String
-single info key = getSingle info.config.lang [ "lobby", key ]
+single info key = getSingle info.config.lang [ "lobby", "manage-group", key ]
 
 divs : Html msg -> Html msg
 divs = div [] << List.singleton
@@ -268,38 +268,38 @@ viewGroup info group = div [ class "w-managegroup-group" ]
         [ text group.name ]
     , div [ class "w-managegroup-info" ]
         [ div []
-            [ divs <| text <| single info "mg-construct-date"
+            [ divs <| text <| single info "construct-date"
             , divs <| text <| time info group.created
             ]
         , div []
-            [ divs <| text <| single info "mg-constructor" 
+            [ divs <| text <| single info "constructor" 
             , divs <| text <| user info group.creator
             ]
         , div []
-            [ divs <| text <| single info "mg-last-date"
+            [ divs <| text <| single info "last-date"
             , divs <| text <| case group.lastTime of
                 Just t -> time info t
-                Nothing -> single info "mg-never"
+                Nothing -> single info "never"
             ]
         , div []
-            [ divs <| text <| single info "mg-leader"
+            [ divs <| text <| single info "leader"
             , divs <| text <| user info group.leader
             ]
         , div []
-            [ divs <| text <| single info "mg-current-game"
+            [ divs <| text <| single info "current-game"
             , divs <| text <| case group.currentGame of
-                Nothing -> single info "mg-no-game"
+                Nothing -> single info "no-game"
                 Just game ->
                     if game.finished == Nothing
                     then time info game.started
-                    else single info "mg-no-game"
+                    else single info "no-game"
             ]
         , div []
-            [ divs <| text <| single info "mg-member"
+            [ divs <| text <| single info "member"
             , divs <| text <| toString <| List.length <| UserLookup.getGroupUser group.id info.users
             ]
         , div []
-            [ divs <| text <| single info "mg-enter-key"
+            [ divs <| text <| single info "enter-key"
             , div [ class "w-managegroup-password" ]
                 [ text <| formatKey group.enterKey ]
             ]
@@ -309,15 +309,15 @@ viewGroup info group = div [ class "w-managegroup-group" ]
             [ class "w-managegroup-button" 
             , onClick (OnFocus group.id)
             ]
-            [ text <| single info "mg-focus-group" ]
+            [ text <| single info "focus-group" ]
         , div 
             [ class "w-managegroup-button" 
             , onClick (ToggleUser group.id)
             ]
             [ text <| single info <| 
                 if Maybe.withDefault False <| Dict.get group.id info.viewUser
-                then "mg-hide-user"
-                else "mg-view-user" 
+                then "hide-user"
+                else "view-user" 
             ]
         , div
             [ class "w-managegroup-button"
@@ -325,22 +325,22 @@ viewGroup info group = div [ class "w-managegroup-group" ]
             ]
             [ text <| single info <|
                 if Maybe.withDefault False <| Dict.get group.id info.banOpened
-                then "mg-hide-ban"
-                else "mg-view-ban" 
+                then "hide-ban"
+                else "view-ban" 
             ]
         , if Dict.get group.id info.banOpened == Just True
             then div
                 [ class "w-managegroup-button"
                 , onClick (Refresh group.id)
                 ]
-                [ text <| single info "mg-refresh-ban"]
+                [ text <| single info "refresh-ban"]
             else text ""
         , if canLeave info group
             then div
                 [ class "w-managegroup-button"
                 , onClick (OnLeave group.id) 
                 ]
-                [ text <| single info "mg-leave-group" ]
+                [ text <| single info "leave-group" ]
             else text ""
         ]
     , if Maybe.withDefault False <| Dict.get group.id info.viewUser
@@ -360,7 +360,7 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                         , if canBan info group user
                             then div 
                                 [ class "w-managegroup-ban" 
-                                , attribute "title" <| single info "mg-do-ban"
+                                , attribute "title" <| single info "do-ban"
                                 , onClick (OnDoBan group.id user.userId)
                                 ]
                                 [ text "X" ]
@@ -377,7 +377,7 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                     Dict.get group.id info.bans
             in if List.isEmpty bans
                 then [ div [ class "w-managegroup-nobans"]
-                        [ text <| single info "mg-no-bans" ]
+                        [ text <| single info "no-bans" ]
                     ]
                 else bans
         else text ""
@@ -414,13 +414,13 @@ viewBan info group ban =
                                 [ class "w-managegroup-unban" 
                                 , onClick (OnUnban ban.group ban.user)
                                 , attribute "title" <|
-                                    single info "mg-revoke"
+                                    single info "revoke"
                                 ]
                                 [ text "X" ]
                             else text ""
                     ]
                 , div [ class "w-managegroup-ban-spoker" ]
-                    [ divs <| text <| single info "mg-spoker"
+                    [ divs <| text <| single info "spoker"
                     , divs <| text <| user info ban.spoker
                     ]
                 ]
