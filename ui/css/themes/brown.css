@@ -15,6 +15,7 @@
 body {
     background-color: #6c3213;
 }
+.w-tutorial-dot,
 .w-managegroup-ban-timefill,
 .w-newgame-submit,
 .w-newgame-cleader-submit,
@@ -56,6 +57,9 @@ body {
 .w-language-button.selected{
     border: none;
 }
+.w-tutorial-dot.mid,
+.w-tutorial-prev::before, 
+.w-tutorial-next::before,
 .w-finished-box,
 .w-menu-button:hover,
 .w-newgame-options-page,
@@ -119,6 +123,7 @@ body {
 body {
     color: #301203;
 }
+.w-tutorial-text,
 .w-newgame-enterkey-code,
 .w-newgame-box,
 .w-language-button.selected,
@@ -129,6 +134,19 @@ body {
 .chat-post-tile,
 .w-user-box-outer {
     color: #ff7a33;
+}
+/*tutorial svg*/
+.w-tutorial-header svg .svg-line-1 {
+    stroke: #301203 !important;
+}
+.w-tutorial-header svg .svg-line-2 {
+    stroke: #c35a22 !important;
+}
+.w-tutorial-header svg .svg-fill-1 {
+    fill: #301203 !important;
+}
+.w-tutorial-header svg .svg-fill-2 {
+    fill: #c35b22 !important;
 }
 /*other*/
 .w-game-selector-tabarea {

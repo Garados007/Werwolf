@@ -41,6 +41,7 @@ type GameMenuEvent
     | EditGamesBox
     | LanguageBox
     | OptionsBox
+    | TutorialBox
 
 type alias GameMenuDef a = ModuleConfig GameMenu GameMenuMsg
     () GameMenuEvent a
@@ -117,6 +118,8 @@ viewButtons model = div []
         , viewSplitter
         , viewLink "" <| menuString model "main-screen"
         , viewLink "" <| menuString model "user-info"
+        , viewSplitter
+        , viewButton (OnEvent TutorialBox) <| menuString model "tutorials"
         , viewSplitter
         , viewImgButton (OnEvent LanguageBox) 
             ("ui/img/lang/" ++ model.lang ++ ".png")

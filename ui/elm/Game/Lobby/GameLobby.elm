@@ -3,6 +3,7 @@ module Game.Lobby.GameLobby exposing (..)
 import ModuleConfig as MC exposing (..)
 
 import Game.UI.GameView as GameView exposing (..)
+import Game.UI.Tutorial as Tutorial exposing (..)
 import Game.Lobby.GameSelector as GameSelector exposing (..)
 import Game.Lobby.GameMenu as GameMenu exposing (..)
 import Game.Lobby.CreateGroup as CreateGroup exposing (..)
@@ -50,6 +51,7 @@ type alias GameLobbyInfo =
     , langs : List LangInfo
     , error : ErrorWindow
     , users : UserLookup
+    , tutorial : Tutorial
     }
 
 type GameLobbyMsg
@@ -63,9 +65,11 @@ type GameLobbyMsg
     | MGameSelector GameSelectorMsg
     | MGameMenu GameMenuMsg
     | MBanSpecificUser BanSpecificUserMsg
+    | MTutorial TutorialMsg
     | MainLang String (Maybe String)
     | ModuleLang String String (Maybe String)
     | LangList (List LangInfo)
+    | CloseEveryModal
 
 type EventMsg
     = Register Request
@@ -88,6 +92,7 @@ type ViewModal
     | VMLanguageChanger
     | VMOptions
     | VMBanSpecificUser
+    | VMTutorial
 
 main : Program Never GameLobby GameLobbyMsg
 main = program
@@ -117,6 +122,7 @@ handleGameMenu event = case event of
     GameMenu.EditGamesBox -> [ ChangeMenu False, ChangeModal VMManageGroups ]
     GameMenu.LanguageBox -> [ ChangeMenu False, ChangeModal VMLanguageChanger ]
     GameMenu.OptionsBox -> [ ChangeMenu False, ChangeModal VMOptions ]
+    GameMenu.TutorialBox -> [ ChangeMenu False, ChangeModal VMTutorial ]
 
 handleCreateGroup : CreateGroupEvent -> List EventMsg
 handleCreateGroup event = case event of
@@ -306,6 +312,7 @@ init =
         (mlc, clc, tlc) = languageChangerModule handleLanguageChanger
         (mo, co, to) = optionsModule handleOptions
         (mbs, cbs, tbs) = banSpecificUserModule handleBanSpecificUser
+        (mt, ct) = Tutorial.init
         model = 
             { network = network
             , games = Dict.empty
@@ -327,6 +334,7 @@ init =
             , langs = []
             , error = NoError
             , users = UserLookup.empty
+            , tutorial = mt
             }
         (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tmg ++ tlc ++ to ++ tbs
     in  ( GameLobby tm
@@ -347,6 +355,7 @@ init =
             , Cmd.map MLanguageChanger clc
             , Cmd.map MOptions co
             , Cmd.map MBanSpecificUser cbs
+            , Cmd.map MTutorial ct
             ] ++ tcmd
         )
 
@@ -360,8 +369,11 @@ view (GameLobby model) = div [] <| viewStyles
         ]
     , div [ class "w-lobby-game" ] <| List.singleton <| case Maybe.andThen (flip Dict.get model.games) model.curGame of
         Nothing -> div [ class "w-lobby-nogame" ]
-            [ text <| getSingle (createLocal model.lang Nothing)
-                [ "lobby", "nogame" ]
+            [ Html.map MTutorial <| flip Tutorial.viewEmbed model.tutorial <|
+                LangConfiguration model.config <|
+                createLocal model.lang Nothing
+            --[ text <| getSingle (createLocal model.lang Nothing)
+            --    [ "lobby", "nogame" ]
             ]
         Just gameView -> div [ class "w-lobby-gameview" ]
             [ Html.map (MGameView (Maybe.withDefault 0 model.curGame)) 
@@ -380,6 +392,10 @@ view (GameLobby model) = div [] <| viewStyles
             VMOptions -> Html.map MOptions <| MC.view model.options
             VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
             VMBanSpecificUser -> Html.map MBanSpecificUser <| MC.view model.banUser
+            VMTutorial -> flip (Tutorial.viewModal MTutorial CloseEveryModal)
+                model.tutorial <|
+                LangConfiguration model.config <|
+                createLocal model.lang Nothing
     , stylesheet <| uri_host ++ uri_path ++ "ui/css/themes/" ++ model.config.theme ++ ".css"
     ]
 
@@ -478,6 +494,9 @@ update msg (GameLobby model) = case msg of
             nmodel = { model | options = wm }
             (tm, tcmd) = handleEvent nmodel wtasks
         in  (GameLobby tm, Cmd.batch <| Cmd.map MOptions wcmd :: tcmd)
+    MTutorial wmsg ->
+        let (wm, wcmd) = Tutorial.update wmsg model.tutorial
+        in (GameLobby { model | tutorial = wm }, Cmd.map MTutorial wcmd)
     MainLang lang content -> updateLang model <|
         case content of
             Nothing -> model.lang
@@ -493,6 +512,10 @@ update msg (GameLobby model) = case msg of
         in  ( GameLobby tm
             , Cmd.batch <| Cmd.map MLanguageChanger clc :: tcmd
             )
+    CloseEveryModal ->
+        ( GameLobby { model | modal = None }
+        , Cmd.none
+        )
         
 
 updateLang : GameLobbyInfo -> LangGlobal -> (GameLobby, Cmd GameLobbyMsg)

@@ -51,6 +51,7 @@
         "manage-groups": "Gruppen verwalten",
         "main-screen": "Hauptseite",
         "user-info": "Benutzerinformationen",
+        "tutorials": "Tutorial",
         "language": "Sprache",
         "options": "Optionen",
         "new-group-name": "Name für die neue Gruppe:",
@@ -116,7 +117,16 @@
         "bsu-minute": "Minute",
         "bsu-info-perma": "Dieser Nutzer wird permanent gebannt und kann ihr nicht wieder beitreten, bis jemand den Bann wieder auflöst.",
         "bsu-create": "Erstelle Bann",
-        "bsu-description": "Beschreibung"
+        "bsu-description": "Beschreibung",
+        "tutorial": {
+            "0": "Willkommen bei Werwölfe von Düsterwald Online. Hier erhälst du kurze Informationen, wie du dieses Spiel am Besten spielen kannst.",
+            "1": "Oben links befindet sich das Hauptmenü. Hier kannst du Gruppen erstellen, beitreten oder verwalten. Du kannst hier auch Informationen über die Gruppen selbst erhalten und Nutzer bannen, kicken oder entbannen.\r\nDas sind aber nur ein paar der vielen Möglichkeiten.",
+            "2": "Hier werden alle Spielelobbys angezeigt und du kannst hier auch die aktuell aktive Lobby auswählen.",
+            "3": "Hier hast du eine Übersicht über alle Nutzer in der aktuellen Gruppe. Du siehst hier auch wann die Nutzer das letzte Mal online waren oder welche sichtbaren Rollen die im Spiel haben.\r\nAußerdem kannst du auch oben die Nutzer nach den Chats filtern.",
+            "4": "Das hier ist der Bildschirm, wenn eine neue Gruppe erstellt wird. Oben kannst du den Spielmodus aus einer Liste auswählen. Im Hauptteil stellst du dann das Spiel ein.\r\nVergiss nicht im zweiten Reiter die Rollen zuzuweisen!",
+            "5": "Das hier ist das Chatfenster. Hier werden alle Textnachrichten von allen dargestellt. Normalerweise werden alle Chaträume zusammengefasst. Im linken Auswahlmenü stellst du ein, welche Chats oben zu sehen sein sollen. Im rechten Auswahlmenü stellst du ein, in welchen Chat du die Nachricht reinschreibst. Nur Spieler die diesen Chat lesen dürfen, sehen dann die Nachtricht!",
+            "6": "Hier kann man für bestimmte Ereignisse abstimmen. Die genauen Effekte sind vom Spielmodus, Runde, Chat, etc. abhängig. Wenn du auf den Prozessbalken klickst, erhälst du sogar noch mehr Informationen!\r\nDer Spielleiter erhält in diesem Bereich Funktionen zur Steuerung des Spiels."
+        }
     },
     "pages": {
         "RoleDescription": {

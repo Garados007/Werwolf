@@ -9,5 +9,6 @@
     { "file": "ui/css/components/language-changer.css", "compress": "css", "required": true },
     { "file": "ui/css/components/error.css", "compress": "css", "required": true },
     { "file": "ui/css/components/manage-groups.css", "compress": "css", "required": true },
-    { "file": "ui/css/components/ban-specific-user.css", "compress": "css", "required": true }
+    { "file": "ui/css/components/ban-specific-user.css", "compress": "css", "required": true },
+    { "file": "ui/css/components/tutorial.css", "compress": "css", "required": true }
 ]

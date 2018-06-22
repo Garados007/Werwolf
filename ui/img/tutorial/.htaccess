@@ -1,0 +1,8 @@
+# origin must match exactly the URL in browser address bar 
+Header set Access-Control-Allow-Origin "http://localhost:8000" 
+# set all headers needed, wildcard does not work! 
+Header set Access-Control-Allow-Headers "Accept,Accept-Charset,Accept-Encoding,Accept-Language,Connection,Content-Type,Cookie,DNT,Host,Keep-Alive,Origin,Referer,User-Agent,X-CSRF-Token,X-Requested-With,x-test" 
+# set allowed methods (GET,PUT,POST,OPTIONS,..) or * for all 
+Header set Access-Control-Allow-Methods "*" 
+# allow credentials (cookies) 
+Header set Access-Control-Allow-Credentials true

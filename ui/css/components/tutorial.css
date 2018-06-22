@@ -1,0 +1,125 @@
+.w-lobby-nogame {
+  display: table-cell;
+  position: relative;
+}
+.w-tutorial-outer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+.w-tutorial-modal {
+  max-width: 100%;
+  width: 40em;
+  max-height: 100%;
+  height: 50em;
+}
+.w-tutorial-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.w-tutorial-header {
+  padding: 1em;
+  text-align: center;
+  height: 50%;
+}
+.w-tutorial-header svg {
+  max-height: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+.w-tutorial-info {
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 1;
+  justify-content: center;
+  position: relative;
+}
+.w-tutorial-text {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 0.5em;
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 1;
+  overflow-y: auto;
+  max-width: 25em;
+}
+.w-tutorial-navarea {
+  height: 1em;
+  margin: 1em;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.w-tutorial-nav-box {
+  display: table;
+  width: 100%;
+  height: 100%;
+  max-width: 15em;
+}
+.w-tutorial-nav-box > div {
+  display: table-cell;
+  position: relative;
+}
+.w-tutorial-prev,
+.w-tutorial-next {
+  width: 1em;
+  cursor: pointer;
+}
+.w-tutorial-prev:before,
+.w-tutorial-next:before {
+  content: "";
+  position: absolute;
+  border-left: 2px solid lightgray;
+  border-top: 2px solid lightgray;
+  transform: rotate(-45deg);
+  transform-origin: center center;
+  width: 100%;
+  height: 100%;
+}
+.w-tutorial-next:before {
+  transform: rotate(135deg);
+}
+.w-tutorial-fast {
+  min-width: 8em;
+}
+.w-tutorial-dot {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  background-color: lightgray;
+  border-radius: 1em;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+.w-tutorial-dot.prev2 {
+  width: 0.9em;
+  height: 0.9em;
+  left: 10%;
+}
+.w-tutorial-dot.prev1 {
+  left: 30%;
+}
+.w-tutorial-dot.mid {
+  background-color: unset;
+  border: 2px solid lightgray;
+  left: 50%;
+}
+.w-tutorial-dot.next1 {
+  left: 70%;
+}
+.w-tutorial-dot.next2 {
+  width: 0.9em;
+  height: 0.9em;
+  left: 90%;
+}
