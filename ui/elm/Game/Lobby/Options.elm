@@ -85,7 +85,7 @@ update def msg (Options model) = case msg of
             else (Options model, Cmd.none, [])
 
 gs : OptionsInfo -> String -> String
-gs model key = getSingle model.config.lang [ "lobby", key ]
+gs model key = getSingle model.config.lang [ "lobby", "option", key ]
 
 view : Options -> Html OptionsMsg
 view (Options model) = 
@@ -93,33 +93,33 @@ view (Options model) =
         configChanger mod var =
             OnConfigChange <| \m -> { m | conf = mod var m.conf }
         conf = model.config.conf
-    in modal OnClose (gs model "options") <|
+    in modal OnClose (getSingle model.config.lang ["lobby", "options"]) <|
         div [ class "w-options-box" ] 
             [ div [ class "w-options-header" ]
-                [ text <| gs model "opt-datetime" ]
-            , div [] [ text <| gs model "opt-chatDateFormat" ]
+                [ text <| gs model "datetime" ]
+            , div [] [ text <| gs model "chatDateFormat" ]
             , viewDateInput 
                 (configChanger <| \tf c -> { c | chatDateFormat = tf } )
                 conf.chatDateFormat
-            , div [] [ text <| gs model "opt-profileTimeFormat" ]
+            , div [] [ text <| gs model "profileTimeFormat" ]
             , viewDateInput 
                 (configChanger <| \tf c -> { c | profileTimeFormat = tf } )
                 conf.profileTimeFormat
-            , div [] [ text <| gs model "opt-profileDateFormat" ]
+            , div [] [ text <| gs model "profileDateFormat" ]
             , viewDateInput 
                 (configChanger <| \tf c -> { c | profileDateFormat = tf } )
                 conf.profileDateFormat
-            , div [] [ text <| gs model "opt-votingDateFormat" ]
+            , div [] [ text <| gs model "votingDateFormat" ]
             , viewDateInput 
                 (configChanger <| \tf c -> { c | votingDateFormat = tf } )
                 conf.votingDateFormat
-            , div [] [ text <| gs model "opt-manageGroupsDateFormat" ]
+            , div [] [ text <| gs model "manageGroupsDateFormat" ]
             , viewDateInput
                 (configChanger <| \tf c -> { c | manageGroupsDateFormat = tf } )
                 conf.manageGroupsDateFormat
             , div [ class "w-options-header" ]
-                [ text <| gs model "opt-style" ]
-            , div [] [ text <| gs model "opt-theme" ]
+                [ text <| gs model "style" ]
+            , div [] [ text <| gs model "theme" ]
             , viewListInput
                 (configChanger <| \tf c -> { c | theme = tf } )
                 conf.theme
@@ -128,7 +128,7 @@ view (Options model) =
                 [ class "w-options-reset"
                 , onClick <| configChanger reset ()
                 ]
-                [ text <| gs model "opt-reset" ]
+                [ text <| gs model "reset" ]
             ]
 
 viewDateInput : (DateTimeFormat -> OptionsMsg) -> DateTimeFormat -> Html OptionsMsg

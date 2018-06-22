@@ -156,11 +156,11 @@ getRequest info = RespControl <| case info.ban of
     Perma -> BanUser info.user info.group -1 info.comment
 
 single : BanSpecificUserInfo -> String -> String
-single info key = getSingle info.config.lang [ "lobby", key ]
+single info key = getSingle info.config.lang [ "lobby", "bsu", key ]
 
 view : BanSpecificUser -> Html BanSpecificUserMsg
 view (BanSpecificUser model) = 
-    modal OnClose (getSingle model.config.lang ["lobby", "ban-specific-user" ]) <|
+    modal OnClose (single model "ban-specific-user") <|
         div [ class "w-banuser-box" ] 
             [ viewRadios model
             , case model.ban of
@@ -172,7 +172,7 @@ view (BanSpecificUser model) =
                 then node "textarea"
                     [ onInput OnInput
                     , attribute "placeholder" <|
-                        single model "bsu-description"
+                        single model "description"
                     , attribute "pattern" "^.{5,1000}$"
                     ]
                     [ text model.comment ]
@@ -182,7 +182,7 @@ view (BanSpecificUser model) =
                     [ class "w-banuser-create"
                     , onClick OnCreate
                     ]
-                    [ text <| single model "bsu-create" ]
+                    [ text <| single model "create" ]
                 else text ""
             ]
 
@@ -199,23 +199,23 @@ viewRadios info =
                 , text <| single info labelKey
                 ]
     in div [ class "w-banuser-radios" ]
-        [ radio "bsu-kick" (OnChangeMode Kick) <| info.ban == Kick
-        , radio "bsu-timeban" (OnChangeMode <| TimeBan BTUHour 5) <| case info.ban of
+        [ radio "kick" (OnChangeMode Kick) <| info.ban == Kick
+        , radio "timeban" (OnChangeMode <| TimeBan BTUHour 5) <| case info.ban of
             TimeBan _ _ -> True
             _ -> False
-        , radio "bsu-dateban" 
+        , radio "dateban" 
             ( OnChangeMode <| (\(d,m,y,h,min) ->
                 DateBan d m y h min
             ) <| split info.now) 
             <| case info.ban of
                 DateBan _ _ _ _ _ -> True
                 _ -> False
-        , radio "bsu-perma" (OnChangeMode Perma) <| info.ban == Perma
+        , radio "perma" (OnChangeMode Perma) <| info.ban == Perma
         ]
 
 viewKick : BanSpecificUserInfo -> Html BanSpecificUserMsg
 viewKick info = div [ class "w-ban-user-conf kick" ]
-    [ text <| single info "bsu-info-kick" ]
+    [ text <| single info "info-kick" ]
 
 viewTimeBan : BanSpecificUserInfo -> BanTypeUnit -> Float -> Html BanSpecificUserMsg
 viewTimeBan info unit duration =
@@ -246,7 +246,7 @@ viewTimeBan info unit duration =
                 [ value k
                 , selected <| f == unit
                 ]
-                [ text <| single info <| "bsu-timeunit-" ++ k ]
+                [ text <| single info <| "timeunit-" ++ k ]
             )
             [ (BTUMinute, "m")
             , (BTUHour, "h")
@@ -275,11 +275,11 @@ viewDateBan info day month year hour minute =
                 , div [] [ inp val min max event ]
                 ]
     in div [ class "w-ban-user-conf dateban" ]
-        [ part "bsu-day" day 1 (dayMax month year) <| \v -> DateBan v month year hour minute
-        , part "bsu-month" month 1 12 <| \v -> DateBan (min day <| dayMax v year) v year hour minute
-        , part "bsu-year" year 2018 2100 <| \v -> DateBan (min day <| dayMax month v) month v hour minute
-        , part "bsu-hour" hour 0 23 <| \v -> DateBan day month year v minute
-        , part "bsu-minute" minute 0 59 <| \v -> DateBan day month year hour v
+        [ part "day" day 1 (dayMax month year) <| \v -> DateBan v month year hour minute
+        , part "month" month 1 12 <| \v -> DateBan (min day <| dayMax v year) v year hour minute
+        , part "year" year 2018 2100 <| \v -> DateBan (min day <| dayMax month v) month v hour minute
+        , part "hour" hour 0 23 <| \v -> DateBan day month year v minute
+        , part "minute" minute 0 59 <| \v -> DateBan day month year hour v
         ]
 
 dayMax : Int -> Int -> Int
@@ -294,7 +294,7 @@ dayMax month year =
 
 viewPerma : BanSpecificUserInfo -> Html BanSpecificUserMsg
 viewPerma info = div [ class "w-ban-user-conf perma"] 
-    [ text <| single info "bsu-info-perma" ]
+    [ text <| single info "info-perma" ]
 
 split : Time -> (Int, Int, Int, Int, Int) --day,month,year,hour,minute
 split time =

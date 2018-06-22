@@ -25,25 +25,25 @@ viewError : LangLocal -> ErrorWindow -> Html msg
 viewError lang window = case window of
     NoError -> div [] []
     AccountError -> viewButton lang
-        { header = "err-account"
+        { header = "account"
         , imgKey = "wi-account-error"
-        , descr = "err-account-descr"
+        , descr = "account-descr"
         , linkUrl = uri_host ++ uri_path
-        , linkText = "err-account-link"
+        , linkText = "account-link"
         }
     NetworkError -> viewButton lang
-        { header = "err-network"
+        { header = "network"
         , imgKey = "wi-network-error"
-        , descr = "err-network-descr"
+        , descr = "network-descr"
         , linkUrl = "javascript:document.location.reload()"
-        , linkText = "err-network-link"
+        , linkText = "network-link"
         }
     Maintenance -> viewButton lang
-        { header = "err-maintenance"
+        { header = "maintenance"
         , imgKey = "wi-maintenance-error"
-        , descr = "err-maintenance-descr"
+        , descr = "maintenance-descr"
         , linkUrl = uri_host ++ uri_path ++ "ui/maintenance/"
-        , linkText = "err-maintenance-link"
+        , linkText = "maintenance-link"
         }
 
 viewButton : LangLocal -> ButtonInfo -> Html msg
@@ -54,7 +54,7 @@ viewButton lang info = modalNoClose (getSingle lang ["lobby", info.header ])
                 [ div [ class info.imgKey ] [] 
                 ]
             , div [ class "w-error-text" ]
-                [ text <| getSingle lang [ "lobby", info.descr ] 
+                [ text <| getSingle lang [ "lobby", "error", info.descr ] 
                 ]
             ]
         , a [ class "w-error-button"
