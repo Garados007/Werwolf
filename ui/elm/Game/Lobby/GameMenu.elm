@@ -120,6 +120,7 @@ viewButtons model = div []
         , viewLink "" <| menuString model "user-info"
         , viewSplitter
         , viewButton (OnEvent TutorialBox) <| menuString model "tutorials"
+        , viewLink "ui/roles/" <| menuString model "role-wiki"
         , viewSplitter
         , viewImgButton (OnEvent LanguageBox) 
             ("ui/img/lang/" ++ model.lang ++ ".png")
