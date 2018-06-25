@@ -2,26 +2,38 @@ module Game.Pages.RoleDescription exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Dict exposing (Dict)
 
-import Game.Utils.Language exposing (LangGlobal, newGlobal, createLocal, addMainLang, addSpecialLang, getSingle, hasGameset)
-import Game.Utils.LangLoader exposing (fetchUiLang, fetchModuleLang)
+import Game.Utils.Language exposing (LangGlobal, LangLocal, newGlobal, createLocal, addMainLang, addSpecialLang, getSingle, hasGameset, updateCurrentLang)
+import Game.Utils.LangLoader exposing (fetchPageLang, fetchModuleLang, LangInfo, fetchLangList)
 import Config exposing (..)
-import Game.Utils.Network exposing (Network, Request, NetworkMsg(..), network, send, update)
+import Game.Utils.Network as Network exposing (Network, Request, NetworkMsg(..), network, send, update)
 import Game.Types.Request exposing (..)
-import Game.Types.Response exposing (..)
+import Game.Types.Changes exposing (Changes(..))
 
+st : a -> List a
+st = List.singleton
+
+(<~|) : (List a -> b) -> a -> b
+(<~|) f v = f [ v ]
+
+infixr 0 <~|
 
 type alias Model = 
     { lang: LangGlobal
     , network: Network
     , gametypes: List String
     , roles: Dict String (List String)
+    , langs: List LangInfo
     }
 
 type Msg
     = MainLang String (Maybe String)
-
+    | ModuleLang String String (Maybe String)
+    | LangList (List LangInfo)
+    | ChangeLang String
+    | MNetwork NetworkMsg
 
 main: Program Never Model Msg
 main = program
@@ -33,35 +45,134 @@ main = program
 
 init: (Model, Cmd Msg)
 init =
-    ( Model (newGlobal lang_backup) network [] Dict.empty
-    , fetchUiLang lang_backup MainLang
+    ( Model (newGlobal lang_backup) network [] Dict.empty []
+    , Cmd.batch 
+        [ fetchPageLang "roles" lang_backup MainLang
+        , Cmd.map MNetwork <| send network <|
+            RespInfo <| InstalledGameTypes
+        , fetchLangList LangList
+        ]
     )
 
 view: Model -> Html Msg
 view model = 
     let local = createLocal model.lang Nothing
-    in  -- text <| getSingle local ["ui", "online"]
-        div [] 
-            [
-                h1 [] [text "Rollen - Wiki"]
-            ,   p [] [text "Spieltypen"]
-            ,   ul [] 
-                   [
-                        li [] [a [href "#main"] [text "Main"]]
-                   ,    li [] [a [href "#easy"] [text "Easy"]]
-                   ] 
-            ,   h2 [id "main"] [text "Main"]
-            ,   p [] [text "Gewöhnliche Spiele, in denen alle regulären Rollen vorkommen können."]
-            ,   h3 [] [text "Dorfbewohner"]
-            ,   img [src "https://image.jimcdn.com/app/cms/image/transf/none/path/s804ddaff65002008/image/i482a845d86724cc7/version/1509653870/image.png", alt "Dorfbewohner männlich"] []
-            ,   img [src "https://image.jimcdn.com/app/cms/image/transf/none/path/s804ddaff65002008/image/iead242b1b89f56e8/version/1509653890/image.png", alt "Dorfbewohner weiblich"] []
-            ,   p [] [text "Gewöhnliche Dorfbewohner ohne Sonderfähigkeiten. Sein Verstand ist seine einzige Waffe bei der Wolfsjagd."]
-            ,   h3 [] [text "Werwolf"]
-            ,   img [src "https://vignette.wikia.nocookie.net/harrypotter/images/6/6a/Werwolf.png/revision/latest?cb=20130905224334&path-prefix=de", alt "Werwolf"] []
-            ,   p [] [text "Gewöhnlicher Werwolf ohne Sonderfähigkeiten. Einigt sich mit seinem Rudel jede Nacht auf ein Fressopfer und versucht tagsüber, nicht aufzufallen."]
-            ,   h2 [id "easy"] [text "Easy"]
-            ,   p [] [text "Für Anfänger geeignete Runden mit nur wenigen grundlegenden Rollen."]
+    in  div []
+        [ viewPage model local
+        , viewSidebar model local
+        ]
+
+viewPage : Model -> LangLocal -> Html Msg 
+viewPage model local =
+    div [ class "page" ] <|
+        stylesheet (absUrl "ui/css/page/roles.css") ::
+        h1 [] [ text <| getSingle local ["wiki", "title"] ] ::
+        div [ class "header" ] [ text <| getSingle local [ "wiki", "header" ] ] ::
+        viewIndex model local ++
+        (List.concatMap (viewModule model) model.gametypes)
+
+viewIndex : Model -> LangLocal -> List (Html Msg)
+viewIndex model local =
+    [ div [ class "toc" ]
+        [ h2 [ class "toctitle" ]
+            [ text <| getSingle local ["wiki", "index"] ]
+        , ul []  <| List.indexedMap
+            (\ind1 type_ -> 
+                let spec = createLocal model.lang <| Just type_
+                in li []
+                    [ a [ href <| "#" ++ type_ ] 
+                        [ span [ class "index" ] 
+                            [ text <| (toString <| ind1 + 1) ++ ". " ]
+                        , span []
+                            [ text <| getSingle spec ["module-name"] 
+                            ]
+                        ]
+                    , ul [] <| List.indexedMap
+                        (\ind2 role -> li [] 
+                            [ a [ href <| "#" ++ type_ ++ "-" ++ role ] 
+                                [ span [ class "index" ]
+                                    [ text <| 
+                                        (toString <| ind1 + 1) ++
+                                        "." ++
+                                        (toString <| ind2 + 1) ++
+                                        ". "
+                                    ]
+                                , span []
+                                    [ text <| getSingle spec [ "roles", role] 
+                                    ]
+                                ]
+                            ]
+                        ) <|
+                        Maybe.withDefault [] <|
+                        Dict.get type_ model.roles
+                    ]
+            )
+            model.gametypes
+        ]
+    ]
+
+viewModule : Model -> String -> List (Html Msg)
+viewModule model module_ =
+    let lang = createLocal model.lang <| Just module_
+    in  [ h2 [ id module_ ]
+            [ text <| getSingle lang [ "module-name" ] ]
+        , div [ class "module-info"]
+            [ text <| getSingle lang [ "module-info" ] ]
+        , div [ class "role-grid" ] <| List.map
+            (\role -> div [ class "role-row", id <| module_ ++ "-" ++ role ]
+                [ div [] <| List.singleton <| img
+                    [ src <| absUrl <|
+                        "ui/img/roles/" ++ module_ ++
+                        "/role-" ++ role ++ ".png"
+                    ] []
+                , div [] 
+                    [ h3 [] [ text <| getSingle lang ["roles", role] ]
+                    , text <| getSingle lang [ "role-wiki", role ] 
+                    ]
+                ]
+            ) <|
+            Maybe.withDefault [] <|
+            Dict.get module_ model.roles
+        ]
+
+viewSidebar : Model -> LangLocal -> Html Msg
+viewSidebar model local = 
+    let lia : String -> List String -> Html Msg
+        lia = \url lkey ->
+            li [] <~| a [ href <| absUrl url ] <~| text <|
+                getSingle local lkey
+    in div [ class "sidebar" ]
+        [ div [ class "sidebar-block" ] <~| ul []
+            [ lia "" [ "nav", "home" ]
+            , lia "ui/game/" [ "nav", "game" ] 
             ]
+        , div [ class "sidebar-block"]
+            [ h3 []
+                [ text <| getSingle local [ "wiki", "wikis" ]]
+            , ul []
+                [ lia "ui/roles/" [ "wiki", "title" ]
+                ]
+            ]
+        , div [ class "sidebar-block"]
+            [ h3 []
+                [ text <| getSingle local [ "wiki", "other-lang" ]]
+            , ul [] <| List.map
+                (\l -> li [] <~| a [ onClick <| ChangeLang l.short ] <~| text <|
+                    l.long
+                )
+                model.langs
+            ]
+        ]
+
+stylesheet : String -> Html msg
+stylesheet url = node "link"
+    [ attribute "rel" "stylesheet"
+    , attribute "property" "stylesheet"
+    , attribute "href" url
+    ] []
+
+absUrl : String -> String
+absUrl url = uri_host ++ uri_path ++ url
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
@@ -72,6 +183,46 @@ update msg model = case msg of
           }
         , Cmd.none
         )
+    ModuleLang module_ lang code ->
+        ( { model | lang = case code of
+            Nothing -> model.lang
+            Just c -> addSpecialLang model.lang lang module_ c
+          }
+        , Cmd.none
+        )
+    LangList list ->
+        { model | langs = list } ! []
+    ChangeLang lang ->
+        { model | lang = updateCurrentLang model.lang lang } ! []
+    MNetwork msg -> case msg of
+        Received conf ->
+            let (nm, cmd) = List.foldl updateChanges (model, []) conf.changes 
+            in nm ! cmd
+        _ ->
+            let (nm, nc) = Network.update msg model.network
+            in { model | network = nm } ! [ Cmd.map MNetwork nc ]
+
+updateChanges : Changes -> (Model, List (Cmd Msg)) -> (Model, List (Cmd Msg))
+updateChanges change (model, cmd) = case change of
+    CInstalledGameTypes types ->
+        ( { model | gametypes = types }
+        ,   ( Cmd.map MNetwork <| send model.network <|
+                RespMulti <| Multi <| List.map
+                (RespInfo << Rolesets)
+                types
+            ) :: 
+            (List.map 
+                (\t -> fetchModuleLang t lang_backup ModuleLang
+                )
+                types
+            ) ++
+            cmd
+        )
+    CRolesets type_ roles ->
+        ( { model | roles = Dict.insert type_ roles model.roles }
+        , cmd
+        )
+    _ -> (model, cmd)
 
 subscriptions: Model -> Sub Msg
 subscriptions model = Sub.none

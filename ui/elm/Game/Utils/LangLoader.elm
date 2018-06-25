@@ -1,5 +1,6 @@
 module Game.Utils.LangLoader exposing 
     ( fetchUiLang
+    , fetchPageLang
     , fetchModuleLang
     , LangInfo
     , fetchLangList
@@ -23,6 +24,20 @@ type alias LangInfo =
 fetchUiLang : String -> (String -> Maybe String -> msg) -> Cmd msg
 fetchUiLang lang msgFunc =
     HttpBuilder.get (getUrl lang "ui")
+        |> withTimeout (10 * Time.second)
+        |> withExpect Http.expectString
+        |> withCredentials
+        |> HttpBuilder.send
+            (\result -> case result of
+                Ok l -> msgFunc lang (Just l)
+                Err e ->
+                    let d = Debug.log "LangLoader:fetchUiLang" (lang,e)
+                    in msgFunc lang Nothing
+            )
+
+fetchPageLang : String -> String -> (String -> Maybe String -> msg) -> Cmd msg
+fetchPageLang page lang msgFunc =
+    HttpBuilder.get (getUrl lang <| "page/" ++ page)
         |> withTimeout (10 * Time.second)
         |> withExpect Http.expectString
         |> withCredentials

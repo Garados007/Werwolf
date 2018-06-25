@@ -29,5 +29,6 @@
     "phase": {
         "d:vote": "Dorfabstimmung",
         "n:wolfvo": "Wolfsphase"
-    }
+    },
+    "module-name": "Testspiel"
 }

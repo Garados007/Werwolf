@@ -72,5 +72,15 @@
         "n:werewo": "Wolfsphase",
         "n:witch": "Hexenphase",
         "n:kill": "Todesliste"
+    },
+    "module-name": "Werwolf Hauptspiel",
+    "module-info": "Dieser Spielmodus entspricht dem offiziellen Werwolf Hauptspiel ohne Erweiterungen.",
+    "role-wiki": {
+        "villager": "Einfacher Dorfbewohner. Nimmt an den Dorfwahlen teil und kann den Hauptmann wählen",
+        "werewolf": "Der Werwolf ist eine eigene Fraktion und spielt gegen die Dorfbewohner. Jede Nacht reißen die Werwölfe einen Dorfbewohner.",
+        "seeress": "Die Seherin gehört zum Dorf und kann jede Nacht sich die Rollen von einem beliebigen Spieler aufdecken lassen. Nur sie kennt dann die geheimen Rollen.",
+        "cupid": "Der Amor kann in der ersten Nacht zwei Verliebte wählen. Diese sind von nun an für immer verknüpft. Sollte einer von beiden sterben, so stirbt auch der andere.",
+        "witch": "Die Hexe gehört zum Dorf und hat zwei Heiltränke. Mit einem kann sie das Opfer der Werwölfe retten und mit den anderen einen beliebigen umbringen. Die Tränke sind nur einmal pro Spiel aktivierbar.",
+        "litlgirl": "Das Blinzelmädchen gehört zum Dorf, hat aber die Fähigkeit die Wölfe zu belauschen. Sie kann sehen wer Werwölfe sind. Die Werwölfe können sie aber nicht sehen."
     }
 }

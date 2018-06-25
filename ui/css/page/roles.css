@@ -1,0 +1,147 @@
+body {
+  font-family: sans-serif;
+  background-color: #f6f6f6;
+}
+.page {
+  background-color: white;
+  margin-left: 11em;
+  border-left: 1px solid #a7d7f9;
+  padding: 1.25em 1.5em 1.5em 1.5em;
+  font-size: 0.875em;
+  line-height: 1.3;
+}
+.header {
+  padding: 0.5em 0 1em;
+}
+h1, h2 {
+  font-weight: normal;
+  border-bottom: 1px solid #a2a9b1;
+  font-family: 'Linux Libertine','Georgia','Times',serif;
+  line-height: 1.3;
+  padding: 0;
+}
+h1 {
+  font-size: 1.8em;
+  margin: 0 0 0.25em;
+}
+h2 {
+  font-size: 1.5em;
+  margin: 1em 0 0.5em;
+}
+.toc {
+  color: #222222;
+  line-height: 1.6;
+  border: 1px solid #a2a9b1;
+  background-color: #f8f9fa;
+  font-size: 95%;
+  display: table;
+  zoom: 1;
+  padding: 7px;
+  width: 100%;
+}
+h2.toctitle {
+  text-align: center;    
+  font-size: 100%;
+  font-family: sans-serif;
+  margin-top: 0;
+  font-weight: bold;
+  border: none;
+}
+.toc a {
+  color: #0645ad;;
+  text-decoration: none;
+}
+.toc a:hover span:last-child {
+  text-decoration: underline;
+}
+.toc ul { 
+  margin: 0.3em 0;
+  list-style-type: none;
+  list-style-image: none;
+  margin-left: 0;
+  padding: 0;
+  text-align: left;
+}
+.toc li {
+  list-style-type: none;
+  list-style-image: none;
+  text-align: left;
+  margin-bottom: 0.1em;
+}
+.toc ul ul {
+  margin: 0 0 0 2em;
+}
+.toc .index {
+  padding-left: 0;
+  padding-right: 0.5em;
+  color: #222;
+}
+.role-grid {
+  display: table;
+  width: 100%;
+  
+}
+.role-row {
+  display: table-row;
+}
+.role-row > div {
+  display: table-cell;
+  padding: 0.25em;
+  vertical-align: middle;
+  border: 1px solid lightgray;
+}
+.role-row > div:first-child {
+  padding: 0 1em;
+  width: 1px;
+}
+.role-row h3 {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+}
+.module-info {
+  margin: 1em 0;
+}
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10em;
+  padding-top: 4em;
+}
+.sidebar-block {
+  margin: 0 0.6em 0 0.7em;
+  padding: 0.25em 0;
+}
+.sidebar-block ul {
+  list-style: none none;
+  margin: 0;
+  padding: 0.3em 0 0 0;
+}
+.sidebar-block li {
+  line-height: 1.125em;
+  margin: 0;
+  padding: 0.25em 0;
+  font-size: 0.75em;
+  word-wrap: break-word;
+}
+.sidebar-block a {
+  text-decoration: none;
+  color: #0645ad;
+  cursor: pointer;
+}
+.sidebar-block a:hover {
+    text-decoration: underline;
+}
+.sidebar-block h3 {
+  font-size: 0.75em;
+  color: #444444;
+  font-weight: normal;
+  margin: 0.5em 0 0;
+  padding: 0.25em 0;
+  cursor: default;
+  border: 0;
+}
+.sidebar-block h3+ul {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAAABCAAAAAAphRnkAAAAJ0lEQVQIW7XFsQEAIAyAMPD/b7uLWz8wS5youFW1UREfiIpH1Q2VBz7fGPS1dOGeAAAAAElFTkSuQmCC);
+  background-repeat: no-repeat;
+}
