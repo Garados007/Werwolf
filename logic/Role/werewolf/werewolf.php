@@ -4,7 +4,7 @@ include_once __DIR__ . '/../RoleBase.php';
 
 class werewolf_werewolf extends RoleBase {
     public function __construct() {
-        $this->roleName = 'werwolf';
+        $this->roleName = 'werewolf';
         $this->canStartNewRound = false;
         $this->canStartVotings = false;
         $this->canStopVotings = false;

@@ -211,10 +211,10 @@ class RoleBase {
                 $players[$i] = Player::create($players[$i]);
             $use = true;
             foreach ($include as $role)
-                if (!$players[$i].hasRole($role)) $use = false;
+                if (!$players[$i]->hasRole($role)) $use = false;
             foreach ($exclude as $role)
-                if ($players[$i].hasRole($role)) $use = false;
-            if ($use) $result[] = $player[$i];
+                if ($players[$i]->hasRole($role)) $use = false;
+            if ($use) $result[] = $players[$i];
         }
         return $result;
     }

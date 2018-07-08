@@ -42,12 +42,13 @@ class VisibleRole extends JsonExport {
 	}
 	
 	public static function addRoles(Player $currentPlayer, Player $targetPlayer, array $keys) {
+		if (count($keys) === 0) return;
 		$result = DB::executeFormatFile(
 			dirname(__FILE__).'/sql/addVisibleRole.sql',
 			array(
 				"player" => $currentPlayer->id,
 				"target" => $targetPlayer->id,
-				"roles" => $keys
+				"roles" => array_values($keys)
 			)
 		);
 		$result->free();

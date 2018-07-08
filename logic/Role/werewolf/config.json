@@ -44,7 +44,7 @@
         "amorous",
         "witch"
     ],
-    "chat_exceptions": [
+    "chats_exceptions": [
         "main"
     ],
     "leader_roles": [ "storytel" ],

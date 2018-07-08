@@ -50,6 +50,9 @@
   padding: 0.1em;
   font-size: 1.2em;
 }
+.w-user-role img {
+  height: 1.2em;
+}
 .w-user-rolespecial {
   height: 1.1em;
   width: 1.1em;
