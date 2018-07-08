@@ -178,7 +178,7 @@ viewUser info ruleset user =
                             [ img
                                 [ src <| uri_host ++ uri_path ++
                                     "ui/img/roles/" ++ rs ++
-                                    "/role-" ++ role.roleKey ++ ".png"
+                                    "/" ++ role.roleKey ++ ".svg"
                                 ] []
                             ] 
                 in flip (++) additionalRoles <| case user.player of

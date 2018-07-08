@@ -123,7 +123,7 @@ viewModule model module_ =
                 [ div [] <| List.singleton <| img
                     [ src <| absUrl <|
                         "ui/img/roles/" ++ module_ ++
-                        "/role-" ++ role ++ ".png"
+                        "/" ++ role ++ ".svg"
                     ] []
                 , div [] 
                     [ h3 [] [ text <| getSingle lang ["roles", role] ]
