@@ -1,16 +1,23 @@
 module Game.Utils.Network exposing 
     ( Network
     , Request
-    , NetworkMsg (Received)
-    , network
+    , NetworkMsg
+    , newNetwork
     , send
     , update
     , addRegulary
     , removeRegulary
     , subscriptions
+    , msgReceived
+    , isReceived
     )
 
-import Game.Types.Request exposing (encodeRequest,EncodedRequest, Response(RespMulti), ResponseMulti(Multi))
+import Game.Types.Request exposing 
+    ( encodeRequest
+    , EncodedRequest
+    , Response (..)
+    , ResponseMulti (..)
+    )
 import Game.Types.Response exposing (Response)
 import Game.Types.Changes exposing (ChangeConfig,Changes,concentrate)
 import Game.Types.DecodeResponse exposing (decodeResponse)
@@ -31,22 +38,30 @@ type Network
 
 type NetworkMsg
     = Fetch (Result Error Response)
-    | RegSend Time.Time
+    | RegSend Time.Posix
     | Received ChangeConfig
 
 type alias NetworkInfo =
     { regular : List Request
     }
 
-network : Network
-network = Network <| NetworkInfo []
+msgReceived : ChangeConfig -> NetworkMsg
+msgReceived = Received
+
+isReceived : NetworkMsg -> Maybe ChangeConfig
+isReceived msg = case msg of 
+    Received c -> Just c 
+    _ -> Nothing
+
+newNetwork : Network
+newNetwork = Network <| NetworkInfo []
 
 send : Network -> Request -> Cmd NetworkMsg
 send network request =
     let
         er = encodeRequest request
     in HttpBuilder.post (buildUrl er)
-        |> withTimeout (10 * Time.second)
+        |> withTimeout 10000
         |> withExpect (Http.expectJson decodeResponse)
         |> withCredentials
         |> withUrlEncodedBody er.vars
@@ -87,7 +102,7 @@ removeRegulary (Network network) request =
 subscriptions : Network -> Sub NetworkMsg
 subscriptions (Network network) =
     if network.regular /= []
-    then Time.every (3 * Time.second) RegSend
+    then Time.every 3000 RegSend
     else Sub.none
 
 buildUrl : EncodedRequest -> String

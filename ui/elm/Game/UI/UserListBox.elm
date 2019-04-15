@@ -1,12 +1,11 @@
 module Game.UI.UserListBox exposing
     ( UserListBox
     , UserListBoxMsg
-        ( UpdateUser
-        , UpdateChats
-        , UpdateRuleset
-        , UpdateConfig
-        , OnCloseBox
-        )
+    , msgUpdateUser
+    , msgUpdateChats
+    , msgUpdateRuleset
+    , msgUpdateConfig
+    , msgOnCloseBox
     , init
     , view
     , update
@@ -25,7 +24,9 @@ import Html.Events exposing (on,onClick)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Config exposing (..)
-import Time exposing (Time)
+import Time exposing (Posix, Zone)
+import Time.Extra exposing (diff, Interval (..))
+import Task
 
 type UserListBox = UserListBox UserListBoxInfo
 
@@ -35,7 +36,8 @@ type alias UserListBoxInfo =
     , chats : Dict ChatId Chat
     , filter: Maybe String
     , ruleset : Maybe String
-    , time : Time
+    , time : Posix
+    , zone : Zone
     , ownUser : Int
     }
 
@@ -49,7 +51,23 @@ type UserListBoxMsg
     | OnCloseBox
     -- private methods
     | ChangeFilter String
-    | NewTime Time
+    | NewTime Posix
+    | NewZone Zone
+
+msgUpdateUser : List User -> UserListBoxMsg
+msgUpdateUser = UpdateUser
+
+msgUpdateChats : Dict ChatId Chat -> UserListBoxMsg
+msgUpdateChats = UpdateChats
+
+msgUpdateRuleset : String -> UserListBoxMsg
+msgUpdateRuleset = UpdateRuleset
+
+msgUpdateConfig : LangConfiguration -> UserListBoxMsg
+msgUpdateConfig = UpdateConfig
+
+msgOnCloseBox : UserListBoxMsg
+msgOnCloseBox = OnCloseBox
 
 single : UserListBoxInfo -> List String -> String
 single info = getSingle info.config.lang
@@ -61,9 +79,12 @@ init conf ownId=
         [] 
         Dict.empty 
         Nothing
-        Nothing 0
+        Nothing
+        (Time.millisToPosix 0)
+        Time.utc
         ownId
-    , Cmd.none)
+    , Task.perform NewZone Time.here
+    )
 
 view : UserListBox -> Html UserListBoxMsg
 view (UserListBox model) =
@@ -144,7 +165,10 @@ viewUser info ruleset user =
                     ] []
                 ]
             , div [ class "w-user-last-online" ]
-                [ text <| getTime info user.stats.lastOnline ]
+                [ text <| getTime info 
+                    <| Time.millisToPosix 
+                    <| 1000 * user.stats.lastOnline 
+                ]
             ]
         , div [ class "w-user-info-area" ]
             [ div [ class "w-user-name" ]
@@ -181,6 +205,8 @@ viewUser info ruleset user =
                                     "/" ++ role.roleKey ++ ".svg"
                                 ] []
                             ] 
+                    flip : (a -> b -> c) -> b -> a -> c
+                    flip f b a = f a b
                 in flip (++) additionalRoles <| case user.player of
                     Nothing -> []
                     Just player -> List.map
@@ -207,17 +233,17 @@ viewBoxHeader info = div [ class "w-box-header"]
         [ text "X" ]
     ]
 
-getTime : UserListBoxInfo -> Int -> String
+getTime : UserListBoxInfo -> Posix -> String
 getTime info time =
-    let dif = info.time - (toFloat time * 1000)
+    let dif = diff Second Time.utc info.time time
     in
-        if dif < Time.second * 30
+        if dif < 30000
         then getSingle info.config.lang ["ui", "online"]
-        else if dif < Time.minute * 45
-        then "-" ++ (toString <| round <| Time.inMinutes dif) ++ "min"
-        else if dif < Time.hour * 16
-        then convert info.config.conf.profileTimeFormat (toFloat time * 1000)
-        else convert info.config.conf.profileDateFormat (toFloat time * 1000)
+        else if dif < 1000 * 60 * 45
+        then "-" ++ (String.fromInt <| dif // 60000) ++ "min"
+        else if dif < 1000 * 60 * 60 * 16
+        then convert info.config.conf.profileTimeFormat time info.zone
+        else convert info.config.conf.profileDateFormat time info.zone
 
 update : UserListBoxMsg -> UserListBox -> (UserListBox, Cmd UserListBoxMsg)
 update msg (UserListBox model) =
@@ -235,7 +261,9 @@ update msg (UserListBox model) =
         UpdateConfig config ->
             (UserListBox { model | config = config }, Cmd.none)
         OnCloseBox -> (UserListBox model, Cmd.none)
+        NewZone zone ->
+            (UserListBox { model | zone = zone }, Cmd.none)
 
 subscriptions : UserListBox -> Sub UserListBoxMsg
 subscriptions (UserListBox model) =
-    Time.every Time.second NewTime
+    Time.every 1000 NewTime

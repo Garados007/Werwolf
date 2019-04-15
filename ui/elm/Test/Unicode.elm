@@ -17,7 +17,7 @@ main = table [] <|
     :: 
     (List.map 
         (\num -> tr []
-            [ td [] [ text <| toString num ]
+            [ td [] [ text <| Debug.fromInt num ]
             , td [] [ text <| flip String.cons "" <| Char.fromCode num ]
             ]
         )

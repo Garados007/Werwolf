@@ -9,8 +9,10 @@ import Game.Types.DecodeTypes exposing (..)
 import Game.Types.DecodeCreateOptions exposing (..)
 
 import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (decode, required)
+import Json.Decode.Pipeline exposing (required)
 import Dict
+
+decode = succeed
 
 decodeResponse : Decoder Response
 decodeResponse =

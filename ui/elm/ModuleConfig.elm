@@ -111,13 +111,13 @@ programUpdate func msg model =
             ( ModuleConfig <|
                 Local
                     (\() -> ModuleConfigCreateOption
-                        (\c -> (model, Cmd.none, []))
-                        (\m -> Html.div [] [])
+                        (\_ -> (model, Cmd.none, []))
+                        (\_ -> Html.div [] [])
                         func
-                        (\m -> Sub.none)
+                        (\_ -> Sub.none)
                     )
                     model
-                    (\e -> [])
+                    (\_ -> [])
             )
             msg
             model

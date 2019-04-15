@@ -1,11 +1,10 @@
 module Game.Lobby.Options exposing
     ( Options
     , OptionsMsg
-        ( SetConfig
-        )
     , OptionsEvent (..)
     , OptionsDef
     , optionsModule
+    , msgSetConfig
     )
     
 import ModuleConfig as MC exposing (..)
@@ -21,6 +20,7 @@ import Html.Attributes exposing (class,attribute,href,value,selected)
 import Html.Events exposing (on,onClick)
 import Dict exposing (Dict)
 import Json.Decode as Json
+import Time
 
 type Options = Options OptionsInfo
 
@@ -41,6 +41,9 @@ type OptionsEvent
 
 type alias OptionsDef a = ModuleConfig Options OptionsMsg
     () OptionsEvent a
+
+msgSetConfig : LangConfiguration -> OptionsMsg
+msgSetConfig = SetConfig
 
 optionsModule : (OptionsEvent -> List a) ->
     (OptionsDef a, Cmd OptionsMsg, List a)
@@ -134,7 +137,7 @@ view (Options model) =
 viewDateInput : (DateTimeFormat -> OptionsMsg) -> DateTimeFormat -> Html OptionsMsg
 viewDateInput msg current = node "select"
     [ on "change" <| Json.map
-        (msg << Maybe.withDefault current << flip Dict.get all)
+        (\k -> msg <| Maybe.withDefault current <| Dict.get k all)
         Html.Events.targetValue
     ] <| List.map
         (\(key,val) -> node "option"
@@ -158,7 +161,7 @@ viewListInput msg current list = node "select"
         list
 
 example : DateTimeFormat -> String
-example = flip convert 1514761199000.0
+example format = convert format (Time.millisToPosix 1514761199000) Time.utc 
 
 reset : () -> Configuration -> Configuration
 reset _ conf = { empty | language = conf.language }

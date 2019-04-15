@@ -8,17 +8,18 @@ import Dict exposing (Dict)
 import Game.Utils.Language exposing (LangGlobal, LangLocal, newGlobal, createLocal, addMainLang, addSpecialLang, getSingle, hasGameset, updateCurrentLang)
 import Game.Utils.LangLoader exposing (fetchPageLang, fetchModuleLang, LangInfo, fetchLangList)
 import Config exposing (..)
-import Game.Utils.Network as Network exposing (Network, Request, NetworkMsg(..), network, send, update)
+import Game.Utils.Network as Network exposing (Network, Request, NetworkMsg(..), newNetwork, send, update)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (Changes(..))
+import Browser
 
 st : a -> List a
 st = List.singleton
 
-(<~|) : (List a -> b) -> a -> b
-(<~|) f v = f [ v ]
-
-infixr 0 <~|
+-- deprecated since elm 0.18
+-- (<~|) : (List a -> b) -> a -> b
+-- (<~|) f v = f [ v ]
+-- infixr 0 <~|
 
 type alias Model = 
     { lang: LangGlobal
@@ -35,9 +36,9 @@ type Msg
     | ChangeLang String
     | MNetwork NetworkMsg
 
-main: Program Never Model Msg
-main = program
-    { init = init
+main: Program () Model Msg
+main = Browser.element
+    { init = always init
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -45,10 +46,10 @@ main = program
 
 init: (Model, Cmd Msg)
 init =
-    ( Model (newGlobal lang_backup) network [] Dict.empty []
+    ( Model (newGlobal lang_backup) newNetwork [] Dict.empty []
     , Cmd.batch 
         [ fetchPageLang "roles" lang_backup MainLang
-        , Cmd.map MNetwork <| send network <|
+        , Cmd.map MNetwork <| send newNetwork <|
             RespInfo <| InstalledGameTypes
         , fetchLangList LangList
         ]
@@ -82,7 +83,7 @@ viewIndex model local =
                 in li []
                     [ a [ href <| "#" ++ type_ ] 
                         [ span [ class "index" ] 
-                            [ text <| (toString <| ind1 + 1) ++ ". " ]
+                            [ text <| (String.fromInt <| ind1 + 1) ++ ". " ]
                         , span []
                             [ text <| getSingle spec ["module-name"] 
                             ]
@@ -92,9 +93,9 @@ viewIndex model local =
                             [ a [ href <| "#" ++ type_ ++ "-" ++ role ] 
                                 [ span [ class "index" ]
                                     [ text <| 
-                                        (toString <| ind1 + 1) ++
+                                        (String.fromInt <| ind1 + 1) ++
                                         "." ++
-                                        (toString <| ind2 + 1) ++
+                                        (String.fromInt <| ind2 + 1) ++
                                         ". "
                                     ]
                                 , span []
@@ -139,10 +140,14 @@ viewSidebar : Model -> LangLocal -> Html Msg
 viewSidebar model local = 
     let lia : String -> List String -> Html Msg
         lia = \url lkey ->
-            li [] <~| a [ href <| absUrl url ] <~| text <|
-                getSingle local lkey
+            li [] 
+                <| st
+                <| a [ href <| absUrl url ] 
+                <| st
+                <| text 
+                <| getSingle local lkey
     in div [ class "sidebar" ]
-        [ div [ class "sidebar-block" ] <~| ul []
+        [ div [ class "sidebar-block" ] <| st <| ul []
             [ lia "" [ "nav", "home" ]
             , lia "ui/game/" [ "nav", "game" ] 
             ]
@@ -157,8 +162,12 @@ viewSidebar model local =
             [ h3 []
                 [ text <| getSingle local [ "wiki", "other-lang" ]]
             , ul [] <| List.map
-                (\l -> li [] <~| a [ onClick <| ChangeLang l.short ] <~| text <|
-                    l.long
+                (\l -> li [] 
+                    <| st 
+                    <| a [ onClick <| ChangeLang l.short ] 
+                    <| st 
+                    <| text 
+                    <| l.long
                 )
                 model.langs
             ]
@@ -191,16 +200,20 @@ update msg model = case msg of
         , Cmd.none
         )
     LangList list ->
-        { model | langs = list } ! []
+        ({ model | langs = list }, Cmd.none)
     ChangeLang lang ->
-        { model | lang = updateCurrentLang model.lang lang } ! []
-    MNetwork msg -> case msg of
-        Received conf ->
+        ( { model | lang = updateCurrentLang model.lang lang }
+        , Cmd.none 
+        )
+    MNetwork smsg -> case Network.isReceived smsg of
+        Just conf ->
             let (nm, cmd) = List.foldl updateChanges (model, []) conf.changes 
-            in nm ! cmd
+            in (nm, Cmd.batch cmd)
         _ ->
-            let (nm, nc) = Network.update msg model.network
-            in { model | network = nm } ! [ Cmd.map MNetwork nc ]
+            let (nm, nc) = Network.update smsg model.network
+            in  ( { model | network = nm }
+                , Cmd.map MNetwork nc
+                )
 
 updateChanges : Changes -> (Model, List (Cmd Msg)) -> (Model, List (Cmd Msg))
 updateChanges change (model, cmd) = case change of

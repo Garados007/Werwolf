@@ -9,7 +9,7 @@ import Task
 import Json.Decode as Json
 import Json.Encode as JE
 import Dict exposing (Dict)
-import Regex exposing (regex)
+import Regex exposing (Regex)
 import Result
 
 import Game.Configuration exposing (..)
@@ -18,6 +18,9 @@ import Game.UI.Loading as Loading exposing (loading)
 import Game.Types.CreateOptions exposing (..)
 import Game.Types.Types exposing (..)
 import Game.Types.Request exposing (NewGameConfig)
+
+regex : String -> Regex 
+regex = Maybe.withDefault Regex.never << Regex.fromString
 
 type NewGame = NewGame NewGameInfo
 
@@ -93,22 +96,22 @@ init (config, group) =
 makeInitOption : Box -> List String -> List (List String, OValue)
 makeInitOption box key = case box.content of
     SubBox (SubBoxContent content) -> List.concat <|
-        List.map (\b -> makeInitOption b <| key :< box.key) content
+        List.map (\b -> makeInitOption b <| addLast key box.key) content
     Desc _ -> []
     Num min max digits default -> 
-        [( key :< box.key
+        [( addLast key box.key
         , ONum ((min <= default) && (default <= max)) default 
         )]
     Text default pattern -> 
-        [( key :< box.key
+        [( addLast key box.key
         , OText (Regex.contains (regex pattern) default) default 
         )]
-    Check default -> [( key :< box.key, OCheck default )]
+    Check default -> [( addLast key box.key, OCheck default )]
     OptList list ->
-        [( key :< box.key
+        [( addLast key box.key
         , case list of
             [] -> OOpt False ""
-            (key,text) :: os -> OOpt True key
+            (key2,text) :: os -> OOpt True key2
         )]
 
 view : NewGame -> Html NewGameMsg
@@ -123,16 +126,16 @@ view (NewGame info) = div [ class "w-newgame-box" ]
             Nothing -> loading
         ]
     , div [ class "w-newgame-options-header" ] <|
+        addFiltered
         [ div [ class "w-newgame-options-header-item", onClick (ShowPage PCommon) ]
             [ text <| getSingle info.config.lang [ "ui", "ng-common" ] ]
         , div [ class "w-newgame-options-header-item", onClick (ShowPage PRoles) ]
             [ text <| getSingle info.config.lang [ "ui", "ng-roles" ] ]
         ]
-        ++?
         [ Maybe.map (\ct ->
                 div [ class "w-newgame-options-header-item", onClick (ShowPage PSpecial) ] <| 
                     List.singleton <| 
-                        case Maybe.andThen (flip Dict.get info.createOptions) info.currentType of
+                        case Maybe.andThen (\k -> Dict.get k info.createOptions) info.currentType of
                             Just co -> text <| getSingle info.config.lang 
                                 [ "new-option", co.chapter ]
                             Nothing -> loading
@@ -188,7 +191,7 @@ viewPageCommon info =
             Json.map OnChangeTargetUser Html.Events.targetValue
         ] <| List.map
         (\user ->
-            node "option" [ value <| toString user.user ]
+            node "option" [ value <| String.fromInt user.user ]
                 [ text user.stats.name ]
         )
         info.user
@@ -219,14 +222,14 @@ viewPageRoles info =
                     [ type_ "number"
                     , attribute "min" "0"
                     , attribute "step" "1"
-                    , attribute "max" <| toString <| List.length info.user
-                    , value <| toString <| Maybe.withDefault 0 <|
+                    , attribute "max" <| String.fromInt <| List.length info.user
+                    , value <| String.fromInt <| Maybe.withDefault 0 <|
                         Dict.get role info.selRoles
                     , onInput (OnChangeSelRole role)
                     ] []
                 ]
             ) <| Maybe.withDefault [] <| 
-            Maybe.andThen (flip Dict.get info.rolesets) <|
+            Maybe.andThen (\k -> Dict.get k info.rolesets) <|
             info.currentType
         )
     , if (List.sum <| Dict.values info.selRoles) == (List.length info.user)
@@ -236,7 +239,7 @@ viewPageRoles info =
     ]
 
 viewPageSpecial : NewGameInfo -> List (Html NewGameMsg)
-viewPageSpecial info = case Maybe.andThen (flip Dict.get info.createOptions) info.currentType of
+viewPageSpecial info = case Maybe.andThen (\k -> Dict.get k info.createOptions) info.currentType of
     Nothing -> [ loading ]
     Just option -> List.map
         (\box -> viewBox info.setting info.config.lang box [])
@@ -252,16 +255,16 @@ viewBox setting lang box list = case box.content of
             [ div [ class "w-newgame-box-title" ] 
                 [ text <| getSingle lang [ "new-option", box.title ] ]
             , div [ class "w-newgame-box-subbox-content" ] <|
-                List.map (\b -> viewBox setting lang b <| list :< box.key)
+                List.map (\b -> viewBox setting lang b <| addLast list box.key)
                 content
             ]
     Desc desc -> div [ class "w-newgame-box-desc" ] <| List.singleton <|
         text <| getSingle lang [ "new-option", desc ]
     Num min max digits default -> 
-        let onum = Dict.get (list :< box.key) setting
+        let onum = Dict.get (addLast list box.key) setting
                 |> Maybe.withDefault (ONum False default)
             (err,val) = case onum of
-                ONum err val -> (not err,val)
+                ONum err2 val2 -> (not err2,val2)
                 _ -> (False, default)
         in div 
             [ class <| (++) "w-newgame-box-num" <| if err then " error" else "" ]
@@ -269,28 +272,28 @@ viewBox setting lang box list = case box.content of
                 [ text <| getSingle lang [ "new-option", box.title ] ]
             , divk <| input
                 [ type_ "number"
-                , value <| toString val
-                , attribute "min" <| toString min
-                , attribute "max" <| toString max
+                , value <| String.fromFloat val
+                , attribute "min" <| String.fromFloat min
+                , attribute "max" <| String.fromFloat max
                 , attribute "required" "required"
-                , attribute "step" <| toString <| 10 ^ (-digits)
+                , attribute "step" <| String.fromFloat <| 10.0 ^ (toFloat -digits)
                 , onInput
-                    ( OnUpdate (list :< box.key) <<
+                    ( OnUpdate (addLast list box.key) <<
                         (\value -> case String.toFloat value of
-                            Ok v ->
+                            Just v ->
                                 if (min <= v) && (v <= max)
                                 then ONum True v
                                 else ONum False v
-                            Err _ -> ONum False val
+                            Nothing -> ONum False val
                         )
                     )
                 ] []
             ] 
     Text default pattern -> 
-        let otext = Dict.get (list :< box.key) setting
+        let otext = Dict.get (addLast list box.key) setting
                 |> Maybe.withDefault (OText (Regex.contains (regex pattern) default) default)
             (err,val) = case otext of
-                OText err val -> (not err,val)
+                OText err2 val2 -> (not err2, val2)
                 _ -> (False, default)
         in div 
             [ class <| (++) "w-newgame-box-text" <| if err then " error" else "" ]
@@ -302,7 +305,7 @@ viewBox setting lang box list = case box.content of
                 , attribute "pattern" pattern
                 , attribute "required" "required"
                 , onInput
-                    ( OnUpdate (list :< box.key) <<
+                    ( OnUpdate (addLast list box.key) <<
                         (\value ->
                             if Regex.contains (regex pattern) value
                             then OText True value
@@ -312,31 +315,32 @@ viewBox setting lang box list = case box.content of
                 ] []
             ] 
     Check default ->
-        let ocheck = Dict.get (list :< box.key) setting
+        let ocheck = Dict.get (addLast list box.key) setting
                 |> Maybe.withDefault (OCheck default)
             val = case ocheck of
-                OCheck val -> val
+                OCheck val2 -> val2
                 _ -> default
         in div 
             [ class "w-newgame-box-check" ]
             [ div [ class "w-newgame-box-otitle" ]
                 [ text <| getSingle lang [ "new-option", box.title ] ]
             , divk <| input
-                ([ type_ "checkbox"
-                , value <| toString val
-                , onClick
-                    ( OnUpdate (list :< box.key) <| OCheck <| not val
-                    )
-                ] ++?
-                [ if val then Just <| attribute "checked" "checked" else Nothing
-                ]
+                (addFiltered
+                    [ type_ "checkbox"
+                    , value <| if val then "true" else "false"
+                    , onClick
+                        ( OnUpdate (addLast list box.key) <| OCheck <| not val
+                        )
+                    ]
+                    [ if val then Just <| attribute "checked" "checked" else Nothing
+                    ]
                 ) []
             ] 
     OptList olist -> 
-        let oopt = Dict.get (list :< box.key) setting
+        let oopt = Dict.get (addLast list box.key) setting
                 |> Maybe.withDefault (OOpt False "")
             (err,val) = case oopt of
-                OOpt err val -> (not err,val)
+                OOpt err2 val2 -> (not err2, val2)
                 _ -> (False, "")
         in div 
             [ class <| (++) "w-newgame-box-opt" <| if err then " error" else "" ]
@@ -345,18 +349,19 @@ viewBox setting lang box list = case box.content of
             , divk <| node "select" 
                 [ on "change" <|
                     Json.map
-                        (OnUpdate (list :< box.key) << OOpt True)
+                        (OnUpdate (addLast list box.key) << OOpt True)
                         Html.Events.targetValue
                 ] <| List.map
                 (\(key,txt) ->
                     node "option"
-                        ([ value key
-                        ]
-                        ++?
-                        [ if key == val 
-                            then Just <| attribute "selected" "selected"
-                            else Nothing
-                        ])
+                        (addFiltered
+                            [ value key
+                            ]
+                            [ if key == val 
+                                then Just <| attribute "selected" "selected"
+                                else Nothing
+                            ]
+                        )
                         [ text <| getSingle lang ["new-option", txt] ]
                 )
                 olist
@@ -414,7 +419,7 @@ update def msg (NewGame info) = case msg of
     OnUpdate keyl var ->
         (NewGame { info | setting = Dict.insert keyl var info.setting }, Cmd.none, [])
     OnChangeTargetUser userS ->
-        (NewGame { info | targetUser = Result.toMaybe <| String.toInt userS }
+        (NewGame { info | targetUser = String.toInt userS }
         , Cmd.none
         , []
         )
@@ -424,9 +429,9 @@ update def msg (NewGame info) = case msg of
         (NewGame 
             { info 
             | selRoles = case String.toInt text of
-                Ok num -> if num < 0 then info.selRoles 
+                Just num -> if num < 0 then info.selRoles 
                     else Dict.insert role num info.selRoles
-                Err _ -> info.selRoles
+                Nothing -> info.selRoles
             }
         , Cmd.none
         , []
@@ -438,7 +443,7 @@ update def msg (NewGame info) = case msg of
             (prepairRoleList info.selRoles)
             (case info.currentType of
                 Just ct -> ct
-                Nothing -> Debug.crash "NewGame:update:OnCreateGame - require ruleset"
+                Nothing -> Debug.todo "NewGame:update:OnCreateGame - require ruleset"
             )
             (prepairConfig info.setting)
         )
@@ -446,16 +451,18 @@ update def msg (NewGame info) = case msg of
 subscriptions : NewGame -> Sub NewGameMsg
 subscriptions model = Sub.none
 
-(++?) : List a -> List (Maybe a) -> List a
-(++?) list = (++) list << List.filterMap identity
+-- former operator ++? (custom operators are removed in elm 0.19)
+addFiltered : List a -> List (Maybe a) -> List a
+addFiltered list = (++) list << List.filterMap identity
 
-(:<) : List a -> a -> List a
-(:<) list a = list ++ [a]
+-- former operator :< (custom operators are removed in elm 0.19)
+addLast : List a -> a -> List a 
+addLast list a = list ++ [a]
 
 formatKey : String -> String
 formatKey key =
     let ml : List Char -> List (List Char)
-        ml = \list ->
+        ml list =
             if list == []
             then []
             else (List.take 4 list) :: (ml <| List.drop 4 list)
@@ -475,7 +482,7 @@ prepairConfig =
             OCheck v -> JE.bool v
             OOpt _ v -> JE.string v
         insertpt : PT -> List String -> JE.Value -> PT
-        insertpt = \pt list val -> case list of
+        insertpt pt list val = case list of
             [] -> PTV val
             l :: ls -> case pt of
                 PTV _ -> PTG <| Dict.insert l 
@@ -493,7 +500,7 @@ prepairConfig =
                     )
                     group
         translate : PT -> JE.Value
-        translate = \pt -> case pt of
+        translate pt = case pt of
             PTG dict -> JE.object <| 
                 List.map (\(k,v) -> (k, translate v)) <| 
                 Dict.toList dict

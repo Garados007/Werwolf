@@ -253,7 +253,7 @@ fetchSpecial : LangLibConfig -> LanguageLibTile -> LanguageVars -> Maybe String
 fetchSpecial config tile vars =
     let special : LanguageLibTile -> List String -> 
             Maybe (List LanguageLibSpecial)
-        special = \sub list ->
+        special sub list =
             case list of
                 [] -> case sub of
                     Text text -> Just [ Raw text ]
@@ -265,7 +265,7 @@ fetchSpecial config tile vars =
                         Nothing -> Nothing
                     _ -> Nothing
         findUser : List User -> Int -> Maybe User
-        findUser = \list id -> case list of
+        findUser list id = case list of
             [] -> Nothing
             l :: ls ->
                 if l.user == id
@@ -279,17 +279,17 @@ fetchSpecial config tile vars =
                 UserName key -> case Dict.get key vars.user of
                     Nothing -> "{" ++ key ++ "}"
                     Just id -> case findUser config.user id of
-                        Nothing -> "User #" ++ (toString id)
+                        Nothing -> "User #" ++ (String.fromInt id)
                         Just u -> u.stats.name
                 ChatRoomName key -> case Dict.get key vars.chat of
                     Nothing -> "{" ++ key ++ "}"
                     Just id -> case Dict.get id config.chats of
-                        Nothing -> "Chat #" ++ (toString id)
+                        Nothing -> "Chat #" ++ (String.fromInt id)
                         Just c -> getChatNameInt config tile c.chatRoom
                 VoteKeyName key -> case Dict.get key vars.voteKey of
                     Nothing -> "{" ++ key ++ "}"
                     Just (cid, vk) -> case Dict.get cid config.chats of
-                        Nothing -> "Voting #" ++ vk ++ "@" ++ (toString cid)
+                        Nothing -> "Voting #" ++ vk ++ "@" ++ (String.fromInt cid)
                         Just c -> getVotingNameInt config tile c.chatRoom vk
             )
             spec

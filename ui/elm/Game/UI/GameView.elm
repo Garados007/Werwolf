@@ -1,14 +1,13 @@
 module Game.UI.GameView exposing
     ( GameView
     , GameViewMsg
-        ( SetConfig
-        , SetLang
-        , Manage
-        , Disposing
-        )
     , GameViewEvent (..)
     , GameViewDef
     , gameViewModule
+    , msgSetConfig
+    , msgSetLang
+    , msgManage
+    , msgDisposing
     )
 
 import ModuleConfig as MC exposing (..)
@@ -56,7 +55,7 @@ type alias GameViewInfo =
     , createOptions : Dict String CreateOptions
     , rolesets : Dict String (List String)
     , userListBox : UserListBox
-    , chatBox : Maybe (ChatBoxDef Int EventMsg)
+    , chatBox : Maybe (ChatBoxDef EventMsg)
     , voting : Maybe (VotingDef EventMsg)
     , newGame : Maybe (NewGameDef EventMsg)
     , showPlayers : Bool
@@ -119,6 +118,18 @@ type EventMsg
     | PVoting VotingMsg
     | PNewGame NewGameMsg
 
+msgManage : List Changes -> GameViewMsg
+msgManage = Manage
+
+msgSetConfig : Configuration -> GameViewMsg
+msgSetConfig = SetConfig
+
+msgSetLang : LangGlobal -> GameViewMsg 
+msgSetLang = SetLang 
+
+msgDisposing : GameViewMsg 
+msgDisposing = Disposing
+
 gameViewModule : (GameViewEvent -> List a) ->
     (Int, Int) -> (GameViewDef a, Cmd GameViewMsg, List a)
 gameViewModule = createModule
@@ -141,7 +152,8 @@ init (groupId, ownUserId) =
         config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing 
         (userListBox, ulbCmd) = UserListBox.init config ownUserId
-        (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox (config, groupId)
+        (chatBox, cbCmd, cbTasks) = chatBoxModule handleChatBox 
+            (config, String.fromInt groupId)
         (voting, vCmd, vTasks) = votingModule handleVoting (config, ownUserId)
         info = 
             { config = config
@@ -249,7 +261,7 @@ handleEvent def = changeWithAll3
 
 justMcUpdate : (a -> msg -> (a, Cmd msg, List ev)) -> Maybe a -> msg -> (Maybe a, Cmd msg, List ev)
 justMcUpdate fc model msg = case model of
-    Just m -> (\(m,c,l) -> (Just m, c, l)) <| fc m msg
+    Just m -> (\(m2,c,l) -> (Just m2, c, l)) <| fc m msg
     Nothing -> (Nothing, Cmd.none, [])
 
 update : GameViewDef a -> GameViewMsg -> GameView -> (GameView, Cmd GameViewMsg, List a)
@@ -263,8 +275,9 @@ update def msg (GameView model) = case msg of
                 | register = removeDoubles rr
                 , unregister = removeDoubles changed_.unregister
                 }
-            req1 = flip List.filter model.periods 
-                <| not << flip List.member changed.unregister
+            req1 = List.filter
+                (\k -> not <| List.member k changed.unregister)
+                model.periods
             req2 = List.append req1 changed.register
             tasks = List.concat
                 [ List.map (MC.event def << Unregister)
@@ -300,10 +313,10 @@ update def msg (GameView model) = case msg of
         , Cmd.none
         , List.concat <| List.map (MC.event def << Unregister) model.periods
         )
-    WrapUserListBox wmsg -> case wmsg of
-        OnCloseBox ->
+    WrapUserListBox wmsg -> if wmsg == UserListBox.msgOnCloseBox
+        then
             (GameView { model | showPlayers = False }, Cmd.none, [])
-        _ ->
+        else
             let
                 (nm, wcmd) = UserListBox.update wmsg model.userListBox
             in  ( GameView { model | userListBox = nm }
@@ -360,14 +373,14 @@ update def msg (GameView model) = case msg of
                 else model.config.lang
             oc = model.config
             nc = { oc 
-                | lang = local
-                    |> flip updateUser model.user
-                    |> flip updateChats model.chats
+                | lang = updateUser 
+                    (updateChats local model.chats)
+                    model.user
                 }
             model1 = { model | config = nc }
-            (nm1, wcmd1) = UserListBox.update (UpdateConfig nc) model1.userListBox
-            (nm2, wcmd2, wtasks2) = justMcUpdate MC.update model.chatBox (ChatBox.SetConfig nc)
-            (nm3, wcmd3, wtasks3) = justMcUpdate MC.update model.voting (Voting.SetConfig nc)
+            (nm1, wcmd1) = UserListBox.update (UserListBox.msgUpdateConfig nc) model1.userListBox
+            (nm2, wcmd2, wtasks2) = justMcUpdate MC.update model.chatBox (ChatBox.msgSetConfig nc)
+            (nm3, wcmd3, wtasks3) = justMcUpdate MC.update model.voting (Voting.msgSetConfig nc)
             (nm4, wcmd4, wtasks4) = justMcUpdate MC.update model.newGame (NewGame.SetConfig nc)
             model2 = { model1 
                 | userListBox = nm1
@@ -388,7 +401,7 @@ update def msg (GameView model) = case msg of
     CreateNewGame ->
         let group = case model.group of
                 Just g -> g
-                Nothing -> Debug.crash "GameView:update:CreateNewGame - no group is set, new Game cant be created"
+                Nothing -> Debug.todo "GameView:update:CreateNewGame - no group is set, new Game cant be created"
             (nm,wcmd,wtask) = newGameModule handleNewGame (model.config, group)
             (tm,tcmd,ttasks) = handleEvent def { model | newGame = Just nm } 
                 <| (PNewGame <| NewGame.SetCreateOptions model.createOptions)
@@ -440,10 +453,10 @@ performUpdate updater info changes =
             in combine change1 change2
 
 pushUpdate : (a -> b -> a) -> a -> List b -> a
-pushUpdate f init list =
+pushUpdate f vinit list =
     case list of
-        [] -> init
-        l :: ls -> pushUpdate f (f init l) ls
+        [] -> vinit
+        l :: ls -> pushUpdate f (f vinit l) ls
 
 groupFinished : Group -> Bool
 groupFinished group = case group.currentGame of
@@ -571,7 +584,7 @@ updateGroup info change =
             in ChangeVar newModel nperiods rperiods send
         CUser user -> if user.group /= info.ownGroupId then ChangeVar info [] [] [] else ChangeVar
             { info
-            | user = (::) user <| List.filter ((./=) .user user) info.user
+            | user = (::) user <| List.filter (pathEqual .user user) info.user
             , hasPlayer =
                 if user.user == info.ownUserId
                 then user.player /= Nothing
@@ -581,8 +594,8 @@ updateGroup info change =
         CLastOnline groupId list -> if groupId /= info.ownGroupId then ChangeVar info [] [] [] else
             let el = List.map .user info.user
                 ul = List.map Tuple.first list
-                nl = List.filter (not << flip List.member el) ul
-                rl = List.filter (not << flip List.member ul) el
+                nl = List.filter (\k -> not <| List.member k el) ul
+                rl = List.filter (\k -> not <| List.member k ul) el
             in ChangeVar
                 { info
                 | user = List.filterMap
@@ -629,7 +642,7 @@ updateGroup info change =
                 ( requestNewVotes chat info.lastVoteTime
                 )
                 ( Maybe.withDefault [] 
-                    <| Maybe.map (flip requestNewVotes info.lastVoteTime) old
+                    <| Maybe.map (\c -> requestNewVotes c info.lastVoteTime) old
                 )
                 []
         CChatEntry entry -> case Dict.get entry.chat info.entrys of
@@ -693,14 +706,16 @@ updateGroup info change =
                             [ if voting.voteEnd == Nothing && voting.voteStart /= Nothing
                                 then Just <| requestNewVotesS voting info.lastVoteTime
                                 else Nothing
-                            , Maybe.andThen (flip requestChangedVotings lastVotingChange) info.group
+                            , Maybe.andThen (\g -> requestChangedVotings g lastVotingChange) info.group
                             ]
                         )
                         ( List.filterMap identity
                             [ if voting.voteEnd /= Nothing
                                 then Just <| requestNewVotesS voting info.lastVoteTime
                                 else Nothing
-                            , Maybe.andThen (flip requestChangedVotings info.lastVotingChange) info.group
+                            , Maybe.andThen 
+                                (\g -> requestChangedVotings g info.lastVotingChange) 
+                                info.group
                             ]
                         )
                         []
@@ -724,7 +739,8 @@ performChanges_Group old new = case new.group of
                 Nothing -> True
             firstJust = \(m,c,t) -> (Just m,c,t)
             (chatBox, cbCmd, cbTasks) = if changefinished && (not finished)
-                then firstJust <| chatBoxModule handleChatBox (new.config, group.id)
+                then firstJust <| chatBoxModule handleChatBox 
+                    (new.config, String.fromInt group.id)
                 else if changefinished && finished
                     then (Nothing, Cmd.none, [])
                     else (new.chatBox, Cmd.none, [])
@@ -751,12 +767,12 @@ getChanges_UserListBox : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List 
 getChanges_UserListBox old new = compact
     [ if old.user /= new.user
         then Just (Cmd.none, List.singleton <| PUserListBox <|
-            UserListBox.UpdateUser new.user
+            UserListBox.msgUpdateUser new.user
             )
         else Nothing
     , if old.chats /= new.chats
         then Just (Cmd.none, List.singleton <| PUserListBox <|
-            UserListBox.UpdateChats new.chats
+            UserListBox.msgUpdateChats new.chats
             )
         else Nothing
     , if old.group == new.group
@@ -766,7 +782,7 @@ getChanges_UserListBox old new = compact
             Just group -> case group.currentGame of
                 Nothing -> Nothing
                 Just game -> Just (Cmd.none, List.singleton <| PUserListBox <|
-                    UserListBox.UpdateRuleset game.ruleset
+                    UserListBox.msgUpdateRuleset game.ruleset
                     )
     ]
 
@@ -774,25 +790,25 @@ getChanges_ChatBox : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List Even
 getChanges_ChatBox old new = compact
     [ if old.entrys /= new.entrys
         then Just ( Cmd.none
-            , List.singleton <| PChatBox <| ChatBox.AddChats <|
+            , List.singleton <| PChatBox <| ChatBox.msgAddChats <|
                 List.filter (\ce -> ce.id > old.lastChat) <| List.concat <| 
                 List.map Dict.values <| Dict.values new.entrys
             )
         else Nothing
     , if old.user /= new.user
         then Just ( Cmd.none
-            , List.singleton <| PChatBox <| ChatBox.SetUser <| Dict.fromList <|
+            , List.singleton <| PChatBox <| ChatBox.msgSetUser <| Dict.fromList <|
                 List.map (\user -> (user.user, user.stats.name)) new.user
             )
         else Nothing
     , if old.chats /= new.chats
         then Just ( Cmd.none
-            , List.singleton <| PChatBox <| ChatBox.SetRooms new.chats
+            , List.singleton <| PChatBox <| ChatBox.msgSetRooms new.chats
             )
         else Nothing
     , if (Maybe.andThen .currentGame old.group) /= (Maybe.andThen .currentGame new.group)
         then Maybe.map (\v -> (Cmd.none, [v]))
-            <| Maybe.andThen (Just << PChatBox << ChatBox.SetGame)
+            <| Maybe.andThen (Just << PChatBox << ChatBox.msgSetGame)
             <| Maybe.andThen .currentGame new.group
         else Nothing
     ]
@@ -808,22 +824,22 @@ getChanges_Voting : GameViewInfo -> GameViewInfo -> (Cmd GameViewMsg, List Event
 getChanges_Voting old new = compact
     [ if old.chats /= new.chats
         then Just (Cmd.none
-            , List.singleton <| PVoting <| Voting.SetRooms new.chats
+            , List.singleton <| PVoting <| Voting.msgSetRooms new.chats
             )
         else Nothing
     , if old.votes /= new.votes
         then Just (Cmd.none
-            , List.singleton <| PVoting <| Voting.SetVotes new.votes
+            , List.singleton <| PVoting <| Voting.msgSetVotes new.votes
             )
         else Nothing
     , if old.user /= new.user
         then Just (Cmd.none
-            , List.singleton <| PVoting <| Voting.SetUser new.user
+            , List.singleton <| PVoting <| Voting.msgSetUser new.user
             )
         else Nothing
     , if old.group /= new.group
         then Just (Cmd.none
-            , List.singleton <| PVoting <| Voting.SetLeader <|
+            , List.singleton <| PVoting <| Voting.msgSetLeader <|
                 case new.group of
                     Nothing -> False
                     Just group -> group.leader == new.ownUserId
@@ -831,7 +847,7 @@ getChanges_Voting old new = compact
         else Nothing
     , if old.group /= new.group
         then Just (Cmd.none
-            , List.singleton <| PVoting <| Voting.SetGame <|
+            , List.singleton <| PVoting <| Voting.msgSetGame <|
                 Maybe.map .id <| Maybe.andThen .currentGame <|
                 new.group
             )
@@ -891,8 +907,9 @@ getChanges_NewGame old new = compact
         else Nothing
     ]
 
-(./=) : (a -> b) -> a -> a -> Bool
-(./=) f a b = (f a) /= (f b)
+-- former operator ./= (custom operators removed in elm 0.19)
+pathEqual : (a -> b) -> a -> a -> Bool 
+pathEqual f a b = (f a) /= (f b)
 
 replace : (a -> Bool) -> a -> List a -> List a
 replace check new list = (::) new <| List.filter check list
@@ -928,7 +945,7 @@ requestUpdatedGroup group =
 requestChangedVotings : Group -> Int -> Maybe Request
 requestChangedVotings group lastChange =
     Maybe.andThen
-        (Just << RespConv << flip GetChangedVotings lastChange)
+        (\g -> Just <| RespConv <| GetChangedVotings g lastChange)
         <| Maybe.map
             .id
             group.currentGame
@@ -954,7 +971,7 @@ requestChatEntrys gameId lastId =
 
 requestNewVotes : Chat -> Int -> List Request
 requestNewVotes chat lastChange = List.map
-    (flip requestNewVotesS lastChange) chat.voting
+    (\v -> requestNewVotesS v lastChange) chat.voting
 
 requestNewVotesS : Game.Types.Types.Voting -> Int -> Request
 requestNewVotesS voting lastChange =
@@ -988,19 +1005,19 @@ modifyVotes dict chat =
         dk : List String
         dk = Dict.keys dict
         remove : List String
-        remove = List.filter (not << flip List.member ck) <| dk
+        remove = List.filter (\k -> not <| List.member k ck) <| dk
         add : List String
-        add = List.filter (not << flip List.member dk) <| ck
+        add = List.filter (\k -> not <| List.member k dk) <| ck
         d1 : Dict VoteKey (Dict UserId Vote)
         d1 = List.foldr Dict.remove dict remove
         d2 : Dict VoteKey (Dict UserId Vote)
-        d2 = List.foldr (flip Dict.insert Dict.empty) d1 add
+        d2 = List.foldr (\k -> Dict.insert k Dict.empty) d1 add
     in d2
 
 view : GameView -> Html GameViewMsg
 view (GameView info) = case getViewType info of
     ViewLoading -> loading
-    ViewInitGame -> div [ class "w-box-game-view", attribute "data-view" <| toString <| getViewType info ] 
+    ViewInitGame -> div [ class "w-box-game-view", attribute "data-view" <| Debug.toString <| getViewType info ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -1012,7 +1029,7 @@ view (GameView info) = case getViewType info of
             Just newGame -> Html.map WrapNewGame <| MC.view newGame
             Nothing -> div [] []
         ]
-    ViewWaitGame -> div [ class "w-box-game-view", attribute "data-view" <| toString <| getViewType info ] 
+    ViewWaitGame -> div [ class "w-box-game-view", attribute "data-view" <| Debug.toString <| getViewType info ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -1022,7 +1039,10 @@ view (GameView info) = case getViewType info of
             ]
         , WaitGameCreation.view info.config
         ]
-    ViewNormalGame -> div [ class "w-box-game-view", attribute "data-view" <| toString <| getViewType info ] 
+    ViewNormalGame -> div 
+        [ class "w-box-game-view"
+        , attribute "data-view" <| Debug.toString <| getViewType info 
+        ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player" <| 
                 if info.showPlayers then " visible" else ""
@@ -1032,18 +1052,18 @@ view (GameView info) = case getViewType info of
             ]
         , Html.map WrapChatBox <| MC.view <| case info.chatBox of
             Just cb -> cb
-            Nothing -> Debug.crash "GameView:view:ViewNormalGame - chatBox should exists"
+            Nothing -> Debug.todo "GameView:view:ViewNormalGame - chatBox should exists"
         ,div 
             [ class <| (++) "w-box-panel w-box-voting" <| 
                 if info.showVotes then " visible" else ""
             ]
             [ Html.map WrapVoting <| MC.view <| case info.voting of
                 Just v -> v
-                Nothing -> Debug.crash "GameView:view:ViewNormalGame - voting should exists"
+                Nothing -> Debug.todo "GameView:view:ViewNormalGame - voting should exists"
             ]
-        --, Html.text <| toString info
+        --, Html.text <| Debug.toString info
         ]
-    ViewGuest -> div [ class "w-box-game-view", attribute "data-view" <| toString <| getViewType info ] 
+    ViewGuest -> div [ class "w-box-game-view", attribute "data-view" <| Debug.toString <| getViewType info ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -1053,9 +1073,9 @@ view (GameView info) = case getViewType info of
             ]
         , Html.map WrapChatBox <| MC.view <| case info.chatBox of
             Just cb -> cb
-            Nothing -> Debug.crash "GameView:view:ViewGuest - chatBox should exists"
+            Nothing -> Debug.todo "GameView:view:ViewGuest - chatBox should exists"
         ]
-    ViewFinished -> div [ class "w-box-game-view", attribute "data-view" <| toString <| getViewType info ] 
+    ViewFinished -> div [ class "w-box-game-view", attribute "data-view" <| Debug.toString <| getViewType info ] 
         [ div 
             [ class <| (++) "w-box-panel w-box-player " <| 
                 if info.showPlayers then "visible" else ""
@@ -1071,8 +1091,8 @@ view (GameView info) = case getViewType info of
 
 maybeCrash : Maybe a -> a
 maybeCrash v = case v of
-    Just v -> v
-    Nothing -> Debug.crash "var shouldn't be Nothing. Report this error on https://github.com/Garados007/Werwolf"
+    Just v2 -> v2
+    Nothing -> Debug.todo "var shouldn't be Nothing. Report this error on https://github.com/Garados007/Werwolf"
 
 subscriptions : GameView -> Sub GameViewMsg
 subscriptions (GameView info) =

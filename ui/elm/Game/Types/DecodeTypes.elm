@@ -1,8 +1,10 @@
 module Game.Types.DecodeTypes exposing (..)
 
 import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (decode, required)
+import Json.Decode.Pipeline exposing (required)
 import Game.Types.Types exposing (..)
+
+decode = succeed
 
 decodeUserStat : Decoder UserStat
 decodeUserStat =

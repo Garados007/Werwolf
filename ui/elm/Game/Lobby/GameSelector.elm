@@ -1,13 +1,12 @@
 module Game.Lobby.GameSelector exposing
     ( GameSelector
     , GameSelectorMsg
-        ( SetConfig
-        , SetGames
-        , SetCurrent
-        )
     , GameSelectorEvent (..)
     , GameSelectorDef
     , gameSelectorModule
+    , msgSetConfig
+    , msgSetGames
+    , msgSetCurrent
     )
 
 import ModuleConfig as MC exposing (..)
@@ -37,6 +36,15 @@ type GameSelectorMsg
     -- private methods
     | OnChangeCurrent Int
     | OnOpenMenu
+
+msgSetConfig : LangConfiguration -> GameSelectorMsg
+msgSetConfig = SetConfig
+
+msgSetGames : Dict Int String -> GameSelectorMsg
+msgSetGames = SetGames
+
+msgSetCurrent : Maybe Int -> GameSelectorMsg
+msgSetCurrent = SetCurrent
 
 type GameSelectorEvent
     = ChangeCurrent (Maybe Int)

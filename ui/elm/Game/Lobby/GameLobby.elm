@@ -23,10 +23,13 @@ import Game.Utils.LangLoader exposing (..)
 import Game.Utils.UserLookup as UserLookup exposing (UserLookup)
 import Config exposing (..)
 
-import Html exposing (Html, div, node, program, text)
+import Html exposing (Html, div, node, text)
 import Html.Attributes exposing (class, style, attribute)
 import Dict exposing (Dict)
 import Set exposing (Set)
+
+-- elm/Browser
+import Browser 
 
 type GameLobby = GameLobby GameLobbyInfo
 
@@ -94,9 +97,9 @@ type ViewModal
     | VMBanSpecificUser
     | VMTutorial
 
-main : Program Never GameLobby GameLobbyMsg
-main = program
-    { init = init
+main : Program () GameLobby GameLobbyMsg
+main = Browser.element
+    { init = always init
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -201,7 +204,7 @@ handleEvent = changeWithAll2
                 else
                     let 
                         (ns, scmd, stasks) = MC.update model.selector <|
-                                GameSelector.SetCurrent <| Just id
+                                GameSelector.msgSetCurrent <| Just id
                         (nmodel, eventCmd) = handleEvent
                             { model
                             | curGame = Just id
@@ -218,18 +221,18 @@ handleEvent = changeWithAll2
                         gameViewModule (handleGameView id)
                         (id, case model.ownId of
                             Nothing ->
-                                Debug.crash "GameLobby:handleEvent:EnterGroup - require own user id"
+                                Debug.todo "GameLobby:handleEvent:EnterGroup - require own user id"
                             Just uid -> uid
                         )
                     curGame = Just <| Maybe.withDefault id model.curGame
                     (ng, lcmd, ltasks) = MC.update gameView <|
-                        GameView.SetLang model.lang
+                        GameView.msgSetLang model.lang
                     (ng2, lcmd2, ltasks2) = MC.update ng <|
-                        GameView.SetConfig model.config
+                        GameView.msgSetConfig model.config
                     (ns, scmd, stasks) =
                         if curGame /= model.curGame
                         then MC.update model.selector <|
-                            GameSelector.SetCurrent curGame
+                            GameSelector.msgSetCurrent curGame
                         else (model.selector, Cmd.none, [])
                     nmodel = { model 
                         | games = Dict.insert id ng2 model.games
@@ -254,12 +257,12 @@ handleEvent = changeWithAll2
             ( { model | modal = modal }, Cmd.none)
         SetBanInfo user group ->
             let (mbs, cbs, tbs) = MC.update model.banUser <|
-                    BanSpecificUser.SetUser user group
+                    BanSpecificUser.msgSetUser user group
                 (nm, ecmd) = handleEvent { model | banUser = mbs } tbs
             in  ( nm, Cmd.batch <| Cmd.map MBanSpecificUser cbs :: ecmd)
         UpdateConfig conf ->
             let (ng, gcmd, gtasks) = updateAllGames model.games
-                    <| GameView.SetConfig conf
+                    <| GameView.msgSetConfig conf
                 nm = { model | config = conf, games = ng }
                 lconfig = LangConfiguration conf <| createLocal nm.lang Nothing
                 (mpc, cpc, tpc) = pushLangConfig lconfig nm
@@ -279,11 +282,11 @@ handleEvent = changeWithAll2
                         { model | config = conf2 }
                         lang
                     (mgm, cgm, tgm) = MC.update m.menu <|
-                        GameMenu.SetLang key
+                        GameMenu.msgSetLang key
                     requests = if hasLanguage lang key
                         then []
                         else (::) (fetchUiLang key MainLang)
-                            <| List.map (\m -> fetchModuleLang m key ModuleLang)
+                            <| List.map (\m2 -> fetchModuleLang m2 key ModuleLang)
                             <| Set.toList
                             <| allGamesets lang
                     (nmodel, eventCmd) = handleEvent
@@ -314,7 +317,7 @@ init =
         (mbs, cbs, tbs) = banSpecificUserModule handleBanSpecificUser
         (mt, ct) = Tutorial.init
         model = 
-            { network = network
+            { network = newNetwork
             , games = Dict.empty
             , selector = mgs
             , createGroup = mcg
@@ -339,7 +342,7 @@ init =
         (tm, tcmd) = handleEvent model <| tgs ++ tgm ++ tcg ++ tjg ++ tmg ++ tlc ++ to ++ tbs
     in  ( GameLobby tm
         , Cmd.batch <|
-            [ Cmd.map MNetwork <| send network <| RespMulti <| Multi
+            [ Cmd.map MNetwork <| send newNetwork <| RespMulti <| Multi
                 [ RespGet <| GetConfig
                 , RespGet <| GetOwnUserStat
                 , RespGet <| GetMyGroupUser
@@ -367,11 +370,16 @@ view (GameLobby model) = div [] <| viewStyles
                 MC.view model.selector
             ]
         ]
-    , div [ class "w-lobby-game" ] <| List.singleton <| case Maybe.andThen (flip Dict.get model.games) model.curGame of
+    , div [ class "w-lobby-game" ] 
+        <| List.singleton 
+        <| case Maybe.andThen (\k -> Dict.get k model.games) model.curGame of
         Nothing -> div [ class "w-lobby-nogame" ]
-            [ Html.map MTutorial <| flip Tutorial.viewEmbed model.tutorial <|
-                LangConfiguration model.config <|
-                createLocal model.lang Nothing
+            [ Html.map MTutorial 
+                <| Tutorial.viewEmbed 
+                    ( LangConfiguration model.config 
+                        <| createLocal model.lang Nothing
+                    )
+                    model.tutorial
             --[ text <| getSingle (createLocal model.lang Nothing)
             --    [ "lobby", "nogame" ]
             ]
@@ -392,10 +400,13 @@ view (GameLobby model) = div [] <| viewStyles
             VMOptions -> Html.map MOptions <| MC.view model.options
             VMLanguageChanger -> Html.map MLanguageChanger <| MC.view model.language
             VMBanSpecificUser -> Html.map MBanSpecificUser <| MC.view model.banUser
-            VMTutorial -> flip (Tutorial.viewModal MTutorial CloseEveryModal)
-                model.tutorial <|
-                LangConfiguration model.config <|
-                createLocal model.lang Nothing
+            VMTutorial -> Tutorial.viewModal 
+                MTutorial 
+                CloseEveryModal
+                ( LangConfiguration model.config
+                    <| createLocal model.lang Nothing
+                )
+                model.tutorial
     , stylesheet <| uri_host ++ uri_path ++ "ui/css/themes/" ++ model.config.theme ++ ".css"
     ]
 
@@ -420,14 +431,14 @@ absUrl url = uri_host ++ uri_path ++ url
 
 update : GameLobbyMsg -> GameLobby -> (GameLobby, Cmd GameLobbyMsg)
 update msg (GameLobby model) = case msg of
-    MNetwork wmsg -> case wmsg of
-        Received changes ->
+    MNetwork wmsg -> case Network.isReceived wmsg of
+        Just changes ->
             let (nm, ncmd) = Network.update wmsg model.network
                 (ng, gcmd, gtasks) = updateAllGames model.games <|
-                    Manage changes.changes
+                    msgManage changes.changes
                 users = UserLookup.putChanges changes.changes model.users
                 (mmg, cmg, tmg) = MC.update model.manageGroups <|
-                    ManageGroups.SetUsers users
+                    ManageGroups.msgSetUsers users
                 nmodel = { model 
                     | network = nm
                     , games = ng 
@@ -444,7 +455,7 @@ update msg (GameLobby model) = case msg of
                     , gcmd
                     ] ++ cmd ++ tcmd
                 )
-        _ ->
+        Nothing ->
             let (nm, cmd) = Network.update wmsg model.network
             in  (GameLobby { model | network = nm }, Cmd.map MNetwork cmd)
     MGameView id wmsg -> case Dict.get id model.games of
@@ -507,7 +518,7 @@ update msg (GameLobby model) = case msg of
             Just l -> addSpecialLang model.lang lang mod l
     LangList list ->
         let (mlc, clc, tlc) = MC.update model.language <|
-                LanguageChanger.SetLangs list
+                LanguageChanger.msgSetLangs list
             (tm, tcmd) = handleEvent { model | language = mlc } tlc
         in  ( GameLobby tm
             , Cmd.batch <| Cmd.map MLanguageChanger clc :: tcmd
@@ -524,7 +535,7 @@ updateLang model lang =
         lconfig = LangConfiguration model.config <|
             createLocal lang Nothing
         (ng, gcmd, gtasks) = updateAllGames model.games <|
-            GameView.SetLang nm.lang
+            GameView.msgSetLang nm.lang
         (mpc, cpc, tpc) = pushLangConfig lconfig nm
         (tm, tcmd) = handleEvent 
             { mpc
@@ -538,21 +549,21 @@ updateLang model lang =
 pushLangConfig : LangConfiguration -> GameLobbyInfo -> (GameLobbyInfo, Cmd GameLobbyMsg, List EventMsg)
 pushLangConfig lconfig model =
     let (mgs, cgs, tgs) = MC.update model.selector <|
-            GameSelector.SetConfig lconfig
+            GameSelector.msgSetConfig lconfig
         (mgm, cgm, tgm) = MC.update model.menu <|
-            GameMenu.SetConfig lconfig
+            GameMenu.msgSetConfig lconfig
         (mcg, ccg, tcg) = MC.update model.createGroup <|
-            CreateGroup.SetConfig lconfig
+            CreateGroup.msgSetConfig lconfig
         (mjg, cjg, tjg) = MC.update model.joinGroup <|
-            JoinGroup.SetConfig lconfig
+            JoinGroup.msgSetConfig lconfig
         (mmg, cmg, tmg) = MC.update model.manageGroups <|
-            ManageGroups.SetConfig lconfig
+            ManageGroups.msgSetConfig lconfig
         (mlc, clc, tlc) = MC.update model.language <|
-            LanguageChanger.SetConfig lconfig
+            LanguageChanger.msgSetConfig lconfig
         (mo, co, to) = MC.update model.options <|
-            Options.SetConfig lconfig
+            Options.msgSetConfig lconfig
         (mbs, cbs, tbs) = MC.update model.banUser <|
-            BanSpecificUser.SetConfig lconfig
+            BanSpecificUser.msgSetConfig lconfig
     in  ( { model
             | selector = mgs
             , menu = mgm
@@ -619,12 +630,12 @@ updateConfig change (m, list, tasks) = case change of
             closeModal = (m.modal == VMJoinGroup) &&
                 ((==) group.enterKey <| JoinGroup.getKey <| MC.getModule m.joinGroup)
             (wm, wcmd, wtasks) = MC.update m.selector <|
-                GameSelector.SetGames <| Dict.map (\_ -> .name) groups
+                GameSelector.msgSetGames <| Dict.map (\_ -> .name) groups
             (mgs, cgs, tgs) = if fetch == []
                 then (wm, Cmd.none, [])
-                else MC.update wm <| GameSelector.SetCurrent <| Just group.id
+                else MC.update wm <| GameSelector.msgSetCurrent <| Just group.id
             (mmg, cmg, tmg) = MC.update m.manageGroups <|
-                ManageGroups.SetGroups groups
+                ManageGroups.msgSetGroups groups
         in  ( { m 
                 | groups = groups
                 , selector = mgs
@@ -639,21 +650,21 @@ updateConfig change (m, list, tasks) = case change of
             )
     CErrInvalidGroupKey ->
         let (mjg, cjg, tjg) = MC.update m.joinGroup <|
-                JoinGroup.InvalidKey
+                JoinGroup.msgInvalidKey
         in  ( { m | joinGroup = mjg }
             , Cmd.map MJoinGroup cjg :: list
             , tjg ++ tasks 
             )
     CErrJoinBannedFromGroup ->
         let (mjg, cjg, tjg) = MC.update m.joinGroup <|
-                JoinGroup.UserBanned
+                JoinGroup.msgUserBanned
         in  ( { m | joinGroup = mjg }
             , Cmd.map MJoinGroup cjg :: list
             , tjg ++ tasks
             )
     CBanInfo ban ->
         let (mmg, cmg, tmg) = MC.update m.manageGroups <|
-                ManageGroups.AddBan ban
+                ManageGroups.msgAddBan ban
         in  ( { m | manageGroups = mmg }
             , Cmd.map MManageGroups cmg :: list
             , tmg ++ tasks
@@ -667,7 +678,8 @@ updateConfig change (m, list, tasks) = case change of
     CGroupLeaved id ->
         let game = Dict.get id m.games
             tgv = case game of
-                Just g -> (\(m,c,t)->t) <| MC.update g GameView.Disposing
+                Just g -> (\(_, _, t) -> t) 
+                    <| MC.update g GameView.msgDisposing
                 Nothing -> []
             groups = Dict.remove id m.groups
             games = Dict.remove id m.games
@@ -675,11 +687,11 @@ updateConfig change (m, list, tasks) = case change of
                 then List.head <| Dict.keys groups
                 else m.curGame
             (mgs, cgs, tgs) = MC.update m.selector <|
-                GameSelector.SetGames <| Dict.map (\_ -> .name) groups
+                GameSelector.msgSetGames <| Dict.map (\_ -> .name) groups
             (mgs2, cgs2, tgs2) = MC.update mgs <|
-                GameSelector.SetCurrent curGame
+                GameSelector.msgSetCurrent curGame
             (mmg, cmg, tmg) = MC.update m.manageGroups <|
-                ManageGroups.SetGroups groups
+                ManageGroups.msgSetGroups groups
             mm = { m 
                 | groups = groups
                 , games = games
@@ -700,7 +712,7 @@ pushOwnId : GameLobbyInfo -> List (Cmd GameLobbyMsg) -> List EventMsg -> (GameLo
 pushOwnId m list tasks = 
     let (mmg, cmg, tmg) = case m.ownId of
             Just id -> MC.update m.manageGroups <|
-                ManageGroups.SetOwnId id
+                ManageGroups.msgSetOwnId id
             Nothing -> (m.manageGroups, Cmd.none, [])
     in  ( { m | manageGroups = mmg }
         , Cmd.map MManageGroups cmg :: list

@@ -1,12 +1,11 @@
 module Game.Lobby.LanguageChanger exposing
     ( LanguageChanger
     , LanguageChangerMsg
-        ( SetConfig
-        , SetLangs
-        )
     , LanguageChangerEvent (..)
     , LanguageChangerDef
     , languageChangerModule
+    , msgSetConfig
+    , msgSetLangs
     )
     
 import ModuleConfig as MC exposing (..)
@@ -42,6 +41,12 @@ type LanguageChangerEvent
 
 type alias LanguageChangerDef a = ModuleConfig LanguageChanger LanguageChangerMsg
     () LanguageChangerEvent a
+
+msgSetConfig : LangConfiguration -> LanguageChangerMsg
+msgSetConfig = SetConfig
+
+msgSetLangs : List LangInfo -> LanguageChangerMsg
+msgSetLangs = SetLangs
 
 languageChangerModule : (LanguageChangerEvent -> List a) ->
     (LanguageChangerDef a, Cmd LanguageChangerMsg, List a)

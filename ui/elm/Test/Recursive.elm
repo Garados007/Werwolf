@@ -40,4 +40,4 @@ decodeBoxContent boxType =
         _ -> fail "not supported box type"
 
 main : Html msg
-main = text (toString (decodeString decodeBox test))
+main = text (Debug.toString (decodeString decodeBox test))

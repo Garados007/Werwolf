@@ -75,9 +75,9 @@ view : Html msg
 view = div []
     [ divs <| getSingle langL [ "key1" ]
     , divs <| getSingle langL [ "key2", "subkey1" ]
-    , divs <| toString <| Maybe.map (getSpecial langL) <| 
+    , divs <| Debug.toString <| Maybe.map (getSpecial langL) <| 
         decodeSpecial special
-    , divs <| toString <| Maybe.map (getSpecial langL) <|
+    , divs <| Debug.toString <| Maybe.map (getSpecial langL) <|
         decodeSpecial special2
     ]
 

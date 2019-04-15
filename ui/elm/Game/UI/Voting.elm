@@ -1,16 +1,15 @@
 module Game.UI.Voting exposing 
     ( Voting
     , VotingMsg
-        ( SetRooms
-        , SetVotes
-        , SetUser
-        , SetConfig
-        , SetLeader
-        , SetGame
-        )
     , VotingEvent (..)
     , VotingDef
     , votingModule
+    , msgSetRooms
+    , msgSetVotes
+    , msgSetUser
+    , msgSetConfig
+    , msgSetLeader
+    , msgSetGame
     )
 
 import ModuleConfig as MC exposing (..)
@@ -21,11 +20,13 @@ import Html.Events exposing (onClick)
 import List
 import Dict exposing (Dict)
 import Char
+import Time exposing (Zone)
+import Task
 
 import Game.Utils.Dates exposing (DateTimeFormat (..), convert)
 import Game.Types.Request as Request exposing 
     (ChatId, UserId, VoteKey, PlayerId
-    , Response(RespControl), ResponseControl(Vote))
+    , Response(..), ResponseControl(..))
 import Game.Types.Types as Types exposing (..)
 import Game.Utils.Network exposing (Request)
 import Game.Configuration exposing (..)
@@ -44,6 +45,7 @@ type alias VotingInfo =
     , user : List User
     , isLeader : Bool
     , info : Dict (ChatId, VoteKey) Bool
+    , zone : Zone
     }
 
 type VotingMsg
@@ -61,6 +63,7 @@ type VotingMsg
     | OnNextRound
     | OnChangeVis ChatId VoteKey
     | OnCloseBox
+    | SetZone Zone
 
 type VotingEvent 
     = Send Request
@@ -68,6 +71,24 @@ type VotingEvent
 
 type alias VotingDef a = ModuleConfig Voting VotingMsg 
     (LangConfiguration, Int) VotingEvent a
+
+msgSetRooms : Dict ChatId Chat -> VotingMsg 
+msgSetRooms = SetRooms
+
+msgSetVotes : Dict ChatId (Dict VoteKey (Dict UserId Vote)) -> VotingMsg 
+msgSetVotes = SetVotes
+
+msgSetUser : List User -> VotingMsg 
+msgSetUser = SetUser
+
+msgSetConfig : LangConfiguration -> VotingMsg 
+msgSetConfig = SetConfig
+
+msgSetLeader : Bool -> VotingMsg 
+msgSetLeader = SetLeader
+
+msgSetGame : Maybe Int -> VotingMsg 
+msgSetGame = SetGame
 
 votingModule : (VotingEvent -> List a) -> 
     (LangConfiguration, Int) -> 
@@ -83,7 +104,8 @@ init : (LangConfiguration, Int) -> (Voting, Cmd VotingMsg, List a)
 init (config, ownId) =
     ( Voting <| VotingInfo config ownId Nothing
         Dict.empty Dict.empty [] False Dict.empty
-    , Cmd.none
+        Time.utc
+    , Task.perform SetZone Time.here
     , []
     )
 
@@ -140,19 +162,19 @@ viewVoting info voting = div [ class "w-voting" ]
             [ div [ class "w-voting-bar" ]
                 [ div 
                     [ class "w-voting-bar-fill"
-                    , style 
-                        [ ("width", (toString <| 
-                            100 * (toFloat <| voteCount info voting) /
-                            (toFloat <| List.length voting.enabledUser)) ++
-                            "%" )
-                        ]
+                    , style "width" 
+                        <| ( String.fromFloat
+                            <| 100 * (toFloat <| voteCount info voting) /
+                            (toFloat <| List.length voting.enabledUser)
+                            ) 
+                        ++ "%"
                     ] []
                 ]
             ]
         , div [ class "w-voting-info-container" ]
-            [ text <| toString <| voteCount info voting
+            [ text <| String.fromInt <| voteCount info voting
             , text "/"
-            , text <| toString <| List.length voting.enabledUser
+            , text <| String.fromInt <| List.length voting.enabledUser
             ]
         ]
     , let vis = Dict.get (voting.chat, voting.voteKey) info.info
@@ -243,7 +265,7 @@ viewSingleVotingInfo info voting =
             |> Maybe.andThen (Dict.get voting.voteKey)
             |> Maybe.withDefault Dict.empty
         missing = List.filter
-            (not << flip List.member (Dict.values votes |> List.map .voter))
+            (\key -> not <| List.member key (Dict.values votes |> List.map .voter))
             voting.enabledUser
     in div [ class "w-voting-info-box" ]
         [ div [ class "w-voting-info-header" ]
@@ -297,14 +319,14 @@ userName info id =
             Nothing -> False
             Just player -> player.id == id
     in case find func info.user of
-        Nothing -> (++) "User #" <| toString id
+        Nothing -> (++) "User #" <| String.fromInt id
         Just user -> user.stats.name
 
 chatName : VotingInfo -> ChatId -> String
 chatName info id =
     case Dict.get id info.room of
         Just chat -> getChatName info.config.lang chat.chatRoom
-        Nothing -> "Chat #" ++ (toString id)
+        Nothing -> "Chat #" ++ (String.fromInt id)
 
 voteName : VotingInfo -> ChatId -> String -> String
 voteName info id key =
@@ -315,7 +337,9 @@ voteName info id key =
 dateName : VotingInfo -> Maybe Int -> String
 dateName info time = case time of
     Nothing -> single info [ "ui", "not-yet" ]
-    Just t -> convert info.config.conf.votingDateFormat (toFloat t * 1000)
+    Just t -> convert info.config.conf.votingDateFormat 
+        (Time.millisToPosix <| t * 1000)
+        info.zone
 
 voteCount : VotingInfo -> TVoting -> Int
 voteCount info voting = case Dict.get voting.chat info.votes of
@@ -349,6 +373,7 @@ update def msg (Voting info) = case msg of
     SetConfig config -> (Voting { info | config = config }, Cmd.none, [])
     SetLeader leader -> (Voting { info | isLeader = leader }, Cmd.none, [])
     SetGame game -> (Voting { info | gameId = game}, Cmd.none, [])
+    SetZone zone -> (Voting { info | zone = zone}, Cmd.none, [])
     OnVote chatId voteKey playerId ->
         (Voting info
         , Cmd.none

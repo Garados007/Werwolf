@@ -1,7 +1,19 @@
 module Game.Utils.Dates exposing (DateTimeFormat (..), convert, all)
 
-import Date exposing (fromTime,day,month,year,Month(..))
-import Time exposing (Time,inHours,inMinutes,inSeconds)
+-- elm/time
+import Time exposing 
+    ( Posix
+    , Zone
+    , Month (..)
+    , toDay
+    , toHour
+    , toMinute
+    , toMonth
+    , toSecond
+    , toYear
+    )
+
+-- elm/core
 import String exposing (repeat,length)
 import Dict exposing (Dict)
 
@@ -48,18 +60,17 @@ all = Dict.fromList
 ex : Int -> Int -> String
 ex decimals num =
     let
-        t = toString num
+        t = String.fromInt num
         l = length t
         pl = if l < decimals then decimals - l else 0
         p = repeat pl "0"
     in p ++ t
 
-convert : DateTimeFormat -> Time -> String
-convert format time =
+convert : DateTimeFormat -> Posix -> Zone -> String
+convert format time zone =
     let
-        date = fromTime time
-        d = day date
-        m = case month date of
+        d = toDay zone time
+        m = case toMonth zone time of
             Jan -> 1
             Feb -> 2
             Mar -> 3
@@ -72,11 +83,11 @@ convert format time =
             Oct -> 10
             Nov -> 11
             Dec -> 12
-        y = year date
-        h = (truncate (inHours time)) % 24
-        min = (truncate (inMinutes time)) % 60
-        s = (truncate (inSeconds time)) % 60
-        h12 = if (h % 12) == 0 then 12 else h % 12
+        y = toYear zone time
+        h = toHour zone time
+        min = toMinute zone time
+        s = toSecond zone time
+        h12 = if (modBy 12 h) == 0 then 12 else modBy 12 h
         ampm = if h<12 then "am" else "pm"
     in case format of
         DD_MM_YYYY -> 

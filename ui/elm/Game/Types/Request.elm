@@ -343,7 +343,7 @@ encodeRequestInternal response =
             case resp of
                 Multi lr ->
                     EncodedRequestInternal "multi" "multi"
-                        [ ("tasks", EString <| encode 0 <| list <| map encodeJson lr)]
+                        [ ("tasks", EString <| encode 0 <| list encodeJson lr)]
 
 encodeJson : Response -> Value
 encodeJson response =
@@ -372,7 +372,7 @@ encodeRequest response =
             (\(k, ev) ->
                 ( k
                 , case ev of
-                    EInt v -> toString v
+                    EInt v -> String.fromInt v
                     EString v -> v
                 )
             )

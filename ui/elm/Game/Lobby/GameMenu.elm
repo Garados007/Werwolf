@@ -1,12 +1,11 @@
 module Game.Lobby.GameMenu exposing
     ( GameMenu
     , GameMenuMsg
-        ( SetConfig
-        , SetLang
-        )
     , GameMenuEvent (..)
     , GameMenuDef
     , gameMenuModule
+    , msgSetConfig
+    , msgSetLang
     )
 
 import ModuleConfig as MC exposing (..)
@@ -33,6 +32,12 @@ type GameMenuMsg
     | SetLang String
     -- private methods
     | OnEvent GameMenuEvent
+
+msgSetConfig : LangConfiguration -> GameMenuMsg
+msgSetConfig = SetConfig
+
+msgSetLang : String -> GameMenuMsg
+msgSetLang = SetLang
 
 type GameMenuEvent
     = CloseMenu
@@ -159,9 +164,9 @@ viewSplitter = div [ class "w-menu-splitter" ] []
 viewCredits : Html msg
 viewCredits = div [ class "w-credits" ]
     [ div []
-        [ text <| flip String.cons "" <| Char.fromCode 169
+        [ text <| String.fromChar <| Char.fromCode 169
         , text <| " 2017 - "
-        , text <| toString build_year
+        , text <| String.fromInt build_year
         ]
     , div []
         [ text <| "Project from "

@@ -40,7 +40,10 @@ type TutorialMsg
     | Fetch Int (Result Error String)
 
 init : (Tutorial, Cmd TutorialMsg)
-init = Tutorial { page = 0, svg = Dict.empty } ! [ fetch 0 ]
+init = 
+    ( Tutorial { page = 0, svg = Dict.empty }
+    , fetch 0
+    )
 
 divs : Html msg -> Html msg
 divs = div [] << List.singleton
@@ -69,7 +72,7 @@ view = lazy2 <| \conf (Tutorial model) ->
             [ div
                 [ class "w-tutorial-text" ]
                 [ text <| getSingle conf.lang 
-                    [ "lobby", "tutorial", toString model.page ]
+                    [ "lobby", "tutorial", String.fromInt model.page ]
                 ]
             ]
         , div 
@@ -84,7 +87,7 @@ viewNav page = div
     [ class "w-tutorial-nav-box" ]
     [ div 
         [ class "w-tutorial-prev" 
-        , onClick <| Go <| (page + maxPage - 1) % maxPage
+        , onClick <| Go <| modBy maxPage <| page + maxPage - 1
         ] []
     , div [ class "w-tutorial-fast" ] <| List.filterMap identity
         [ if page > 1
@@ -103,7 +106,7 @@ viewNav page = div
         ]
     , div
         [ class "w-tutorial-next"
-        , onClick <| Go <| (page + 1) % maxPage
+        , onClick <| Go <| modBy maxPage <| page + 1
         ] []
     ]
 
@@ -115,22 +118,29 @@ viewDot className page = div
 
 fetch : Int -> Cmd TutorialMsg
 fetch page = HttpBuilder.get
-    (uri_host ++ uri_path ++ "ui/img/tutorial/" ++ (toString page) ++ ".svg")
-    |> withTimeout (10 * Time.second)
+    (uri_host ++ uri_path ++ "ui/img/tutorial/" ++ (String.fromInt page) ++ ".svg")
+    |> withTimeout 10000
     |> withExpect Http.expectString
     |> withCredentials
     |> HttpBuilder.send (Fetch page)
 
 update : TutorialMsg -> Tutorial -> (Tutorial, Cmd TutorialMsg)
 update msg (Tutorial model) = case msg of
-    Go page -> Tutorial { model | page = page } !
-        if Dict.member page model.svg 
-        then []
-        else [ fetch page ]
+    Go page -> 
+        ( Tutorial { model | page = page }
+        , Cmd.batch <|
+            if Dict.member page model.svg 
+            then []
+            else [ fetch page ]
+        )
     Fetch page (Ok svg) ->
-        Tutorial { model | svg = Dict.insert page (trimSvg svg) model.svg } ! []
+        ( Tutorial { model | svg = Dict.insert page (trimSvg svg) model.svg }
+        , Cmd.none
+        )
     Fetch page (Err _) ->
-        Tutorial { model | svg = Dict.insert page "" model.svg } ! []
+        ( Tutorial { model | svg = Dict.insert page "" model.svg }
+        , Cmd.none 
+        )
 
 trimSvg : String -> String
 trimSvg svg =

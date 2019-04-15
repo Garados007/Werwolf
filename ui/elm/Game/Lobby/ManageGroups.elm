@@ -1,15 +1,14 @@
 module Game.Lobby.ManageGroups exposing
     ( ManageGroups
     , ManageGroupsMsg
-        ( SetConfig
-        , SetGroups
-        , SetUsers
-        , SetOwnId
-        , AddBan
-        )
     , ManageGroupsEvent (..)
     , ManageGroupsDef
     , manageGroupsModule
+    , msgSetConfig
+    , msgSetGroups
+    , msgSetUsers
+    , msgSetOwnId
+    , msgAddBan
     )
     
 import ModuleConfig as MC exposing (..)
@@ -27,7 +26,9 @@ import Html.Attributes exposing (class,attribute,href,value,src,style)
 import Html.Events exposing (onClick)
 import Dict exposing (Dict)
 import Char
-import Time exposing (Time)
+import Time exposing (Posix, Zone)
+import Time.Extra
+import Task
 
 type ManageGroups = ManageGroups ManageGroupsInfo
 
@@ -39,7 +40,8 @@ type alias ManageGroupsInfo =
     , ownUser : Maybe Int
     , bans : Dict Int (Dict Int BanInfo)
     , banOpened : Dict Int Bool
-    , now : Time
+    , now : Posix
+    , zone : Zone
     }
 
 type ManageGroupsMsg
@@ -56,7 +58,8 @@ type ManageGroupsMsg
     | OnLeave Int
     | OnDoBan Int Int
     | OnToggleBan Int
-    | NewTime Time
+    | NewTime Posix
+    | NewZone Zone
     | Refresh Int
     | OnUnban Int Int
 
@@ -70,6 +73,21 @@ type ManageGroupsEvent
 
 type alias ManageGroupsDef a = ModuleConfig ManageGroups ManageGroupsMsg
     () ManageGroupsEvent a
+
+msgSetConfig : LangConfiguration -> ManageGroupsMsg
+msgSetConfig = SetConfig
+
+msgSetGroups : Dict Int Group -> ManageGroupsMsg
+msgSetGroups = SetGroups
+
+msgSetUsers : UserLookup -> ManageGroupsMsg
+msgSetUsers = SetUsers
+
+msgSetOwnId : Int -> ManageGroupsMsg
+msgSetOwnId = SetOwnId
+
+msgAddBan : BanInfo -> ManageGroupsMsg
+msgAddBan = AddBan
 
 manageGroupsModule : (ManageGroupsEvent -> List a) ->
     (ManageGroupsDef a, Cmd ManageGroupsMsg, List a)
@@ -92,9 +110,10 @@ init () =
         , ownUser = Nothing
         , bans = Dict.empty
         , banOpened = Dict.empty
-        , now = 0
+        , now = Time.millisToPosix 0
+        , zone = Time.utc
         }
-    , Cmd.none
+    , Task.perform NewZone <| Time.here
     , []
     )
 
@@ -191,8 +210,10 @@ update def msg (ManageGroups model) = case msg of
         let old = Dict.get group model.banOpened
         in  ( ManageGroups
                 { model
-                | banOpened = flip (Dict.insert group) model.banOpened <|
-                    not <| Maybe.withDefault False old
+                | banOpened = Dict.insert 
+                    group
+                    (not <| Maybe.withDefault False old)
+                    model.banOpened
                 , bans = if old == Just True
                     then Dict.remove group model.bans
                     else model.bans
@@ -214,8 +235,20 @@ update def msg (ManageGroups model) = case msg of
         ( ManageGroups 
             { model
             | now = time 
-            , bans = flip Dict.map model.bans <|
-                \_ -> Dict.filter <| \_ -> not << flip isDelete model.now
+            , bans = Dict.map
+                ( \_ -> Dict.filter 
+                    <| \_ b -> not 
+                    <| isDelete b model.now
+                )
+                model.bans
+            }
+        , Cmd.none
+        , []
+        )
+    NewZone zone->
+        ( ManageGroups
+            { model
+            | zone = zone
             }
         , Cmd.none
         , []
@@ -226,10 +259,10 @@ update def msg (ManageGroups model) = case msg of
         , MC.event def <| Unban group user
         )
 
-isDelete : BanInfo -> Time -> Bool
+isDelete : BanInfo -> Posix -> Bool
 isDelete ban now = case ban.endDate of
     Nothing -> False
-    Just d -> (toFloat d) * 1000 <= now
+    Just d -> d * 1000 <= Time.posixToMillis now
 
 view : ManageGroups -> Html ManageGroupsMsg
 view (ManageGroups model) = 
@@ -244,18 +277,21 @@ single info key = getSingle info.config.lang [ "lobby", "manage-group", key ]
 divs : Html msg -> Html msg
 divs = div [] << List.singleton
 
-user : ManageGroupsInfo -> Int -> String
-user info u = case UserLookup.getSingleUser u info.users of
-    Nothing -> (++) "User #" <| toString u
+getUser : ManageGroupsInfo -> Int -> String
+getUser info user = case UserLookup.getSingleUser user info.users of
+    Nothing -> (++) "User #" <| String.fromInt user
     Just u -> u.name
 
-time : ManageGroupsInfo -> Int -> String
-time info = convert info.config.conf.manageGroupsDateFormat << toFloat << (*) 1000
+getTime : ManageGroupsInfo -> Int -> String
+getTime info time = convert 
+    info.config.conf.manageGroupsDateFormat 
+    (Time.millisToPosix <| time * 1000)
+    info.zone
 
 formatKey : String -> String
 formatKey key =
     let ml : List Char -> List (List Char)
-        ml = \list ->
+        ml list =
             if list == []
             then []
             else (List.take 4 list) :: (ml <| List.drop 4 list)
@@ -269,21 +305,21 @@ viewGroup info group = div [ class "w-managegroup-group" ]
     , div [ class "w-managegroup-info" ]
         [ div []
             [ divs <| text <| single info "construct-date"
-            , divs <| text <| time info group.created
+            , divs <| text <| getTime info group.created
             ]
         , div []
             [ divs <| text <| single info "constructor" 
-            , divs <| text <| user info group.creator
+            , divs <| text <| getUser info group.creator
             ]
         , div []
             [ divs <| text <| single info "last-date"
             , divs <| text <| case group.lastTime of
-                Just t -> time info t
+                Just t -> getTime info t
                 Nothing -> single info "never"
             ]
         , div []
             [ divs <| text <| single info "leader"
-            , divs <| text <| user info group.leader
+            , divs <| text <| getUser info group.leader
             ]
         , div []
             [ divs <| text <| single info "current-game"
@@ -291,12 +327,12 @@ viewGroup info group = div [ class "w-managegroup-group" ]
                 Nothing -> single info "no-game"
                 Just game ->
                     if game.finished == Nothing
-                    then time info game.started
+                    then getTime info game.started
                     else single info "no-game"
             ]
         , div []
             [ divs <| text <| single info "member"
-            , divs <| text <| toString <| List.length <| UserLookup.getGroupUser group.id info.users
+            , divs <| text <| String.fromInt <| List.length <| UserLookup.getGroupUser group.id info.users
             ]
         , div []
             [ divs <| text <| single info "enter-key"
@@ -405,7 +441,7 @@ viewBan info group ban =
                 ]
             , div [ class "w-managegroup-ban-detaillist" ]
                 [ div [ class "w-managegroup-ban-user" ]
-                    [ divs <| text <| user info ban.user 
+                    [ divs <| text <| getUser info ban.user 
                     , case info.ownUser of
                         Nothing -> text ""
                         Just id ->
@@ -421,37 +457,37 @@ viewBan info group ban =
                     ]
                 , div [ class "w-managegroup-ban-spoker" ]
                     [ divs <| text <| single info "spoker"
-                    , divs <| text <| user info ban.spoker
+                    , divs <| text <| getUser info ban.spoker
                     ]
                 ]
             ]
         , div [ class "w-managegroup-ban-timing" ]
             [ div [ class "w-managegroup-ban-timeinfo" ]
-                [ divs <| text <| time info ban.startDate
+                [ divs <| text <| getTime info ban.startDate
                 , divs <| text "-"
                 , case ban.endDate of
-                    Just d -> divs <| text <| time info d
+                    Just d -> divs <| text <| getTime info d
                     Nothing -> divs <| text <| 
-                        flip String.cons "" <| Char.fromCode 8734
+                       String.fromChar <| Char.fromCode 8734
                 ]
             , if ban.endDate == Nothing then text "" else div
                 [ class "w-managegroup-ban-timebar" ]
                 [ div
                     [ class "w-managegroup-ban-timefill"
-                    , style 
-                        [ ("width", (toString <| timePos info.now ban) ++ "%")
-                        ]
+                    , style "width"
+                        <| (String.fromFloat <| timePos info.now ban) ++ "%"
                     ] []
                 ]
             ]
         ]
 
-timePos : Time -> BanInfo -> Float
+timePos : Posix -> BanInfo -> Float
 timePos now ban = case ban.endDate of
     Just end ->
         let st = (toFloat ban.startDate) * 1000
             et = (toFloat end) * 1000
-        in max 0 <| min 100 <| 100 * (now - st) / (et - st)
+            nt = toFloat <| Time.posixToMillis now
+        in max 0 <| min 100 <| 100 * (nt - st) / (et - st)
     Nothing -> 0
 
 
@@ -471,6 +507,6 @@ canBan info group user =
 
 subscriptions : ManageGroups -> Sub ManageGroupsMsg
 subscriptions (ManageGroups model) =
-    if model.now == 0
-    then Time.every Time.second NewTime
-    else Time.every Time.minute NewTime
+    if model.now == Time.millisToPosix 0
+    then Time.every 1000 NewTime
+    else Time.every 60000 NewTime

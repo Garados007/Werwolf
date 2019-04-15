@@ -1,14 +1,15 @@
 module Game.UI.ChatInsertBox exposing
     ( Model
-    , Msg (UpdateConfig)
+    , Msg
     , EventMsg (..)
     , ChatInsertBoxDef
     , chatInsertBoxModule
+    , msgUpdateConfig
     )
 
 import ModuleConfig exposing (..)
 
-import Html exposing (Html,program,div,textarea,text,button)
+import Html exposing (Html,div,textarea,text,button)
 import Html.Attributes exposing (class,value)
 import Html.Events exposing (onInput,onClick)
 
@@ -42,6 +43,9 @@ type Msg
 
 type EventMsg
     = SendEvent String
+
+msgUpdateConfig : LangConfiguration -> Msg
+msgUpdateConfig = UpdateConfig
 
 init : LangConfiguration -> (Model, Cmd Msg, List a)
 init config = (Model config "" newModDetector, Cmd.none, [])

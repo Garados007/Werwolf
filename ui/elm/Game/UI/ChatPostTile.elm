@@ -1,8 +1,8 @@
 module Game.UI.ChatPostTile exposing (ChatPostTile,view)
 
-import Html exposing (program,Html,div,text)
+import Html exposing (Html,div,text)
 import Html.Attributes exposing (class)
-import Time exposing (Time)
+import Time exposing (Posix, Zone)
 import Game.Utils.Dates exposing (DateTimeFormat,convert)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
@@ -10,7 +10,8 @@ import Game.Utils.Language exposing (..)
 type alias ChatPostTile =
     { userName: String
     , userId: Int
-    , time: Time
+    , time: Posix
+    , zone: Zone
     , chat: String
     , chatId : Int
     , text: String
@@ -27,7 +28,7 @@ view config post =
             , div [ class "chat-post-tile-chat" ]
                 [ text <| chatName config post.chat ]
             , div [ class "chat-post-tile-time" ]
-                [ text (convert config.conf.chatDateFormat post.time) ]
+                [ text (convert config.conf.chatDateFormat post.time post.zone) ]
             ]
         , div [ class "chat-post-tile-text" ]
             [ case post.special of

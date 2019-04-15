@@ -2,8 +2,10 @@ module Game.Types.DecodeCreateOptions exposing
     (decodeCreateOptions)
 
 import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (decode, required, optional)
+import Json.Decode.Pipeline exposing (required, optional)
 import Game.Types.CreateOptions exposing (..)
+
+decode = succeed -- from Json.Decode.Pipeline in elm 0.18
 
 decodeCreateOptions : Decoder CreateOptions
 decodeCreateOptions =

@@ -11,10 +11,12 @@ import Game.Utils.Dates exposing (DateTimeFormat(..))
 import Config exposing (..)
 
 import Json.Decode as JD
-import Json.Decode.Pipeline exposing (decode,required,optional)
+import Json.Decode.Pipeline exposing (required,optional)
 import Json.Encode as JE
 import Dict exposing (Dict)
 import Result
+
+decode = JD.succeed
 
 type alias Configuration =
     { language: String
@@ -66,7 +68,7 @@ decoder = JD.andThen
             |> required "votingDateFormat" decodeTime
             |> optional "manageGroupsDateFormat" decodeTime DD_MM_YYYY_H24_M_S
             |> optional "theme" JD.string "default"
-        _ -> JD.fail <| "not supported version " ++ (toString version)
+        _ -> JD.fail <| "not supported version " ++ (String.fromInt version)
     )
     (JD.field "version" JD.int)
 
@@ -83,8 +85,8 @@ encodeTime format = Dict.toList Game.Utils.Dates.all
     |> find ((==) format << Tuple.second)
     |> Maybe.map (Tuple.first >> JE.string)
     |> \t -> case t of
-        Nothing ->Debug.crash <|
-            "date time format " ++ (toString format) ++
+        Nothing ->Debug.todo <|
+            "date time format " ++ (Debug.toString format) ++
             " is not found in convert list, report this bug at github: "++
             "https://github.com/garados007/Werwolf"
         Just v -> v

@@ -1,18 +1,17 @@
 module Game.UI.ChatBox exposing
     ( ChatBox
     , ChatBoxMsg
-        ( AddChats
-        , SetUser
-        , SetRooms
-        , SetConfig
-        , SetGame
-        )
     , ChatBoxEvent (..)
     , ChatBoxDef
     , chatBoxModule
     , init
     , update
     , view
+    , msgAddChats
+    , msgSetUser
+    , msgSetRooms
+    , msgSetConfig
+    , msgSetGame
     )
 
 import ModuleConfig as MC exposing (..)
@@ -32,8 +31,9 @@ import Html.Attributes exposing (class,title,value,attribute,selected)
 import Html.Events exposing (on,onClick)
 import Html.Lazy exposing (lazy)
 import Dict exposing (Dict)
-import Time exposing (second)
+import Time exposing (Zone)
 import Json.Decode as Json
+import Task
 
 type ChatBox = ChatBox ChatBoxInfo
 
@@ -46,6 +46,7 @@ type alias ChatBoxInfo =
     , selected : Maybe ChatId
     , targetChat : Maybe ChatId
     , game: Maybe Game
+    , zone : Zone
     }
 
 type ChatBoxMsg
@@ -63,6 +64,7 @@ type ChatBoxMsg
     | ChangeVisible String
     | OnViewUser
     | OnViewVotes
+    | SetZone Zone
 
 type EventMsg
     = SendText String
@@ -72,10 +74,25 @@ type ChatBoxEvent
     | ViewVotes
     | Send Request
 
-type alias ChatBoxDef a b = ModuleConfig ChatBox ChatBoxMsg 
-    (LangConfiguration, a) ChatBoxEvent b
+type alias ChatBoxDef b = ModuleConfig ChatBox ChatBoxMsg 
+    (LangConfiguration, String) ChatBoxEvent b
 
-chatBoxModule : (ChatBoxEvent -> List b) -> (LangConfiguration, a)  -> (ChatBoxDef a b, Cmd ChatBoxMsg, List b)
+msgAddChats : List ChatEntry -> ChatBoxMsg 
+msgAddChats = AddChats
+
+msgSetUser : Dict UserId String -> ChatBoxMsg 
+msgSetUser = SetUser 
+
+msgSetRooms : Dict ChatId Chat -> ChatBoxMsg 
+msgSetRooms = SetRooms
+
+msgSetConfig : LangConfiguration -> ChatBoxMsg 
+msgSetConfig = SetConfig
+
+msgSetGame : Game -> ChatBoxMsg
+msgSetGame = SetGame
+
+chatBoxModule : (ChatBoxEvent -> List b) -> (LangConfiguration, String)  -> (ChatBoxDef b, Cmd ChatBoxMsg, List b)
 chatBoxModule = createModule
     { init = init
     , view = view
@@ -83,11 +100,11 @@ chatBoxModule = createModule
     , subscriptions = \_ -> Sub.none
     }
 
-init : (LangConfiguration, a) -> (ChatBox, Cmd ChatBoxMsg, List b)
+init : (LangConfiguration, String) -> (ChatBox, Cmd ChatBoxMsg, List b)
 init (config, token) =
     let
         cl = ChatLog.init <| 
-            (++) "chat-log-" <| toString token
+            (++) "chat-log-" token
         (cb, cbCmd, cbList) = chatInsertBoxModule handleChatInsertBox config
         info = ChatBoxInfo 
             config
@@ -95,17 +112,19 @@ init (config, token) =
             cb
             Dict.empty Dict.empty
             Nothing Nothing Nothing
+            Time.utc
         (ninfo, moreCmd, pt) = handleOwn Nothing info cbList
     in
         ( ChatBox ninfo
         , Cmd.batch
             [ Cmd.map WrapChatInsertBox cbCmd
             , moreCmd
+            , Task.perform SetZone Time.here
             ]
         , pt
         )
 
-update : ChatBoxDef a b -> ChatBoxMsg -> ChatBox -> (ChatBox, Cmd ChatBoxMsg, List b)
+update : ChatBoxDef b -> ChatBoxMsg -> ChatBox -> (ChatBox, Cmd ChatBoxMsg, List b)
 update def msg (ChatBox model) =
     case msg of
         WrapChatLog wmsg ->
@@ -134,10 +153,10 @@ update def msg (ChatBox model) =
             let cu = Dict.toList user |> List.filterMap
                     (\(id,u) ->
                         case Dict.get id model.user of
-                            Nothing -> Just <| UpdateUser id u
+                            Nothing -> Just <| msgUpdateUser id u
                             Just du ->
                                 if du == u
-                                then Just <| UpdateUser id u
+                                then Just <| msgUpdateUser id u
                                 else Nothing
                     )
                 (nu, wcmd) = updateAll ChatLog.update model.chatLog cu
@@ -152,7 +171,7 @@ update def msg (ChatBox model) =
                             Nothing -> True
                             Just dr -> dr /= r
                     ) |>
-                    List.map (\r -> UpdateChat r.id r.chatRoom)
+                    List.map (\r -> msgUpdateChat r.id r.chatRoom)
                 (nr, wcmd) = updateAll ChatLog.update model.chatLog cr
                 newModel = { model | rooms = rooms, chatLog = nr }
             in  (ChatBox { newModel | targetChat = getBestChatId newModel }
@@ -161,7 +180,7 @@ update def msg (ChatBox model) =
                 )
         SetConfig config ->
             let (wm, wcmd, wt) = MC.update model.insertBox 
-                    (ChatInsertBox.UpdateConfig config)
+                    (ChatInsertBox.msgUpdateConfig config)
                 (tm, task, tpm) = handleOwn (Just def) 
                     { model | config = config, insertBox = wm } wt
             in  (ChatBox tm
@@ -172,20 +191,24 @@ update def msg (ChatBox model) =
             (ChatBox { model | game = Just game }, Cmd.none, [])
         ChangeFilter filter ->
             let
-                filt = Result.toMaybe <| String.toInt filter
-                (wm, wcmd) = ChatLog.update (UpdateFilter filt) model.chatLog
+                filt = String.toInt filter
+                (wm, wcmd) = ChatLog.update (msgUpdateFilter filt) model.chatLog
             in  ( ChatBox { model | selected = filt, chatLog = wm }
                 , Cmd.map WrapChatLog wcmd
                 , []
                 )
         ChangeVisible filter ->
-            case String.toInt filter of
-                Ok id ->
-                    ( ChatBox { model | targetChat = Just id}, Cmd.none, [])
-                Err _ ->
-                    ( ChatBox { model | targetChat = Nothing }, Cmd.none, [])
+            ( ChatBox { model | targetChat = String.toInt filter }
+            , Cmd.none
+            , []
+            )
         OnViewUser -> ( ChatBox model, Cmd.none, MC.event def ViewUser)
         OnViewVotes -> ( ChatBox model, Cmd.none, MC.event def ViewVotes)
+        SetZone zone ->
+            ( ChatBox { model | zone = zone }
+            , Cmd.none
+            , []
+            )
 
 divk : Html msg -> Html msg
 divk = div [] << List.singleton
@@ -218,7 +241,7 @@ view (ChatBox model) = divc "w-chat-box" <|
                     List.map
                         (\(id,key) ->
                             node "option" 
-                                [ value <| toString id 
+                                [ value <| String.fromInt id 
                                 , selected <| model.selected == Just id
                                 ] 
                                 [ text <| getChatName model.config.lang key ]
@@ -233,7 +256,7 @@ view (ChatBox model) = divc "w-chat-box" <|
                 List.map
                     (\(id,chat) ->
                         node "option"
-                            [ value <| toString id 
+                            [ value <| String.fromInt id 
                             , selected <| Just id == model.targetChat
                             ] 
                             [ text <| getChatName model.config.lang chat.chatRoom 
@@ -265,7 +288,7 @@ view (ChatBox model) = divc "w-chat-box" <|
 viewStatus : LangLocal -> Game -> Html ChatBoxMsg
 viewStatus lang game = divc "w-chat-phase-status" <| divk <| div []
     [ divk <| text <| getSingle lang [ "ui", "day-count" ]
-    , divk <| text <| toString <| game.day
+    , divk <| text <| String.fromInt <| game.day
     , divk <| text <| getSingle lang [ "ui", "day-time" ]
     , divk <| text <| getSingle lang 
         [ "phase-time", String.left 1 game.phase ]
@@ -286,16 +309,19 @@ addAllChats : ChatBoxInfo -> ChatLog -> List ChatEntry -> (ChatLog, List (Cmd Ch
 addAllChats info log chats = 
     (\(cl,mes) -> (cl, List.map (Cmd.map WrapChatLog) mes)) <|
         updateAll ChatLog.update log <| List.map 
-            (\c -> Add <| PostTile <| ChatPostTile
+            (\c -> msgAdd 
+              <| PostTile 
+              <| ChatPostTile
                 (case Dict.get c.user info.user of
                     Just name -> name
-                    Nothing -> "User #" ++ (toString c.user)
+                    Nothing -> "User #" ++ (String.fromInt c.user)
                 )
                 c.user
-                ((toFloat c.sendDate) * second)
+                (Time.millisToPosix <| c.sendDate * 1000)
+                info.zone
                 (case Dict.get c.chat info.rooms of
                     Just room -> room.chatRoom
-                    Nothing -> "Room #" ++ (toString c.chat)
+                    Nothing -> "Room #" ++ (String.fromInt c.chat)
                 )
                 c.chat
                 c.text
@@ -347,8 +373,8 @@ handleChatInsertBox msg =
     case msg of
         SendEvent text -> [ SendText text ]
 
-handleOwn : Maybe (ChatBoxDef a b) -> ChatBoxInfo -> List EventMsg -> (ChatBoxInfo, Cmd ChatBoxMsg, List b)
-handleOwn mdef info list = 
+handleOwn : Maybe (ChatBoxDef b) -> ChatBoxInfo -> List EventMsg -> (ChatBoxInfo, Cmd ChatBoxMsg, List b)
+handleOwn mdef cinfo list = 
     let (ninfo, ncmd, npr) = changeWithAll3
             (\info msg -> case msg of
                 SendText text -> case mdef of
@@ -360,6 +386,6 @@ handleOwn mdef info list =
                             PostChat (getSendChatId info) text
                         )
             )
-            info
+            cinfo
             list
     in (ninfo, Cmd.batch ncmd, List.concat npr)

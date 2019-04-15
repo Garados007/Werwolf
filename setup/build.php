@@ -33,7 +33,7 @@ if (MANUAL_BUILD) {
     $elmcom = function ($source, $target, $doc) {
         $codestyle = ' style="color:white;background-color:#333;display:block;margin:0.5em 0;padding:0.5em;"';
         return '<code'.$codestyle.'>elm make '.implode(DIRECTORY_SEPARATOR, $source).
-            ' --yes --output '.implode(DIRECTORY_SEPARATOR, $target).
+            ' --output '.implode(DIRECTORY_SEPARATOR, $target).
             (RELEASE_MODE ? '' : ' --debug --docs '.implode(DIRECTORY_SEPARATOR, $doc)).
             '</code>';
     };
@@ -64,7 +64,7 @@ else {
         $rp = function ($path) {
             return implode(DIRECTORY_SEPARATOR,explode('/',$path));
         };
-        $run('elm make '.realpath(__DIR__.'/../'.$source).' --yes --output '.$rp(__DIR__.'/../'.$target).
+        $run('elm make '.realpath(__DIR__.'/../'.$source).' --output '.$rp(__DIR__.'/../'.$target).
             (RELEASE_MODE ? '' : ' --debug --docs '.$rp(__DIR__.'/../'.$doc)).' 2>&1',
             CT.'build elm file '.$source.' to '.$target);
     };

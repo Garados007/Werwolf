@@ -1,9 +1,8 @@
 module Game.Lobby.BanSpecificUser exposing
     ( BanSpecificUser
     , BanSpecificUserMsg
-        ( SetConfig
-        , SetUser
-        )
+    , msgSetConfig
+    , msgSetUser
     , BanSpecificUserEvent (..)
     , BanSpecificUserDef
     , banSpecificUserModule
@@ -20,10 +19,21 @@ import Game.Types.Request exposing (..)
 import Html exposing (Html,div,text,a,img,input,node)
 import Html.Attributes exposing (class,attribute,href,value,type_,checked,selected)
 import Html.Events exposing (onInput,onClick,on)
-import Time exposing (Time)
-import Date
 import Json.Decode as Json
-import Regex exposing (regex,HowMany(All))
+import Regex exposing (Regex)
+
+-- elm/core
+import Task
+
+-- elm/time
+import Time exposing (Posix, Zone, posixToMillis, posixToMillis, utc, here)
+
+-- justinmimbs/time-extra
+import Time.Extra exposing (Interval (..), Parts, add, partsToPosix, posixToParts)
+
+regex : String -> Regex 
+regex = Maybe.withDefault Regex.never
+    << Regex.fromString
 
 type BanSpecificUser = BanSpecificUser BanSpecificUserInfo
 
@@ -32,7 +42,8 @@ type alias Request = Game.Types.Request.Response
 type alias BanSpecificUserInfo =
     { config : LangConfiguration
     , ban : BanMode
-    , now : Time
+    , now : Posix
+    , zone : Zone
     , comment : String
     , user : Int
     , group : Int
@@ -45,7 +56,8 @@ type BanSpecificUserMsg
     -- private Methods
     | OnClose
     | OnChangeMode BanMode
-    | NewTime Time
+    | NewTime Posix
+    | NewZone Zone
     | OnCreate
     | OnInput String
 
@@ -67,6 +79,12 @@ type BanMode
 type alias BanSpecificUserDef a = ModuleConfig BanSpecificUser BanSpecificUserMsg
     () BanSpecificUserEvent a
 
+msgSetConfig : LangConfiguration -> BanSpecificUserMsg
+msgSetConfig = SetConfig
+
+msgSetUser : Int -> Int -> BanSpecificUserMsg 
+msgSetUser user group = SetUser user group
+
 banSpecificUserModule : (BanSpecificUserEvent -> List a) ->
     (BanSpecificUserDef a, Cmd BanSpecificUserMsg, List a)
 banSpecificUserModule event = createModule
@@ -83,12 +101,13 @@ init () =
         { config = LangConfiguration empty <|
             createLocal (newGlobal lang_backup) Nothing
         , ban = Kick
-        , now = 0
+        , now = Time.millisToPosix 0
+        , zone = utc
         , comment = ""
         , user = 0
         , group = 0
         }
-    , Cmd.none
+    , Task.perform NewZone here
     , []
     )
 
@@ -124,6 +143,11 @@ update def msg (BanSpecificUser model) = case msg of
         , Cmd.none
         , []
         )
+    NewZone zone ->
+        ( BanSpecificUser { model | zone = zone }
+        , Cmd.none
+        , []
+        )
     OnCreate ->
         ( BanSpecificUser model
         , Cmd.none
@@ -140,20 +164,52 @@ getRequest info = RespControl <| case info.ban of
     Kick -> KickUser info.user info.group
     TimeBan unit time ->
         let fact = case unit of
-                BTUMinute -> Time.minute
-                BTUHour -> Time.hour
-                BTUDays -> 24 * Time.hour
-            target = info.now + (fact * time)
-        in BanUser info.user info.group (round <| target / 1000) info.comment
+                BTUMinute -> 60 * 1000
+                BTUHour -> 60 * 60 * 1000
+                BTUDays -> 24 * 60 * 60 * 1000
+            target = add Millisecond (round <| fact * time) info.zone info.now
+        in BanUser info.user info.group 
+            ((posixToMillis target) // 1000) 
+            info.comment
     DateBan d m y h min ->
-        let str = (toString y) ++ "-" ++ (toString m) ++ "-" ++
-                (toString d) ++ "T" ++ (toString h) ++ ":" ++
-                (toString min)
-            date = case Date.fromString str of
-                Ok d -> Date.toTime d
-                Err e -> Debug.crash <| "BanSpecificUser:getRequest - cannot transform date: " ++ e
-        in BanUser info.user info.group (round <| date / 1000) info.comment
+        let date = partsToPosix info.zone
+                <| Parts y (numMonth m) d h min 0 0
+        in BanUser info.user info.group 
+            ((posixToMillis date) // 1000)
+            info.comment
     Perma -> BanUser info.user info.group -1 info.comment
+
+monthNum : Time.Month -> Int
+monthNum month = case month of
+    Time.Jan -> 1
+    Time.Feb -> 2
+    Time.Mar -> 3
+    Time.Apr -> 4
+    Time.May -> 5
+    Time.Jun -> 6
+    Time.Jul -> 7
+    Time.Aug -> 8
+    Time.Sep -> 9
+    Time.Oct -> 10
+    Time.Nov -> 11
+    Time.Dec -> 12
+
+numMonth : Int -> Time.Month 
+numMonth num = case num of 
+    1 -> Time.Jan
+    2 -> Time.Feb
+    3 -> Time.Mar
+    4 -> Time.Apr 
+    5 -> Time.May 
+    6 -> Time.Jun
+    7 -> Time.Jul 
+    8 -> Time.Aug 
+    9 -> Time.Sep 
+    10 -> Time.Oct
+    11 -> Time.Nov 
+    12 -> Time.Dec
+    -- Fallback
+    _ -> Time.Jan
 
 single : BanSpecificUserInfo -> String -> String
 single info key = getSingle info.config.lang [ "lobby", "bsu", key ]
@@ -204,9 +260,9 @@ viewRadios info =
             TimeBan _ _ -> True
             _ -> False
         , radio "dateban" 
-            ( OnChangeMode <| (\(d,m,y,h,min) ->
-                DateBan d m y h min
-            ) <| split info.now) 
+            ( OnChangeMode <| (\p ->
+                DateBan p.day (monthNum p.month) p.year p.hour p.minute
+            ) <| posixToParts info.zone info.now) 
             <| case info.ban of
                 DateBan _ _ _ _ _ -> True
                 _ -> False
@@ -225,13 +281,15 @@ viewTimeBan info unit duration =
             input
                 [ type_ "number"
                 , attribute "min" "0"
-                , value <| toString val
+                , value <| String.fromFloat val
                 , attribute "step" "0.001"
-                , onInput <| OnChangeMode << event << (\v -> case String.toFloat v of
-                        Ok n -> n
-                        Err _ -> val
-                    )
+                , onInput <| OnChangeMode 
+                    << event
+                    << Maybe.withDefault val
+                    << String.toFloat
                 ] []
+        flip : (a -> b -> c) -> b -> a -> c
+        flip f b a = f a b
     in div [ class "w-banuser-conf timeban" ]
         [ div [] <| List.singleton <| inp duration (TimeBan unit)
         , div [] <| List.singleton <| node "select"
@@ -239,7 +297,7 @@ viewTimeBan info unit duration =
                     "m" -> BTUMinute
                     "h" -> BTUHour
                     "d" -> BTUDays
-                    _ -> Debug.crash <| "BanSpecificUser:viewTimeBan - unknown unit format " ++ u
+                    _ -> Debug.todo <| "BanSpecificUser:viewTimeBan - unknown unit format " ++ u
                 ) Html.Events.targetValue
             ] <| List.map
             (\(f,k) -> node "option"
@@ -260,13 +318,13 @@ viewDateBan info day month year hour minute =
         inp = \val min max event ->
             input
                 [ type_ "number"
-                , attribute "min" <| toString min
-                , attribute "max" <| toString max
-                , value <| toString val
-                , onInput <| OnChangeMode << event << (\v -> case String.toInt v of
-                        Ok n -> n
-                        Err _ -> val
-                    )
+                , attribute "min" <| String.fromInt min
+                , attribute "max" <| String.fromInt max
+                , value <| String.fromInt val
+                , onInput <| OnChangeMode 
+                    << event 
+                    << Maybe.withDefault val 
+                    << String.toInt
                 ] []
         part : String -> Int -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
         part = \labelKey val min max event ->
@@ -285,10 +343,10 @@ viewDateBan info day month year hour minute =
 dayMax : Int -> Int -> Int
 dayMax month year =
     if month == 2
-    then if (year % 4 == 0) && ((year % 100 /= 0) || (year % 400 == 0))
+    then if (modBy 4 year == 0) && ((modBy 100 year /= 0) || (modBy 400 year == 0))
         then 29
         else 28
-    else if xor (month <= 7) (month % 2 == 0)
+    else if xor (month <= 7) (modBy 2 month == 0)
         then 31
         else 30
 
@@ -296,31 +354,8 @@ viewPerma : BanSpecificUserInfo -> Html BanSpecificUserMsg
 viewPerma info = div [ class "w-ban-user-conf perma"] 
     [ text <| single info "info-perma" ]
 
-split : Time -> (Int, Int, Int, Int, Int) --day,month,year,hour,minute
-split time =
-    let date = Date.fromTime <| time + (Time.hour * 4)
-    in  ( Date.day date
-        , case Date.month date of
-            Date.Jan -> 1
-            Date.Feb -> 2
-            Date.Mar -> 3
-            Date.Apr -> 4
-            Date.May -> 5
-            Date.Jun -> 6
-            Date.Jul -> 7
-            Date.Aug -> 8
-            Date.Sep -> 9
-            Date.Oct -> 10
-            Date.Nov -> 11
-            Date.Dec -> 12
-        , Date.year date
-        , Date.hour date
-        , Date.minute date
-        )
-
-
 subscriptions : BanSpecificUser -> Sub BanSpecificUserMsg
 subscriptions (BanSpecificUser model) =
-    if model.now == 0
-    then Time.every Time.second NewTime
-    else Time.every (Time.second*20) NewTime
+    if model.now == Time.millisToPosix 0
+    then Time.every 1000 NewTime
+    else Time.every 20000 NewTime

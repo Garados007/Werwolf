@@ -1,11 +1,10 @@
 module Game.Lobby.CreateGroup exposing
     ( CreateGroup
     , CreateGroupMsg
-        ( SetConfig
-        )
     , CreateGroupEvent (..)
     , CreateGroupDef
     , createGroupModule
+    , msgSetConfig
     )
     
 import ModuleConfig as MC exposing (..)
@@ -33,6 +32,9 @@ type CreateGroupMsg
     | OnClose
     | OnChangeName String
     | OnCreate
+
+msgSetConfig : LangConfiguration -> CreateGroupMsg
+msgSetConfig = SetConfig
 
 type CreateGroupEvent
     = Close

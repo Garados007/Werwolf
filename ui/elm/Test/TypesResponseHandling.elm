@@ -58,7 +58,7 @@ view model =
                 , ("font-family", "monospace")
                 ]
             ]
-            [ text (toString model.response)
+            [ text (Debug.toString model.response)
             ]
         , if model.error /= "" then div [] [] 
         else div
@@ -67,7 +67,7 @@ view model =
                 , ("font-family", "monospace")
                 ]
             ]
-            [ text (toString model.changes)
+            [ text (Debug.toString model.changes)
             ]
         ]
 
@@ -91,7 +91,7 @@ update msg model =
             case res of
                 Err err ->
                     ({ model
-                        | error = toString err
+                        | error = Debug.toString err
                         , response = Nothing
                         }
                     , Cmd.none

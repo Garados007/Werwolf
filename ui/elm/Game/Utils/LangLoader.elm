@@ -12,8 +12,10 @@ import HttpBuilder exposing (withTimeout, withExpect, withCredentials
 import Config exposing (uri_host, uri_path)
 import Result exposing (Result)
 import Time
-import Json.Decode exposing (Decoder,list,string)
-import Json.Decode.Pipeline exposing (decode,required)
+import Json.Decode exposing (Decoder,list,string, succeed)
+import Json.Decode.Pipeline exposing (required)
+
+decode = succeed
 
 type alias LangInfo =
     { short : String -- short key
@@ -24,7 +26,7 @@ type alias LangInfo =
 fetchUiLang : String -> (String -> Maybe String -> msg) -> Cmd msg
 fetchUiLang lang msgFunc =
     HttpBuilder.get (getUrl lang "ui")
-        |> withTimeout (10 * Time.second)
+        |> withTimeout 10000
         |> withExpect Http.expectString
         |> withCredentials
         |> HttpBuilder.send
@@ -38,7 +40,7 @@ fetchUiLang lang msgFunc =
 fetchPageLang : String -> String -> (String -> Maybe String -> msg) -> Cmd msg
 fetchPageLang page lang msgFunc =
     HttpBuilder.get (getUrl lang <| "page/" ++ page)
-        |> withTimeout (10 * Time.second)
+        |> withTimeout 10000
         |> withExpect Http.expectString
         |> withCredentials
         |> HttpBuilder.send
@@ -52,7 +54,7 @@ fetchPageLang page lang msgFunc =
 fetchModuleLang : String -> String -> (String -> String -> Maybe String -> msg) -> Cmd msg
 fetchModuleLang module_ lang msgFunc =
     HttpBuilder.get (getUrl lang <| "modules/" ++ module_)
-        |> withTimeout (10 * Time.second)
+        |> withTimeout 10000
         |> withExpect Http.expectString
         |> withCredentials
         |> HttpBuilder.send
@@ -66,7 +68,7 @@ fetchModuleLang module_ lang msgFunc =
 fetchLangList : (List LangInfo -> msg) -> Cmd msg
 fetchLangList msg =
     HttpBuilder.get (uri_host ++ uri_path ++ "lang2/langlist.json")
-        |> withTimeout (10 * Time.second)
+        |> withTimeout 10000
         |> withExpect (Http.expectJson <| list langInfoDecoder)
         |> withCredentials
         |> HttpBuilder.send

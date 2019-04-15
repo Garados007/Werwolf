@@ -216,5 +216,5 @@ handleLeaved resp =
 
 debug : Int -> a -> a
 debug num value =
-    let d = log ((++) "d" <| toString num) value
+    let d = log ((++) "d" <| String.fromInt num) value
     in always value d

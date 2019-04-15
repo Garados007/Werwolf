@@ -1,14 +1,13 @@
 module Game.Lobby.JoinGroup exposing
     ( JoinGroup
     , JoinGroupMsg
-        ( SetConfig
-        , InvalidKey
-        , UserBanned
-        )
     , JoinGroupEvent (..)
     , JoinGroupDef
     , joinGroupModule
     , getKey
+    , msgSetConfig
+    , msgInvalidKey
+    , msgUserBanned
     )
     
 import ModuleConfig as MC exposing (..)
@@ -21,7 +20,11 @@ import Game.Lobby.ModalWindow exposing (modal)
 import Html exposing (Html,div,text,a,img,input)
 import Html.Attributes exposing (class,attribute,href,value)
 import Html.Events exposing (onInput,onClick)
-import Regex exposing (regex,HowMany(All))
+import Regex exposing (Regex)
+
+regex : String -> Regex
+regex = Maybe.withDefault Regex.never
+    << Regex.fromString
 
 type JoinGroup = JoinGroup JoinGroupInfo
 
@@ -48,6 +51,15 @@ type JoinGroupEvent
 
 type alias JoinGroupDef a = ModuleConfig JoinGroup JoinGroupMsg
     () JoinGroupEvent a
+
+msgSetConfig : LangConfiguration -> JoinGroupMsg
+msgSetConfig = SetConfig
+
+msgInvalidKey : JoinGroupMsg
+msgInvalidKey = InvalidKey
+
+msgUserBanned : JoinGroupMsg
+msgUserBanned = UserBanned
 
 joinGroupModule : (JoinGroupEvent -> List a) ->
     (JoinGroupDef a, Cmd JoinGroupMsg, List a)
@@ -109,7 +121,7 @@ keypattern : String
 keypattern = "^\\s*([0-9A-HJ-NP-UW-Za-hj-np-uw-z]\\s*){12}$"
 
 shortenKey : String -> String
-shortenKey = Regex.replace All (regex "\\s") (always "")
+shortenKey = Regex.replace (regex "\\s") (always "")
 
 view : JoinGroup -> Html JoinGroupMsg
 view (JoinGroup model) = 
