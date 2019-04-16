@@ -115,8 +115,8 @@ $index = function ($target, $title,$start) {
         '<script type="text/javascript" src="'.URI_HOST.URI_PATH.$target.
         '/script.js"></script><link rel="stylesheet" '.
         'property="stylesheet" href="'.URI_HOST.URI_PATH.$target.
-        '/style.css" /></head><body><script type="text/javascript">'.
-        $start.'.fullscreen()</script></body></html>';
+        '/style.css" /></head><body><div id="elm-node"/><script type="text/javascript">'.
+        $start.'.init({node:document.getElementById("elm-node")})</script></body></html>';
     file_put_contents(__DIR__.'/../'.$target.'/index.php', $content);
     echo CT.'Index file /'.$target.'/index.php created';
 };
