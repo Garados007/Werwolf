@@ -28,51 +28,122 @@ class ApiBase {
     }
 
     protected function getData(array $format) {
+        $result = $this->getDataInner($format, $this->data);
+        if (isset($result['error']))
+            return $result['error'];
+        $this->formated = $result['result'];
+        return true;
+    }
+
+    private function getDataInner(array $format, $data) {
         $result = array();
         foreach ($format as $key => $type) {
             if (substr($key, 0, 1) == '?') {
                 $key = substr($key, 1, strlen($key)-1);
-                if (!isset($this->data[$key]))
+                if (!isset($data[$key]))
                     continue;
             }
-            elseif (!isset($this->data[$key]))
-                return $this->errorFormat("Key $key not given");
+            elseif (!isset($data[$key]))
+                return array(
+                    'error' => $this->errorFormat("Key $key not given")
+                );
             switch ($type) {
                 case "int":
-                    $result[$key] = intval($this->data[$key]);
+                    $result[$key] = intval($data[$key]);
                     break;
                 case "num":
-                    $result[$key] = floatval($this->data[$key]);
+                    $result[$key] = floatval($data[$key]);
                     break;
                 case "bool":
-                    $result[$key] = filter_var($this->data[$key], 
+                    $result[$key] = filter_var($data[$key], 
                         FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
                     if ($result[$key] === null) $result[$key] = false;
                     break;
+                case "string":
+                    if (is_array($data[$key]))
+                        return array(
+                            'error' => $this->errorFormat(
+                                "Key $key: is an array instead of string"
+                            )
+                        );
+                    $result[$key] = strval($data[$key]);
+                    break;
                 case "json":
-                    $result[$key] = json_decode($this->data[$key], true);
-                    if (json_last_error() != JSON_ERROR_NONE)
-                        return $this->errorFormat("Key $key: ".
-                            json_last_error_msg());
+                    if (is_string($data[$key])) {
+                        $result[$key] = json_decode($data[$key], true);
+                        if (json_last_error() != JSON_ERROR_NONE)
+                            return array(
+                                'error' => $this->errorFormat("Key $key: ".
+                                    json_last_error_msg()
+                                )
+                            );
+                    }
+                    elseif (is_array($data[$key])) {
+                        $result[$key] = $data[$key];
+                    }
+                    else
+                        return array(
+                            'error' => $this->errorFormat(
+                                "Key $key: is not valid json"
+                            )
+                        );
                     break;
                 default:
-                    $result[$key] = $this->data[$key];
+                    $result[$key] = $data[$key];
             }
             if (is_array($type) && count($type) > 1)
                 switch ($type[0]) {
                     case "regex":
-                        if (!preg_match($type[1], $this->data[$key]))
-                            return $this->errorFormat(
-                                "Key $key: value doesn't match ".
-                                $type[1]
+                        if (!is_string($data[$key]))
+                            return array(
+                                'error' => $this->errorFormat(
+                                    "Key $key: value is not a string"
+                                )
+                            );
+                        if (!preg_match($type[1], $data[$key]))
+                            return array(
+                                'error' => $this->errorFormat(
+                                    "Key $key: value doesn't match ".
+                                    $type[1]
+                                )
                             );
                         break;
+                    case "list":
+                        $form = array();
+                        foreach ($data[$key] as $k => $v)
+                            $form[$k] = $type[1];
+                        $lr = $this->getDataInner($form, $data[$key]);
+                        if (isset($lr['error']))
+                            return array(
+                                'error' => $this->errorFormat(
+                                    "Key $key: ".$lr['error']['info']
+                                )
+                            );
+                        $result[$key] = $lr['result'];
+                        break;
+                    case "object":
+                        $lr = $this->getDataInner($type[1], $data[$key]);
+                        if (isset($lr['error']))
+                            return array(
+                                'error' => $this->errorFormat(
+                                    "Key $key: ".$lr['error']['info']
+                                )
+                            );
+                        $result[$key] = $lr['result'];
+                    break;
                 }
         }
-        if (isset($this->data['token']))
-            $result['token'] = $this->data['token'];
-        $this->formated = $result;
-        return true;
+        if (isset($data['token']))
+            $result['token'] = $data['token'];
+        return array(
+            'result' => $result
+        );
+    }
+
+    protected function setValues($keys, $target) {
+        foreach ($keys as $key)
+            if (isset($this->formated[$key]))
+                $target->$key = $this->formated[$key];
     }
 
     protected function wrapResult($result) {
@@ -145,4 +216,37 @@ class ApiBase {
         }
         else return $this->error('account', 'login required');
     }
+
+    ////copied from other project - needs to be tested
+    // protected function init($data, $permission, $db) {
+    //     if (($result = $this->getData($data)) !== true)
+    //         return $this->wrapError($result);
+    //     $this->inclPerm();
+    //     $ap = new ApiPermission();
+    //     foreach ($permission as $key => $perm) {
+    //         if (substr($key, 0, 1) == '?') {
+    //             $key = substr($key, 1, strlen($key)-1);
+    //             $break = false;
+    //             foreach ($perm as $p)
+    //                 if (!isset($this->formated[$p])) {
+    //                     $break = true;
+    //                     break;
+    //                 }
+    //             if ($break) continue;
+    //         }
+    //         $name = 'canAccess' . $key;
+    //         if (!call_user_func_array(array($ap, $name), array_merge(
+    //             array($this->account['id']),
+    //             array_map(
+    //                 function ($element) {
+    //                     return $this->formated[$element];
+    //                 },
+    //                 $perm
+    //             )
+    //         )))
+    //             return $this->wrapError($this->errorAccess());
+    //     }
+    //     call_user_func_array(array($this, "inclDb"), $db);
+    //     return null;
+    // }
 }
