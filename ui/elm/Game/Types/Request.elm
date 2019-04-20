@@ -1,6 +1,5 @@
 module Game.Types.Request exposing
-    ( UserId, GroupId, ChatId, GameId, VoteKey, PlayerId
-    , GroupVersion, NewGameConfig
+    ( GroupVersion, NewGameConfig
     , TopUserFilter (..)
     , Response (..)
     , ResponseGet (..)
@@ -18,12 +17,8 @@ import Json.Encode exposing (Value, object, string, int, list, encode)
 import List exposing (map)
 import Dict exposing (Dict)
 
-type alias UserId = Int
-type alias GroupId = Int
-type alias ChatId = Int
-type alias GameId = Int
-type alias VoteKey = String
-type alias PlayerId = Int
+import Game.Types.Types exposing (..)
+import Time exposing (Posix)
 
 type alias GroupVersion =
     { group : GroupId
@@ -78,10 +73,10 @@ type ResponseGet
 type ResponseConv
     = LastOnline GroupId
     | GetUpdatedGroup GroupVersion
-    | GetChangedVotings GameId Int --LastChange
-    | GetNewChatEntrys ChatId Int --After
-    | GetAllNewChatEntrys GameId Int --AfterId
-    | GetNewVotes ChatId VoteKey Int --LastChange
+    | GetChangedVotings GameId Posix --LastChange
+    | GetNewChatEntrys ChatId Posix --After
+    | GetAllNewChatEntrys GameId ChatEntryId --AfterId
+    | GetNewVotes ChatId VoteKey Posix --LastChange
     
 type ResponseControl
     = CreateGroup String --name
@@ -95,7 +90,7 @@ type ResponseControl
     | Vote ChatId VoteKey PlayerId
     | SetConfig String
     | LeaveGroup GroupId
-    | BanUser UserId GroupId Int String
+    | BanUser UserId GroupId Posix String
     | KickUser UserId GroupId
     | RevokeBan UserId GroupId
 
@@ -135,47 +130,50 @@ allTopUserFilter = Dict.fromList
     , ( "mostPermaBanned", TFMostPermaBanned )
     ]
 
+ePosix : Posix -> EncodedValue
+ePosix posix = EInt <| Time.posixToMillis posix // 1000
+
 encodeRequestInternal : Response -> EncodedRequestInternal
 encodeRequestInternal response =
     case response of
         RespGet resp ->
             case resp of
-                GetUserStats userId ->
+                GetUserStats (UserId userId) ->
                     EncodedRequestInternal "get" "getUserStats"
                         [ ("user", EInt userId)
                         ]
                 GetOwnUserStat ->
                     EncodedRequestInternal "get" "getOwnUserStat"
                         []
-                GetGroup groupId ->
+                GetGroup (GroupId groupId) ->
                     EncodedRequestInternal "get" "getGroup"
                         [ ("group", EInt groupId)
                         ]
-                GetUser groupId userId ->
+                GetUser (GroupId groupId) (UserId userId) ->
                     EncodedRequestInternal "get" "getUser"
                         [ ("group", EInt groupId)
                         , ("user", EInt userId)
                         ]
-                GetUserFromGroup groupId ->
+                GetUserFromGroup (GroupId groupId) ->
                     EncodedRequestInternal "get" "getUserFromGroup"
                         [ ("group", EInt groupId)
                         ]
                 GetMyGroupUser ->
                     EncodedRequestInternal "get" "getMyGroupUser"
                         []
-                GetChatRoom chatId ->
+                GetChatRoom (ChatId chatId) ->
                     EncodedRequestInternal "get" "getChatRoom"
                         [ ("chat", EInt chatId)
                         ]
-                GetChatRooms gameId ->
+                GetChatRooms (GameId gameId) ->
                     EncodedRequestInternal "get" "getChatRooms"
                         [ ("game", EInt gameId)
                         ]
-                GetChatEntrys chatId ->
+                GetChatEntrys (ChatId chatId) ->
                     EncodedRequestInternal "get" "getChatEntrys"
                         [ ("chat", EInt chatId)
                         ]
-                GetVotes chatId voteKey ->
+                GetVotes (ChatId chatId) (VoteKey voteKey) ->
                     EncodedRequestInternal "get" "getVotes"
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
@@ -193,7 +191,7 @@ encodeRequestInternal response =
                             <| Dict.toList allTopUserFilter
                         )
                         ]
-                GetAllBansOfUser user ->
+                GetAllBansOfUser (UserId user) ->
                     EncodedRequestInternal "get" "getAllBansOfUser"
                         [ ("user", EInt user)
                         ]
@@ -203,24 +201,24 @@ encodeRequestInternal response =
                 GetOldestBans ->
                     EncodedRequestInternal "get" "getOldestBans"
                         []
-                GetUserSpokenBans user ->
+                GetUserSpokenBans (UserId user) ->
                     EncodedRequestInternal "get" "getUserSpokenBans"
                         [ ("user", EInt user)
                         ]
-                GetBansFromGroup group ->
+                GetBansFromGroup (GroupId group) ->
                     EncodedRequestInternal "get" "getBansFromGroup"
                         [ ("group", EInt group)
                         ]
         RespConv resp ->
             case resp of
-                LastOnline groupId ->
+                LastOnline (GroupId groupId) ->
                     EncodedRequestInternal "conv" "lastOnline"
                         [ ("group", EInt groupId)
                         ]
                 GetUpdatedGroup gv ->
                     EncodedRequestInternal "conv" "getUpdatedGroup"
                         (
-                            [ ("group", EInt gv.group)
+                            [ ("group", gv.group |> \(GroupId id) -> EInt id)
                             , ("lastChange", EInt gv.lastChange)
                             , ("leader", EInt gv.leader)
                             ]
@@ -231,26 +229,26 @@ encodeRequestInternal response =
                                 ]
                             Nothing -> []
                         ))
-                GetChangedVotings gameId lastChange ->
+                GetChangedVotings (GameId gameId) lastChange ->
                     EncodedRequestInternal "conv" "getChangedVotings"
                         [ ("game", EInt gameId)
-                        , ("lastChange", EInt lastChange)
+                        , ("lastChange", ePosix lastChange)
                         ]
-                GetNewChatEntrys chatId after ->
+                GetNewChatEntrys (ChatId chatId) after ->
                     EncodedRequestInternal "conv" "getNewChatEntrys"
                         [ ("chat", EInt chatId)
-                        , ("after", EInt after)
+                        , ("after", ePosix after)
                         ]
-                GetAllNewChatEntrys gameId after ->
+                GetAllNewChatEntrys (GameId gameId) (ChatEntryId after) ->
                     EncodedRequestInternal "conv" "getAllNewChatEntrys"
                         [ ("game", EInt gameId)
                         , ("after", EInt after)
                         ]
-                GetNewVotes chatId voteKey lastChange ->
+                GetNewVotes (ChatId chatId) (VoteKey voteKey) lastChange ->
                     EncodedRequestInternal "conv" "getNewVotes"
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
-                        , ("lastChange", EInt lastChange)
+                        , ("lastChange", ePosix lastChange)
                         ]
         RespControl resp ->
             case resp of
@@ -262,40 +260,40 @@ encodeRequestInternal response =
                     EncodedRequestInternal "control" "joinGroup"
                         [ ("key", EString key)
                         ]
-                ChangeLeader groupId userId ->
+                ChangeLeader (GroupId groupId) (UserId userId) ->
                     EncodedRequestInternal "control" "changeLeader"
                         [ ("group", EInt groupId)
                         , ("leader", EInt userId)
                         ]
                 StartNewGame ng ->
                     EncodedRequestInternal "control" "startNewGame"
-                        [ ("group", EInt ng.group)
+                        [ ("group", ng.group |> \(GroupId id) -> EInt id)
                         , ("roles", EString <| encode 0 <| object <| 
                             List.map (\(k,v) -> (k,int v)) <|
                             Dict.toList ng.roles)
                         , ("ruleset", EString ng.ruleset)
                         , ("config", EString <| encode 0 ng.config)
                         ]
-                NextPhase gameId ->
+                NextPhase (GameId gameId) ->
                     EncodedRequestInternal "control" "nextPhase"
                         [ ("game", EInt gameId)
                         ]
-                PostChat chatId chat ->
+                PostChat (ChatId chatId) chat ->
                     EncodedRequestInternal "control" "postChat"
                         [ ("chat", EInt chatId)
                         , ("text", EString chat)
                         ]
-                StartVoting chatId voteKey ->
+                StartVoting (ChatId chatId) (VoteKey voteKey) ->
                     EncodedRequestInternal "control" "startVoting"
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
                         ]
-                FinishVoting chatId voteKey ->
+                FinishVoting (ChatId chatId) (VoteKey voteKey) ->
                     EncodedRequestInternal "control" "finishVoting"
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
                         ]
-                Vote chatId voteKey playerId ->
+                Vote (ChatId chatId) (VoteKey voteKey) (PlayerId playerId) ->
                     EncodedRequestInternal "control" "vote"
                         [ ("chat", EInt chatId)
                         , ("voteKey", EString voteKey)
@@ -305,23 +303,23 @@ encodeRequestInternal response =
                     EncodedRequestInternal "control" "setConfig"
                         [ ("config", EString config)
                         ]
-                LeaveGroup group ->
+                LeaveGroup (GroupId group) ->
                     EncodedRequestInternal "control" "leaveGroup"
                         [ ("group", EInt group)
                         ]
-                BanUser user group end comment ->
+                BanUser (UserId user) (GroupId group) end comment ->
                     EncodedRequestInternal "control" "banUser"
                         [ ("user", EInt user)
                         , ("group", EInt group)
-                        , ("end", EInt end)
+                        , ("end", ePosix end)
                         , ("comment", EString comment)
                         ]
-                KickUser user group ->
+                KickUser (UserId user) (GroupId group) ->
                     EncodedRequestInternal "control" "kickUser"
                         [ ("user", EInt user)
                         , ("group", EInt group)
                         ]
-                RevokeBan user group ->
+                RevokeBan (UserId user) (GroupId group) ->
                     EncodedRequestInternal "control" "revokeBan"
                         [ ("user", EInt user)
                         , ("group", EInt group)

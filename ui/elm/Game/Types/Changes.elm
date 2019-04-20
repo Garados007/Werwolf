@@ -11,6 +11,7 @@ import Debug exposing (log)
 import List
 import Dict
 import Json.Decode exposing (decodeValue, string, int)
+import Time exposing (Posix)
 
 type Changes
     = CUserStat UserStat
@@ -21,19 +22,19 @@ type Changes
     | CChatEntry ChatEntry
     | CVote Vote
     | CVoting Voting
-    | CLastOnline Int (List (Int, Int))
+    | CLastOnline Int (List (UserId, Posix))
     | CInstalledGameTypes (List String)
     | CCreateOptions String CreateOptions
     | CRolesets String (List String)
     | CConfig (Maybe String)
-    | COwnId Int
+    | COwnId UserId
     | CBanInfo BanInfo
     | CAccountInvalid
     | CNetworkError
     | CMaintenance
     | CErrInvalidGroupKey
     | CErrJoinBannedFromGroup
-    | CGroupLeaved Int
+    | CGroupLeaved GroupId
     
 type alias ChangeConfig =
     { changes: List Changes
@@ -127,7 +128,7 @@ concentrate resp =
                         dv = Maybe.andThen 
                             (Result.toMaybe << decodeValue int) t
                     in case dv of
-                        Just d -> ChangeConfig [ CGroupLeaved d ] False
+                        Just d -> ChangeConfig [ CGroupLeaved <| GroupId d ] False
                         Nothing -> ChangeConfig [] False
                 BanUser ban ->
                     ChangeConfig [ CBanInfo ban ] False
@@ -211,7 +212,7 @@ handleLeaved resp =
         dv = Maybe.andThen
             (Result.toMaybe << decodeValue int) t
     in case dv of
-        Just group -> ChangeConfig [ CGroupLeaved group ] False
+        Just group -> ChangeConfig [ CGroupLeaved <| GroupId group ] False
         Nothing -> ChangeConfig [] False
 
 debug : Int -> a -> a

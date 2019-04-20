@@ -1,17 +1,33 @@
 module Game.Types.Types exposing (..)
 
+import Time exposing (Posix)
+
+type UserId = UserId Int 
+
+type GroupId = GroupId Int
+
+type GameId = GameId Int
+
+type PlayerId = PlayerId Int
+
+type ChatId = ChatId Int
+
+type ChatEntryId = ChatEntryId Int
+
+type VoteKey = VoteKey String
+
 -- global information about any user
 type alias UserStat =
     -- The User Id
-    { userId : Int 
+    { userId : UserId
     -- The User name
     , name : String
     -- The hash sum for the gravatar image
     , gravatar: String
     -- Unix Time of first game
-    , firstGame : Maybe Int
+    , firstGame : Maybe Posix
     -- Unix Time of last game
-    , lastGame : Maybe Int
+    , lastGame : Maybe Posix
     -- total count of games
     , gameCount : Int
     -- total count of wins
@@ -19,7 +35,7 @@ type alias UserStat =
     -- total count of self moderated games
     , moderatedCount : Int
     -- Unix Time of last Online
-    , lastOnline : Int
+    , lastOnline : Posix
     -- AI Id (currently unused)
     , aiId : Maybe Int
     -- AI Name (currently unused)
@@ -39,17 +55,17 @@ type alias UserStat =
 -- global information about a group
 type alias Group =
     -- the unique id of this group
-    { id : Int
+    { id : GroupId
     -- the creator defined name of this group
     , name : String
     -- Unix time of creation
-    , created : Int
+    , created : Posix
     -- Unix time of last started game
-    , lastTime : Maybe Int
+    , lastTime : Maybe Posix
     -- UserStat Id of the creator
-    , creator : Int
+    , creator : UserId
     -- UserStat Id of the current leader
-    , leader : Int
+    , leader : UserId
     -- Game Object of the current  Game
     , currentGame : Maybe Game
     -- The key to enter this group
@@ -59,13 +75,13 @@ type alias Group =
 -- informations about a current game
 type alias Game =
     -- the id of this game
-    { id : Int
+    { id : GameId
     -- the id of the refering group
-    , mainGroupId : Int
+    , mainGroupId : GroupId
     -- the Unix time when the game was started
-    , started : Int
+    , started : Posix
     -- the Unix time when this game was finished
-    , finished : Maybe Int
+    , finished : Maybe Posix
     -- the indicator of the current phase
     -- night phases has the prefix 'n:' and day phases 'd:'
     , phase : String
@@ -81,9 +97,9 @@ type alias Game =
 -- information about a user in a group
 type alias User =
     -- the refering group id
-    { group : Int
+    { group : GroupId
     -- the user id
-    , user : Int
+    , user : UserId
     -- the player object (only set if game starts and user is not a guest)
     , player : Maybe Player
     -- the stats with all the information about the user
@@ -93,11 +109,11 @@ type alias User =
 -- the player object in a game
 type alias Player =
     -- the id of this player
-    { id : Int
+    { id : PlayerId
     -- the game id
-    , game : Int
+    , game : GameId
     -- the user id
-    , user : Int
+    , user : UserId
     -- determines if the user is currently alive
     , alive : Bool
     -- a bunch of roles that are currently visible to the current user
@@ -115,9 +131,9 @@ type alias Role =
 -- information about a single chat room
 type alias Chat =
     -- the unique id of this room
-    { id : Int
+    { id : ChatId
     -- the refering game id
-    , game : Int
+    , game : GameId
     -- the chat room key
     , chatRoom : String
     -- list of current votings in this room
@@ -130,24 +146,24 @@ type alias Chat =
 -- information about a voting to select an action
 type alias Voting =
     -- the id of the chat where this voting is in
-    { chat : Int
+    { chat : ChatId
     -- the key of this voting, its only used to identify
     -- the voting in this chat
     , voteKey : String
     -- Unix time when this voting was created
-    , created : Int
+    , created : Posix
     -- Unix time when this voting was started 
     --(after that are votes possible)
-    , voteStart : Maybe Int
+    , voteStart : Maybe Posix
     -- Unix time when this voting was finished
     -- (after that no more votes are possible)
-    , voteEnd : Maybe Int
+    , voteEnd : Maybe Posix
     -- List of player Ids who are allowed to vote
-    , enabledUser : List Int
+    , enabledUser : List PlayerId
     -- List of player Ids who can be target of a vote
-    , targetUser : List Int
+    , targetUser : List PlayerId
     -- the result of this voting (can be Nothing)
-    , result : Maybe Int
+    , result : Maybe PlayerId
     }
 
 -- information about the current permissions for the current user
@@ -162,50 +178,50 @@ type alias Permission =
     -- current user is visible to the others in this chat
     , visible : Bool
     -- a list of all other visible player ids who has access to this chat
-    , player : List Int
+    , player : List PlayerId
     }
 
 -- a single entry in a chat
 type alias ChatEntry =
     -- the unique id for this entry
-    { id : Int
+    { id : ChatEntryId
     -- the chat id
-    , chat : Int
-    -- the user id (not player!)
-    , user : Int
+    , chat : ChatId
+    -- the user id
+    , user : UserId
     -- the text that was written
     , text : String
     -- the Unix time when this chat was send
-    , sendDate : Int
+    , sendDate : Posix
     }
 
 -- a single vote in a voting
 type alias Vote =
     -- the chat id where the voting is in
     -- combined with the voteKey it refers the voting itself
-    { setting : Int
+    { setting : ChatId
     -- refers with the setting the voting
-    , voteKey : String
+    , voteKey : VoteKey
     -- the voter who gave the vote
-    , voter : Int
+    , voter : PlayerId
     -- the target that was choosen by the voter
-    , target : Int
+    , target : PlayerId
     -- the Unix time when this vote was given
-    , date : Int
+    , date : Posix
     }
 
 -- contains information about a single ban
 type alias BanInfo =
     -- the user that was banned
-    { user : Int
+    { user : UserId
     -- the spoker who has banned the user
-    , spoker : Int
+    , spoker : UserId
     -- the group in which the user is banned
-    , group : Int
+    , group : GroupId
     -- the date when this ban was created and starts
-    , startDate : Int
+    , startDate : Posix
     -- the end date of this ban or Nothing if its infinitive
-    , endDate : Maybe Int
+    , endDate : Maybe Posix
     -- the reason why the user was banned for
     , comment : String
     }

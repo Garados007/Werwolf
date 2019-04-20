@@ -5,6 +5,7 @@ import Game.Types.CreateOptions exposing (..)
 import Game.Types.Request exposing (TopUserFilter, allTopUserFilter)
 import Dict exposing (Dict)
 import Json.Encode exposing (Value)
+import Time exposing (Posix)
 
 type alias Response =
     { info : ResponseInfo
@@ -45,7 +46,7 @@ type ResultGet
     | GetBansFromGroup (List BanInfo)
 
 type ResultConv
-    = LastOnline (List (Int, Int))
+    = LastOnline (List (UserId, Posix))
     | GetUpdatedGroup (Maybe Group)
     | GetChangedVotings (List Voting)
     | GetNewChatEntrys (List ChatEntry)

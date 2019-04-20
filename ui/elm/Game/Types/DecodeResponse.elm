@@ -11,6 +11,7 @@ import Game.Types.DecodeCreateOptions exposing (..)
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (required)
 import Dict
+import Game.Types.Types exposing (UserId (..))
 
 decode = succeed
 
@@ -125,7 +126,7 @@ decodeConv : String -> Decoder (Maybe ResultConv)
 decodeConv method =
     case method of
         "lastOnline" ->
-            decSingle LastOnline (list (decodeTuple2 int))
+            decSingle LastOnline (list (decodeTuple2 (map UserId int) dposix))
         "getUpdatedGroup" ->
             decSingle GetUpdatedGroup (nullable decodeGroup)
         "getChangedVotings" ->
@@ -195,9 +196,9 @@ decodeMulti method =
 decSingle : (a -> b) -> Decoder a -> Decoder (Maybe b)
 decSingle f d = andThen (succeed << Just << f) (field "result" d)
 
-decodeTuple2 : Decoder a -> Decoder (a,a)
-decodeTuple2 decoder=
+decodeTuple2 : Decoder a -> Decoder b -> Decoder (a,b)
+decodeTuple2 decoder1 decoder2=
     map2 
         (\a b -> (a,b))
-        (index 0 decoder)
-        (index 1 decoder)
+        (index 0 decoder1)
+        (index 1 decoder2)
