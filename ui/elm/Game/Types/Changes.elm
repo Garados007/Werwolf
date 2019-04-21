@@ -10,7 +10,7 @@ import Game.Types.Response exposing (..)
 import Debug exposing (log)
 import List
 import Dict
-import Json.Decode exposing (decodeValue, string, int)
+import Json.Decode exposing (Decoder,decodeValue, string, int)
 import Time exposing (Posix)
 
 type Changes
@@ -22,7 +22,7 @@ type Changes
     | CChatEntry ChatEntry
     | CVote Vote
     | CVoting Voting
-    | CLastOnline Int (List (UserId, Posix))
+    | CLastOnline GroupId (List (UserId, Posix))
     | CInstalledGameTypes (List String)
     | CCreateOptions String CreateOptions
     | CRolesets String (List String)
@@ -32,14 +32,20 @@ type Changes
     | CAccountInvalid
     | CNetworkError
     | CMaintenance
-    | CErrInvalidGroupKey
-    | CErrJoinBannedFromGroup
+    | CErrInvalidGroupKey String
+    | CErrJoinBannedFromGroup String
     | CGroupLeaved GroupId
     
 type alias ChangeConfig =
     { changes: List Changes
     , reload: Bool
     }
+
+reqVal : String -> Decoder a -> Response -> Maybe a 
+reqVal name decoder resp = resp.info.request 
+    |> Dict.get name 
+    |> Maybe.map (decodeValue decoder)
+    |> Maybe.andThen Result.toMaybe
 
 concentrate : Response -> ChangeConfig
 concentrate resp =
@@ -87,7 +93,7 @@ concentrate resp =
                             (Result.toMaybe << decodeValue int) t
                     in case dv of
                         Just ti -> 
-                            ChangeConfig [ CLastOnline ti v ] False
+                            ChangeConfig [ CLastOnline (GroupId ti) v ] False
                         Nothing -> ChangeConfig [] False
                 GetUpdatedGroup v ->
                     case v of
@@ -179,7 +185,9 @@ concentrate resp =
             "wrongId" -> case resp.info.class of
                 "control" -> case resp.info.method of
                     "joinGroup" -> case e.info of
-                        "group key not found in db" -> ChangeConfig [ CErrInvalidGroupKey ] False
+                        "group key not found in db" -> case reqVal "key" string resp of
+                            Just k -> ChangeConfig [ CErrInvalidGroupKey k ] False
+                            Nothing -> ChangeConfig [] False
                         _ -> handleError resp
                     _ -> handleError resp
                 _ -> handleError resp
@@ -194,7 +202,9 @@ concentrate resp =
                     _ -> handleError resp
                 "control" -> case resp.info.method of
                     "joinGroup" -> case e.info of
-                        "user is banned from this group" -> ChangeConfig [ CErrJoinBannedFromGroup ] False
+                        "user is banned from this group" -> case reqVal "key" string resp of 
+                            Just k -> ChangeConfig [ CErrJoinBannedFromGroup k ] False
+                            Nothing -> ChangeConfig [] False
                         _ -> handleError resp
                     _ -> handleError resp
                 _ -> handleError resp

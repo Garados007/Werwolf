@@ -4,17 +4,38 @@ import Time exposing (Posix)
 
 type UserId = UserId Int 
 
+userId : UserId -> Int 
+userId (UserId id) = id
+
 type GroupId = GroupId Int
+
+groupId : GroupId -> Int 
+groupId (GroupId id) = id
 
 type GameId = GameId Int
 
+gameId : GameId -> Int 
+gameId (GameId id) = id
+
 type PlayerId = PlayerId Int
+
+playerId : PlayerId -> Int 
+playerId (PlayerId id) = id 
 
 type ChatId = ChatId Int
 
+chatId : ChatId -> Int 
+chatId (ChatId id) = id
+
 type ChatEntryId = ChatEntryId Int
 
+chatEntryId : ChatEntryId -> Int 
+chatEntryId (ChatEntryId id) = id 
+
 type VoteKey = VoteKey String
+
+voteKey : VoteKey -> String 
+voteKey (VoteKey id) = id
 
 -- global information about any user
 type alias UserStat =
@@ -149,7 +170,7 @@ type alias Voting =
     { chat : ChatId
     -- the key of this voting, its only used to identify
     -- the voting in this chat
-    , voteKey : String
+    , voteKey : VoteKey
     -- Unix time when this voting was created
     , created : Posix
     -- Unix time when this voting was started 

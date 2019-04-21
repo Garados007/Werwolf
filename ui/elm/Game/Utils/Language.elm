@@ -28,7 +28,7 @@ import Json.Decode as Json exposing
 import Json.Decode.Pipeline exposing (required,optional)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Game.Types.Types exposing (..)
+import Game.Types.Types as Types exposing (..)
 
 type LanguageLibTile
     = Text String
@@ -268,7 +268,7 @@ fetchSpecial config tile vars =
         findUser list id = case list of
             [] -> Nothing
             l :: ls ->
-                if l.user == id
+                if Types.userId l.user == id
                 then Just l
                 else findUser ls id
     in case special tile vars.key of

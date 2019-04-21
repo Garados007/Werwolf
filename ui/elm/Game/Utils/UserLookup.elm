@@ -64,12 +64,15 @@ putChanges changes (UserLookup dict) =
                         (\u d -> case Dict.get u d of
                             Just entry -> Dict.insert
                                 u
-                                { entry | groups = Set.insert group entry.groups }
+                                { entry | groups = Set.insert 
+                                    (Types.groupId group) 
+                                    entry.groups 
+                                }
                                 d
                             Nothing -> Dict.insert
                                 u
                                 { stat = Nothing
-                                , groups = Set.singleton group
+                                , groups = Set.singleton <| Types.groupId group
                                 }
                                 d
                         )
@@ -82,7 +85,7 @@ putChanges changes (UserLookup dict) =
                             | groups = 
                                 if Set.member id users
                                 then entry.groups
-                                else Set.remove group entry.groups
+                                else Set.remove (Types.groupId group) entry.groups
                             }
                         )
                         inserted
