@@ -8,7 +8,7 @@ module Game.Utils.UserLookup exposing
     , getUserGroups
     )
 
-import Game.Types.Types exposing (..)
+import Game.Types.Types as Types exposing (..)
 import Game.Types.Changes exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
@@ -29,34 +29,36 @@ putChanges : List Changes -> UserLookup -> UserLookup
 putChanges changes (UserLookup dict) =
     let insert : Changes -> UserLookupInfo -> UserLookupInfo
         insert = \change info -> case change of
-            CUser user -> case Dict.get user.user info of
+            CUser user -> case Dict.get (Types.userId user.user) info of
                 Just entry -> Dict.insert 
-                    user.user
+                    (Types.userId user.user)
                     { entry
                     | stat = Just user.stats
-                    , groups = Set.insert user.group entry.groups
+                    , groups = Set.insert (Types.groupId user.group) entry.groups
                     }
                     info
                 Nothing -> Dict.insert
-                    user.user
+                    (Types.userId user.user)
                     { stat = Just user.stats
-                    , groups = Set.singleton user.group
+                    , groups = Set.singleton <| Types.groupId user.group
                     }
                     info
-            CUserStat stat -> case Dict.get stat.userId info of
+            CUserStat stat -> case Dict.get (Types.userId stat.userId) info of
                 Just entry -> Dict.insert
-                    stat.userId
+                    (Types.userId stat.userId)
                     { entry | stat = Just stat }
                     info
                 Nothing -> Dict.insert
-                    stat.userId
+                    (Types.userId stat.userId)
                     { stat = Just stat
                     , groups = Set.empty
                     }
                     info
             CLastOnline group online ->
                 let users : Set Int
-                    users = List.map Tuple.first online |> Set.fromList
+                    users = List.map 
+                        (Tuple.first >> Types.userId) online 
+                        |> Set.fromList
                     inserted : UserLookupInfo
                     inserted = Set.foldl
                         (\u d -> case Dict.get u d of
