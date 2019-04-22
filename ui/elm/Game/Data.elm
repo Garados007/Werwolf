@@ -61,12 +61,7 @@ type alias GroupData =
 type alias ChatData =
     { chat : Chat 
     , entry : SafeDict Int ChatEntryId ChatEntry 
-    , vote : SafeDict String VoteKey VoteData
-    }
-
-type alias VoteData =
-    { voting : Voting
-    , votes : SafeDict Int PlayerId Vote
+    , votes : SafeDict String VoteKey (SafeDict Int PlayerId Vote)
     }
 
 empty : Posix -> Zone -> Data 
@@ -203,7 +198,7 @@ update changement data =
                                             Nothing ->
                                                 { chat = nc
                                                 , entry = UnionDict.include Dict.empty
-                                                , vote = UnionDict.include Dict.empty
+                                                , votes = UnionDict.include Dict.empty
                                                 }
                                         )
                                     |> safen
@@ -248,14 +243,13 @@ update changement data =
                                 |> UnionDict.update nv.setting
                                     (Maybe.map <| \chat -> 
                                         { chat
-                                        | vote = unsafen VoteKey Types.voteKey chat.vote
+                                        | votes = unsafen VoteKey Types.voteKey chat.votes
                                             |> UnionDict.update nv.voteKey 
-                                                (Maybe.map <| \vote ->
-                                                    { vote
-                                                    | votes = unsafen PlayerId Types.playerId vote.votes
-                                                        |> UnionDict.insert nv.voter nv 
-                                                        |> safen
-                                                    }
+                                                (Maybe.withDefault (UnionDict.include Dict.empty)
+                                                    >> unsafen PlayerId Types.playerId
+                                                    >> UnionDict.insert nv.voter nv 
+                                                    >> safen
+                                                    >> Just
                                                 )
                                             |> safen
                                         }
@@ -278,16 +272,21 @@ update changement data =
                                 |> UnionDict.update nv.chat
                                     (Maybe.map <| \chat -> 
                                         { chat
-                                        | vote = unsafen VoteKey Types.voteKey chat.vote
-                                            |> UnionDict.update nv.voteKey 
-                                                (\mvote -> Just <| case mvote of
-                                                    Just vote -> { vote | voting = nv }
-                                                    Nothing ->
-                                                        { voting = nv 
-                                                        , votes = UnionDict.include Dict.empty
-                                                        }
-                                                )
-                                            |> safen
+                                        | chat = chat.chat |> \rc -> 
+                                            { rc 
+                                            | voting = 
+                                                let (voting,updated) = List.foldr
+                                                        (\v (r,u) ->
+                                                            if v.voteKey == nv.voteKey
+                                                            then (nv :: r, True)
+                                                            else (v :: r, u)
+                                                        )
+                                                        ([], False)
+                                                        rc.voting
+                                                in  if updated
+                                                    then voting
+                                                    else nv :: voting
+                                            }
                                         }
                                     )
                                 |> safen
@@ -430,12 +429,6 @@ pathChatData
     -> DetectorPath ChatData msg 
     -> DetectorPath GroupData msg 
 pathChatData = pathSafeDictInt "chat" .chats
-
-pathVoteData
-    : List (ModActionEx (List Path) VoteData msg)
-    -> DetectorPath VoteData msg 
-    -> DetectorPath ChatData msg 
-pathVoteData = pathSafeDictString "vote" .vote
 
 pathSafeDictInt 
     : String
