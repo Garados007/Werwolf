@@ -90,7 +90,7 @@ decodeVoting : Decoder Voting
 decodeVoting =
     decode Voting
         |> required "chat" (map ChatId int)
-        |> required "voteKey" string
+        |> required "voteKey" (map VoteKey string)
         |> required "created" dposix
         |> required "voteStart" (nullable dposix)
         |> required "voteEnd" (nullable dposix)

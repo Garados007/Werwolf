@@ -1,6 +1,5 @@
 module Game.Configuration exposing
     ( Configuration
-    , LangConfiguration
     , empty
     , decodeConfig
     , encodeConfig
@@ -26,11 +25,6 @@ type alias Configuration =
     , votingDateFormat: DateTimeFormat
     , manageGroupsDateFormat: DateTimeFormat
     , theme: String
-    }
-
-type alias LangConfiguration =
-    { conf: Configuration
-    , lang: LangLocal
     }
 
 empty : Configuration

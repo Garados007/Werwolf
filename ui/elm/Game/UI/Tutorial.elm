@@ -24,6 +24,7 @@ import HttpBuilder exposing (withTimeout, withExpect, withCredentials
     , withUrlEncodedBody)
 import Dict exposing (Dict)
 import Time
+import SvgParser exposing (parse)
 
 maxPage : Int -- constant
 maxPage = 7
@@ -48,30 +49,40 @@ init =
 divs : Html msg -> Html msg
 divs = div [] << List.singleton
 
-viewEmbed : LangConfiguration -> Tutorial -> Html TutorialMsg
-viewEmbed conf = div [ class "w-tutorial-outer" ] 
-    << List.singleton << view conf
+viewEmbed : LangLocal -> Tutorial -> Html TutorialMsg
+viewEmbed lang = div [ class "w-tutorial-outer" ] 
+    << List.singleton << view lang
 
-viewModal : (TutorialMsg -> msg) -> msg -> LangConfiguration -> Tutorial -> Html msg
-viewModal map close conf = modal close 
-    (getSingle conf.lang [ "lobby", "tutorials" ]) <<
+viewModal : (TutorialMsg -> msg) -> msg -> LangLocal -> Tutorial -> Html msg
+viewModal map close lang = modal close 
+    (getSingle lang [ "lobby", "tutorials" ]) <<
     Html.map map <<
     div [ class "w-tutorial-modal" ] <<
-    List.singleton << view conf 
+    List.singleton << view lang
 
-view : LangConfiguration -> Tutorial -> Html TutorialMsg
-view = lazy2 <| \conf (Tutorial model) ->
+view : LangLocal -> Tutorial -> Html TutorialMsg
+view = lazy2 <| \lang (Tutorial model) ->
     div [ class "w-tutorial-box" ]
         [ div
             [ class "w-tutorial-header" 
-            , property "innerHTML" <| string <| Maybe.withDefault "" <|
-                Dict.get model.page model.svg
-            ] []
+            -- , property "innerHTML" 
+            --     <| string 
+            --     <| Debug.log "svg"
+            --     <| Maybe.withDefault "" 
+            --     <| Dict.get model.page model.svg
+            ]
+            [ Maybe.withDefault (text "")
+                <| Result.toMaybe
+                <| parse
+                <| Maybe.withDefault ""
+                <| Dict.get model.page model.svg
+
+            ]
         , div
             [ class "w-tutorial-info" ]
             [ div
                 [ class "w-tutorial-text" ]
-                [ text <| getSingle conf.lang 
+                [ text <| getSingle lang 
                     [ "lobby", "tutorial", String.fromInt model.page ]
                 ]
             ]

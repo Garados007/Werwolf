@@ -1,9 +1,7 @@
 module Game.UI.NewGame exposing (..)
 
-import ModuleConfig as MC exposing (..)
-
 import Html exposing (Html,div,text,node,input)
-import Html.Attributes exposing (class,value,type_,attribute)
+import Html.Attributes exposing (class,value,type_,attribute,selected)
 import Html.Events exposing (on,onClick,onInput)
 import Task
 import Json.Decode as Json
@@ -12,12 +10,15 @@ import Dict exposing (Dict)
 import Regex exposing (Regex)
 import Result
 
-import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Game.UI.Loading as Loading exposing (loading)
 import Game.Types.CreateOptions exposing (..)
-import Game.Types.Types exposing (..)
+import Game.Types.Types as Types exposing (..)
 import Game.Types.Request exposing (NewGameConfig)
+import Game.Data as Data exposing (Data)
+import DataDiff.Path as Diff exposing (DetectorPath, Path (..))
+import DataDiff.Ex exposing (SingleActionEx (..), ModActionEx (..))
+import UnionDict exposing (UnionDict)
 
 regex : String -> Regex 
 regex = Maybe.withDefault Regex.never << Regex.fromString
@@ -25,39 +26,36 @@ regex = Maybe.withDefault Regex.never << Regex.fromString
 type NewGame = NewGame NewGameInfo
 
 type alias NewGameInfo =
-    { config: LangConfiguration
-    , installedTypes : Maybe (List String)
+    { groupId : GroupId
     , currentType : Maybe String
-    , group : Group
     , page : Pages
-    , createOptions : Dict String CreateOptions
     , setting : Dict (List String) OValue
-    , user : List User
-    , targetUser : Maybe Int
-    , rolesets : Dict String (List String)
+    , targetUser : Maybe UserId
     , selRoles : Dict String Int
     }
 
 type NewGameMsg
     -- public msg
-    = SetConfig LangConfiguration
-    | SetInstalledTypes (List String)
-    | SetCreateOptions (Dict String CreateOptions)
-    | SetUser (List User)
-    | SetRoleset (Dict String (List String))
     -- private msg
-    | ChangeCurrentType String
+    = ChangeCurrentType Bool String
+    | SetSetting (Dict (List String) OValue)
     | ShowPage Pages
     | OnUpdate (List String) OValue
-    | OnChangeTargetUser String
-    | OnChangeLeader Int
+    | OnChangeTargetUser Bool String
+    | OnChangeLeader UserId
     | OnChangeSelRole String String
     | OnCreateGame
+    | CallEvent (List NewGameEvent)
+    | Multi (List NewGameMsg)
 
 type NewGameEvent
     = FetchLangSet String
-    | ChangeLeader Int Int --group user
+    | ChangeLeader GroupId UserId --group user
     | CreateGame NewGameConfig
+    | ReqData (Data -> NewGameMsg)
+    | ModData (Data -> Data)
+    | RefreshLangList
+    | FetchOptions String
 
 type Pages = PCommon | PRoles | PSpecial
 
@@ -67,30 +65,97 @@ type OValue
     | OCheck Bool 
     | OOpt Bool String
 
-type PT = PTG (Dict String PT) | PTV JE.Value
-
-type alias NewGameDef a = ModuleConfig NewGame NewGameMsg
-    (LangConfiguration, Group) NewGameEvent a
+type PT 
+    = PTG (Dict String PT) 
+    | PTV JE.Value
 
 getActiveRuleset : NewGame -> Maybe String
 getActiveRuleset (NewGame info) = info.currentType
 
-newGameModule : (NewGameEvent -> List a) -> (LangConfiguration, Group) ->
-    (NewGameDef a, Cmd NewGameMsg, List a)
-newGameModule = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
+detector : NewGame -> DetectorPath Data NewGameMsg
+detector (NewGame info) = Data.pathGameData
+    <| Diff.batch
+    [ Diff.mapData .installedTypes
+        <| Diff.value
+            [ ChangedEx <| \_ _ mt -> case mt of
+                Just (c::cs) -> ChangeCurrentType False c
+                _ -> CallEvent []
+            ]
+    , Diff.mapData .createOptions
+        <| Diff.dict
+            (\_ _ -> PathString)
+            PathString
+            [ AddedEx <| \path co ->
+                let cot : String 
+                    cot = List.reverse path 
+                        |> List.head 
+                        |> \pe -> case pe of 
+                            Just (PathString s) -> s
+                            _ -> ""
+                in  if Just cot == info.currentType
+                    then co.box 
+                        |> List.concatMap (\b -> makeInitOption b [])
+                        |> Dict.fromList
+                        |> SetSetting
+                    else CallEvent []
+            ]
+        <| Diff.value []
+    , Diff.cond
+            (\_ _ _ -> info.targetUser == Nothing)
+        <| Data.pathGroupData []
+        <| Diff.cond (\_ _ g -> g.group.id == info.groupId)
+        <| Diff.mapData .user 
+        <| Diff.list
+            (\_ _ -> PathInt)
+            [ AddedEx <| \_ u ->
+                if info.targetUser == Nothing 
+                then OnChangeTargetUser False
+                    <| String.fromInt 
+                    <| Types.userId u.user
+                else CallEvent []
+            ]
+        <| Diff.value []
+    ]
 
-init : (LangConfiguration, Group) -> (NewGame, Cmd NewGameMsg, List a)
-init (config, group) =
-    ( NewGame <| NewGameInfo
-        config Nothing Nothing group PCommon Dict.empty 
-        Dict.empty [] Nothing Dict.empty Dict.empty
-    , Cmd.none
-    , []
+init : GroupId -> (NewGame, List NewGameEvent)
+init groupId = 
+    ( NewGame 
+        { groupId = groupId
+        , currentType = Nothing
+        , page = PCommon
+        , setting = Dict.empty
+        , targetUser = Nothing
+        , selRoles = Dict.empty
+        }
+    , List.singleton <| ReqData <| \data -> Multi 
+        <| List.filterMap identity
+            [ case data.game.installedTypes of 
+                Just (t::ts) -> Just <| ChangeCurrentType False t
+                _ -> Nothing
+            , case data.game.installedTypes of 
+                Just (t::ts) -> case Dict.get t data.game.createOptions of 
+                    Nothing -> FetchOptions t
+                        |> List.singleton
+                        |> CallEvent 
+                        |> Just
+                    Just co -> co.box
+                        |> List.concatMap (\b -> makeInitOption b [])
+                        |> Dict.fromList
+                        |> SetSetting
+                        |> Just
+                _ -> Nothing
+            , data.game.groups 
+                |> UnionDict.unsafen GroupId Types.groupId 
+                |> UnionDict.get groupId 
+                |> Maybe.map .user
+                |> Maybe.andThen List.head
+                |> Maybe.map
+                    (.user 
+                        >> Types.userId
+                        >> String.fromInt
+                        >> OnChangeTargetUser False
+                    )
+            ]
     )
 
 makeInitOption : Box -> List String -> List (List String, OValue)
@@ -114,29 +179,29 @@ makeInitOption box key = case box.content of
             (key2,text) :: os -> OOpt True key2
         )]
 
-view : NewGame -> Html NewGameMsg
-view (NewGame info) = div [ class "w-newgame-box" ]
+view : Data -> LangLocal -> NewGame -> Html NewGameMsg
+view data lang (NewGame info) = div [ class "w-newgame-box" ]
     [ div [ class "w-newgame-title" ]
-        [ text <| getSingle info.config.lang [ "ui", "newgame" ] ]
+        [ text <| getSingle lang [ "ui", "newgame" ] ]
     , div [ class "w-newgame-variants-box" ]
         [ div [ class "w-newgame-variants-title" ]
-            [ text <| getSingle info.config.lang [ "ui", "ng-variants" ] ]
-        , case info.installedTypes of
+            [ text <| getSingle lang [ "ui", "ng-variants" ] ]
+        , case data.game.installedTypes of
             Just it -> viewInstalledTypes it
             Nothing -> loading
         ]
     , div [ class "w-newgame-options-header" ] <|
         addFiltered
         [ div [ class "w-newgame-options-header-item", onClick (ShowPage PCommon) ]
-            [ text <| getSingle info.config.lang [ "ui", "ng-common" ] ]
+            [ text <| getSingle lang [ "ui", "ng-common" ] ]
         , div [ class "w-newgame-options-header-item", onClick (ShowPage PRoles) ]
-            [ text <| getSingle info.config.lang [ "ui", "ng-roles" ] ]
+            [ text <| getSingle lang [ "ui", "ng-roles" ] ]
         ]
         [ Maybe.map (\ct ->
                 div [ class "w-newgame-options-header-item", onClick (ShowPage PSpecial) ] <| 
                     List.singleton <| 
-                        case Maybe.andThen (\k -> Dict.get k info.createOptions) info.currentType of
-                            Just co -> text <| getSingle info.config.lang 
+                        case Maybe.andThen (\k -> Dict.get k data.game.createOptions) info.currentType of
+                            Just co -> text <| getSingle lang 
                                 [ "new-option", co.chapter ]
                             Nothing -> loading
             ) info.currentType
@@ -146,10 +211,18 @@ view (NewGame info) = div [ class "w-newgame-box" ]
             PCommon -> viewPageCommon
             PRoles -> viewPageRoles
             PSpecial -> viewPageSpecial
-        ) info
-    , if (info.currentType /= Nothing) &&
-            ((List.sum <| Dict.values info.selRoles) == (List.length info.user)) &&
-            (List.all
+        ) data lang info 
+    , if (info.currentType /= Nothing)
+            &&  ( ((+) 1 <| List.sum <| Dict.values info.selRoles)
+                    ==  ( data.game.groups
+                            |> UnionDict.unsafen GroupId Types.groupId
+                            |> UnionDict.get info.groupId 
+                            |> Maybe.map .user 
+                            |> Maybe.withDefault []
+                            |> List.length
+                        )
+                )
+            && (List.all
                 (\(list,ov) -> case ov of
                     ONum er _ -> er
                     OText er _ -> er
@@ -158,14 +231,14 @@ view (NewGame info) = div [ class "w-newgame-box" ]
                 ) <| Dict.toList info.setting
             )
         then div [ class "w-newgame-submit", onClick OnCreateGame ]
-            [ text <| getSingle info.config.lang [ "ui", "create-newgame" ] ]
+            [ text <| getSingle lang [ "ui", "create-newgame" ] ]
         else div [] []
     ]
 
 viewInstalledTypes : List String -> Html NewGameMsg
 viewInstalledTypes list = node "select"
     [ on "change" <|
-        Json.map ChangeCurrentType Html.Events.targetValue
+        Json.map (ChangeCurrentType True) Html.Events.targetValue
     ] <| List.map
     (\it -> node "option" 
         [ value it]
@@ -173,76 +246,102 @@ viewInstalledTypes list = node "select"
     )
     list
 
-viewPageCommon : NewGameInfo -> List (Html NewGameMsg)
-viewPageCommon info = 
+viewPageCommon : Data -> LangLocal -> NewGameInfo -> List (Html NewGameMsg)
+viewPageCommon data lang info = 
     [ div [ class "w-newgame-enterkey-header" ]
-        [ text <| getSingle info.config.lang [ "ui", "enter-key" ]]
+        [ text <| getSingle lang [ "ui", "enter-key" ]]
     , input
         [ class "w-newgame-enterkey-code" 
         , type_ "text"
         , attribute "readonly" "readonly"
-        , value <| formatKey info.group.enterKey
+        , value 
+            <| formatKey 
+            <| Maybe.withDefault ""
+            <| Maybe.map (.enterKey << .group)
+            <| UnionDict.get info.groupId 
+            <| UnionDict.unsafen GroupId Types.groupId
+            <| data.game.groups
         ] []
     , div [ class "w-newgame-cleader-header" ]
-        [ text <| getSingle info.config.lang [ "ui", "change-leader" ] ]
+        [ text <| getSingle lang [ "ui", "change-leader" ] ]
     , node "select"
         [ class "w-newgame-cleader-select" 
         , on "change" <|
-            Json.map OnChangeTargetUser Html.Events.targetValue
-        ] <| List.map
-        (\user ->
-            node "option" [ value <| String.fromInt user.user ]
+            Json.map (OnChangeTargetUser True) Html.Events.targetValue
+        ] 
+        <| List.map
+            (\user ->  node "option" 
+                [ value <| String.fromInt <| Types.userId user.user ]
                 [ text user.stats.name ]
-        )
-        info.user
+            )
+        <| Maybe.withDefault []
+        <| Maybe.map .user 
+        <| UnionDict.get info.groupId 
+        <| UnionDict.unsafen GroupId Types.groupId
+        <| data.game.groups
     , case info.targetUser of
         Just tu -> div 
             [ class "w-newgame-cleader-submit" 
             , onClick <| OnChangeLeader tu
             ]
-            [ text <| getSingle info.config.lang [ "ui", "on-change-leader" ] ]
+            [ text <| getSingle lang [ "ui", "on-change-leader" ] ]
         Nothing -> div [] []
     ]
 
-viewPageRoles : NewGameInfo -> List (Html NewGameMsg)
-viewPageRoles info =
+viewPageRoles : Data -> LangLocal -> NewGameInfo -> List (Html NewGameMsg)
+viewPageRoles data lang info =
     [ div [ class "w-newgame-roleset-header" ]
-        [ text <| getSingle info.config.lang [ "ui", "rolesets" ] ]
+        [ text <| getSingle lang [ "ui", "rolesets" ] ]
     , div [ class "w-newgame-roleset-group" ] <|
         ( div [ class "w-newgame-roleset-single" ]
-            [ divk <| text <| getSingle info.config.lang [ "ui", "role-leader" ]
+            [ divk <| text <| getSingle lang [ "ui", "role-leader" ]
             , divk <| text "1" 
             ]
         )
         ::
         ( List.map
             (\role -> div [ class "w-newgame-roleset-single" ]
-                [ divk <| text <| getSingle info.config.lang [ "roles", role ]
+                [ divk <| text <| getSingle lang [ "roles", role ]
                 , divk <| input
                     [ type_ "number"
                     , attribute "min" "0"
                     , attribute "step" "1"
-                    , attribute "max" <| String.fromInt <| List.length info.user
-                    , value <| String.fromInt <| Maybe.withDefault 0 <|
-                        Dict.get role info.selRoles
+                    , attribute "max" 
+                        <| String.fromInt 
+                        <| List.length 
+                        <| Maybe.withDefault []
+                        <| Maybe.map .user 
+                        <| UnionDict.get info.groupId
+                        <| UnionDict.unsafen GroupId Types.groupId
+                        <| data.game.groups
+                    , value 
+                        <| String.fromInt 
+                        <| Maybe.withDefault 0 
+                        <| Dict.get role info.selRoles
                     , onInput (OnChangeSelRole role)
                     ] []
                 ]
             ) <| Maybe.withDefault [] <| 
-            Maybe.andThen (\k -> Dict.get k info.rolesets) <|
+            Maybe.andThen (\k -> Dict.get k data.game.rolesets) <|
             info.currentType
         )
-    , if (List.sum <| Dict.values info.selRoles) == (List.length info.user)
+    , if (==) ((+) 1 <| List.sum <| Dict.values info.selRoles) 
+            <| List.length 
+            <| Maybe.withDefault []
+            <| Maybe.map .user 
+            <| UnionDict.get info.groupId
+            <| UnionDict.unsafen GroupId Types.groupId
+            <| data.game.groups
         then div [] []
         else div [ class "w-newgame-roleset-invalid" ]
-            [ text <| getSingle info.config.lang ["ui", "role-invalid" ] ]
+            [ text <| getSingle lang ["ui", "role-invalid" ] ]
     ]
 
-viewPageSpecial : NewGameInfo -> List (Html NewGameMsg)
-viewPageSpecial info = case Maybe.andThen (\k -> Dict.get k info.createOptions) info.currentType of
+viewPageSpecial : Data -> LangLocal -> NewGameInfo -> List (Html NewGameMsg)
+viewPageSpecial data lang info = case Maybe.andThen (\k -> Dict.get k data.game.createOptions) info.currentType of
     Nothing -> [ loading ]
     Just option -> List.map
-        (\box -> viewBox info.setting info.config.lang box [])
+        (\box -> viewBox info.setting lang box [])
         option.box
 
 divk : Html msg -> Html msg
@@ -354,77 +453,72 @@ viewBox setting lang box list = case box.content of
                 ] <| List.map
                 (\(key,txt) ->
                     node "option"
-                        (addFiltered
-                            [ value key
-                            ]
-                            [ if key == val 
-                                then Just <| attribute "selected" "selected"
-                                else Nothing
-                            ]
-                        )
+                        [ value key
+                        , selected <| key == val
+                        ]
                         [ text <| getSingle lang ["new-option", txt] ]
                 )
                 olist
             ] 
 
-update : NewGameDef a -> NewGameMsg -> NewGame -> (NewGame, Cmd NewGameMsg, List a)
-update def msg (NewGame info) = case msg of
-    SetConfig config -> (NewGame { info | config = config }, Cmd.none, [])
-    SetInstalledTypes list -> 
-        let nt = case info.currentType of
-                    Just ct -> Just ct
-                    Nothing -> case list of
-                        [] -> Nothing
-                        c::cs -> Just c
-        in  ( NewGame 
-                { info 
-                | installedTypes = Just list 
-                , currentType = nt
-                }
-            , Cmd.none
-            , case nt of
-                Just nct -> event def <| FetchLangSet nct
-                Nothing -> []
-            )
-    SetCreateOptions createOptions ->
-        (NewGame { info 
-        | createOptions = createOptions 
-        , setting = case info.currentType of
-            Nothing -> Dict.empty
-            Just ct -> case Dict.get ct createOptions of
-                Nothing -> Dict.empty
-                Just opt -> Dict.fromList <| List.concat <| 
-                    List.map (\b -> makeInitOption b []) opt.box
-        }, Cmd.none, [])
-    SetUser user -> 
-        (NewGame 
+update : NewGameMsg -> NewGame -> (NewGame, Cmd NewGameMsg, List NewGameEvent)
+update msg (NewGame info) = case msg of
+    ChangeCurrentType override nct ->
+        ( NewGame 
             { info 
-            | user = user 
-            , targetUser = if info.user == []
-                then Maybe.map .user <| List.head user
-                else info.targetUser
+            | currentType = 
+                if override
+                then Just nct
+                else info.currentType 
+                    |> Maybe.withDefault nct 
+                    |> Just
+            , selRoles = Dict.empty 
             }
         , Cmd.none
-        , []
+        ,   [ FetchLangSet nct 
+            , ModData <| \data -> 
+                { data 
+                | game = data.game |> \game ->
+                    { game
+                    | groups = game.groups
+                        |> UnionDict.unsafen GroupId Types.groupId
+                        |> UnionDict.update info.groupId
+                            ( Maybe.map <| \group ->
+                                { group 
+                                | newGameLang = Just nct
+                                }
+                            )
+                        |> UnionDict.safen
+                    }
+                }
+            , FetchOptions nct
+            , RefreshLangList
+            ]
         )
-    SetRoleset roleset ->
-        (NewGame { info | rolesets = roleset }, Cmd.none, [])
-    ChangeCurrentType nct ->
-        ( NewGame { info | currentType = Just nct, selRoles = Dict.empty }
-        , Cmd.none
-        , event def <| FetchLangSet nct
-        )
+    SetSetting set ->
+        ( NewGame { info | setting = set }, Cmd.none, [])
     ShowPage page ->
         (NewGame { info | page = page }, Cmd.none, [])
     OnUpdate keyl var ->
         (NewGame { info | setting = Dict.insert keyl var info.setting }, Cmd.none, [])
-    OnChangeTargetUser userS ->
-        (NewGame { info | targetUser = String.toInt userS }
+    OnChangeTargetUser override userS ->
+        (NewGame 
+            { info 
+            | targetUser = 
+                if override
+                then String.toInt userS  |> Maybe.map UserId
+                else case info.targetUser of 
+                    Just tu -> info.targetUser
+                    Nothing -> String.toInt userS |> Maybe.map UserId
+            }
         , Cmd.none
         , []
         )
     OnChangeLeader target ->
-        (NewGame info, Cmd.none, event def <| ChangeLeader info.group.id target)
+        ( NewGame info
+        , Cmd.none
+        , [ ChangeLeader  info.groupId target ]
+        )
     OnChangeSelRole role text ->
         (NewGame 
             { info 
@@ -438,8 +532,8 @@ update def msg (NewGame info) = case msg of
         )
     OnCreateGame ->
         (NewGame info, Cmd.none
-        , event def <| CreateGame <| NewGameConfig
-            info.group.id
+        , List.singleton <| CreateGame <| NewGameConfig
+            info.groupId
             (prepairRoleList info.selRoles)
             (case info.currentType of
                 Just ct -> ct
@@ -447,9 +541,15 @@ update def msg (NewGame info) = case msg of
             )
             (prepairConfig info.setting)
         )
-
-subscriptions : NewGame -> Sub NewGameMsg
-subscriptions model = Sub.none
+    CallEvent event -> (NewGame info, Cmd.none, event)
+    Multi msgs -> List.foldr
+            (\m (nm, cmds, events) ->
+                let (rm, rcmd, re) = update m nm 
+                in (rm, rcmd :: cmds, re ++ events)
+            )
+            (NewGame info, [], [])
+            msgs
+        |> \(nm, cmds, events) -> (nm, Cmd.batch cmds, events)
 
 -- former operator ++? (custom operators are removed in elm 0.19)
 addFiltered : List a -> List (Maybe a) -> List a

@@ -1,22 +1,18 @@
 module Game.UI.UserListBox exposing
     ( UserListBox
     , UserListBoxMsg
-    , msgUpdateUser
-    , msgUpdateChats
-    , msgUpdateRuleset
-    , msgUpdateConfig
-    , msgOnCloseBox
+    , UserListEvent (..)
     , init
     , view
     , update
-    , subscriptions
     )
 
-import Game.Types.Types exposing (..)
-import Game.Types.Request exposing (ChatId)
+import Game.Types.Types as Types exposing (..)
 import Game.Utils.Dates exposing (convert)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
+import Game.Data as Data exposing (Data)
+import UnionDict exposing (UnionDict)
 
 import Html exposing (Html,div,text,node,img)
 import Html.Attributes exposing (class,value,src,title,selected)
@@ -31,87 +27,82 @@ import Task
 type UserListBox = UserListBox UserListBoxInfo
 
 type alias UserListBoxInfo =
-    { config : LangConfiguration
-    , user : List User
-    , chats : Dict ChatId Chat
+    { groupId : GroupId
     , filter: Maybe String
-    , ruleset : Maybe String
-    , time : Posix
-    , zone : Zone
-    , ownUser : Int
     }
 
 type UserListBoxMsg
     -- public methods
-    = UpdateUser (List User)
-    | UpdateChats (Dict ChatId Chat)
-    | UpdateRuleset String
-    | UpdateConfig LangConfiguration
     -- public event
-    | OnCloseBox
+    = OnCloseBox
     -- private methods
     | ChangeFilter String
-    | NewTime Posix
-    | NewZone Zone
 
-msgUpdateUser : List User -> UserListBoxMsg
-msgUpdateUser = UpdateUser
+type UserListEvent 
+    = CloseBox
 
-msgUpdateChats : Dict ChatId Chat -> UserListBoxMsg
-msgUpdateChats = UpdateChats
+init : GroupId -> UserListBox
+init group = UserListBox 
+    { groupId = group
+    , filter = Nothing
+    }
 
-msgUpdateRuleset : String -> UserListBoxMsg
-msgUpdateRuleset = UpdateRuleset
-
-msgUpdateConfig : LangConfiguration -> UserListBoxMsg
-msgUpdateConfig = UpdateConfig
-
-msgOnCloseBox : UserListBoxMsg
-msgOnCloseBox = OnCloseBox
-
-single : UserListBoxInfo -> List String -> String
-single info = getSingle info.config.lang
-
-init : LangConfiguration -> Int -> (UserListBox, Cmd UserListBoxMsg)
-init conf ownId= 
-    (UserListBox <| UserListBoxInfo 
-        conf 
-        [] 
-        Dict.empty 
-        Nothing
-        Nothing
-        (Time.millisToPosix 0)
-        Time.utc
-        ownId
-    , Task.perform NewZone Time.here
-    )
-
-view : UserListBox -> Html UserListBoxMsg
-view (UserListBox model) =
+view : Data -> LangLocal -> UserListBox -> Html UserListBoxMsg
+view data lang (UserListBox model) =
     div [ class "w-user-roles-box" ]
-        [ viewBoxHeader model
-        , viewChatSelector model
+        [ viewBoxHeader lang model
+        , viewChatSelector data lang model
         , div []
-            ( List.map (div [ class "w-user-box-outer" ] << List.singleton) <|
-                List.map (viewUser model model.ruleset) <| 
-                filterUser model
+            ( List.map 
+                (div [ class "w-user-box-outer" ] 
+                    << List.singleton
+                )
+                <| List.map 
+                    (viewUser data lang model
+                        <| getRuleset data model.groupId
+                    ) 
+                <| filterUser data model
             )
         ]
 
-filterUser : UserListBoxInfo -> List User
-filterUser info =
-    List.filter
-        (\user -> case info.filter of
-            Nothing -> True
-            Just filter ->
-                case find filter <| Dict.values info.chats of
-                    Nothing -> True
-                    Just chat -> case user.player of
-                        Nothing -> False
-                        Just player ->
-                            List.member player.id chat.permission.player
-        )
-        info.user
+getRuleset : Data -> GroupId -> Maybe String 
+getRuleset data groupId =  data
+    |> Data.getGroup groupId
+    |> Maybe.andThen (.group >> .currentGame)
+    |> Maybe.map .ruleset
+
+filterUser : Data -> UserListBoxInfo -> List User
+filterUser data info = List.filter
+    (\user -> case info.filter of
+        Nothing -> True
+        Just filter ->
+            case find filter 
+                <| List.map .chat 
+                <| UnionDict.values 
+                <| getChats data info 
+            of
+                Nothing -> True
+                Just chat -> case user.player of
+                    Nothing -> False
+                    Just player ->
+                        List.member player.id chat.permission.player
+    )
+    <| getUser data info
+
+getChats : Data -> UserListBoxInfo -> UnionDict Int ChatId Data.ChatData
+getChats data info = data.game.groups
+    |> UnionDict.unsafen GroupId Types.groupId 
+    |> UnionDict.get info.groupId
+    |> Maybe.map .chats
+    |> Maybe.withDefault (UnionDict.include Dict.empty)
+    |> UnionDict.unsafen ChatId Types.chatId
+
+getUser : Data -> UserListBoxInfo -> List User 
+getUser data info = data.game.groups 
+    |> UnionDict.unsafen GroupId Types.groupId 
+    |> UnionDict.get info.groupId
+    |> Maybe.map .user 
+    |> Maybe.withDefault []
 
 find : String -> List Chat -> Maybe Chat
 find key list =
@@ -122,9 +113,9 @@ find key list =
             then Just c
             else find key cs
     
-viewChatSelector : UserListBoxInfo -> Html UserListBoxMsg
-viewChatSelector info =
-    if Dict.isEmpty info.chats
+viewChatSelector : Data -> LangLocal -> UserListBoxInfo -> Html UserListBoxMsg
+viewChatSelector data lang info =
+    if UnionDict.isEmpty <| getChats data info
     then div [] []
     else div [ class "w-user-select-chat" ]
         [ node "select" 
@@ -135,22 +126,23 @@ viewChatSelector info =
                 [ value "" 
                 , selected <| info.filter == Nothing
                 ] 
-                [ text <| single info ["ui", "filter-all"] ]) <|
+                [ text <| getSingle lang ["ui", "filter-all"] ]) <|
                 List.map
                     (\key ->
                         node "option" 
                             [ value key 
                             , selected <| Just key == info.filter
                             ] 
-                            [ text<| getChatName info.config.lang key ]
+                            [ text<| getChatName lang key ]
                     )
-                    <| List.map .chatRoom
-                    <| Dict.values info.chats
+                    <| List.map (.chat >> .chatRoom)
+                    <| UnionDict.values 
+                    <| getChats data info
 
         ]
 
-viewUser : UserListBoxInfo -> Maybe String -> User -> Html UserListBoxMsg
-viewUser info ruleset user =
+viewUser : Data -> LangLocal -> UserListBoxInfo -> Maybe String -> User -> Html UserListBoxMsg
+viewUser data lang info ruleset user =
     div [ class "w-user-box" ]
         [ div [ class "w-user-icon-area" ]
             [ div [ class "w-user-icon" ]
@@ -165,9 +157,7 @@ viewUser info ruleset user =
                     ] []
                 ]
             , div [ class "w-user-last-online" ]
-                [ text <| getTime info 
-                    <| Time.millisToPosix 
-                    <| 1000 * user.stats.lastOnline 
+                [ text <| getTime data lang user.stats.lastOnline 
                 ]
             ]
         , div [ class "w-user-info-area" ]
@@ -176,8 +166,9 @@ viewUser info ruleset user =
             , div [ class "w-user-roles" ] <| 
                 let additionalRoles : List (Html msg)
                     additionalRoles = List.filterMap 
-                        (Maybe.map (div [ class "w-user-role w-user-rolespecial" ] <<
-                            List.singleton)
+                        (Maybe.map 
+                            <| div [ class "w-user-role w-user-rolespecial" ] 
+                            << List.singleton
                         )
                         [ case user.player of
                             Just player ->
@@ -185,13 +176,13 @@ viewUser info ruleset user =
                                 then Nothing
                                 else Just <| div 
                                     [ class "w-user-special-death"
-                                    , title <| single info [ "ui", "player-death" ]
+                                    , title <| getSingle lang [ "ui", "player-death" ]
                                     ] []
                             Nothing -> Nothing
-                        , if info.ownUser == user.user
+                        , if data.game.ownId == Just user.user
                             then Just <| div 
                                 [ class "w-user-special-ownuser" 
-                                , title <| single info [ "ui", "player-own" ]
+                                , title <| getSingle lang [ "ui", "player-own" ]
                                 ] []
                             else Nothing
                         ]
@@ -215,7 +206,7 @@ viewUser info ruleset user =
                                 ++ role.roleKey
                             , Html.Attributes.attribute 
                                 "data-role" role.roleKey
-                            , title <| single info [ "roles", role.roleKey]
+                            , title <| getSingle lang [ "roles", role.roleKey]
                             ]
                             <| showRoles role
                         )
@@ -223,47 +214,37 @@ viewUser info ruleset user =
             ]
         ]
 
-viewBoxHeader : UserListBoxInfo -> Html UserListBoxMsg
-viewBoxHeader info = div [ class "w-box-header"]
+viewBoxHeader : LangLocal -> UserListBoxInfo -> Html UserListBoxMsg
+viewBoxHeader lang info = div [ class "w-box-header"]
     [ div [ class "w-box-header-title" ]
-        [ text <| getSingle info.config.lang
+        [ text <| getSingle lang
             [ "ui", "user-header" ]
         ]
     , div [ class "w-box-header-close", onClick OnCloseBox ]
         [ text "X" ]
     ]
 
-getTime : UserListBoxInfo -> Posix -> String
-getTime info time =
-    let dif = diff Second Time.utc info.time time
+getTime : Data -> LangLocal -> Posix -> String
+getTime data lang time =
+    let dif = diff Second Time.utc time data.time.now 
     in
-        if dif < 30000
-        then getSingle info.config.lang ["ui", "online"]
-        else if dif < 1000 * 60 * 45
+        if dif < 30
+        then getSingle lang ["ui", "online"]
+        else if dif < 60 * 45
         then "-" ++ (String.fromInt <| dif // 60000) ++ "min"
-        else if dif < 1000 * 60 * 60 * 16
-        then convert info.config.conf.profileTimeFormat time info.zone
-        else convert info.config.conf.profileDateFormat time info.zone
+        else if dif < 60 * 60 * 16
+        then convert data.config.profileTimeFormat time data.time.zone
+        else convert data.config.profileDateFormat time data.time.zone
 
-update : UserListBoxMsg -> UserListBox -> (UserListBox, Cmd UserListBoxMsg)
-update msg (UserListBox model) =
-    case msg of
-        UpdateUser user ->
-            (UserListBox { model | user = user }, Cmd.none)
-        UpdateChats chats ->
-            (UserListBox { model | chats = chats }, Cmd.none)
-        UpdateRuleset ruleset ->
-            (UserListBox { model | ruleset = Just ruleset }, Cmd.none)
-        ChangeFilter filter ->
-            (UserListBox { model | filter = Just filter }, Cmd.none)
-        NewTime time ->
-            (UserListBox { model | time = time }, Cmd.none)
-        UpdateConfig config ->
-            (UserListBox { model | config = config }, Cmd.none)
-        OnCloseBox -> (UserListBox model, Cmd.none)
-        NewZone zone ->
-            (UserListBox { model | zone = zone }, Cmd.none)
-
-subscriptions : UserListBox -> Sub UserListBoxMsg
-subscriptions (UserListBox model) =
-    Time.every 1000 NewTime
+update : UserListBoxMsg -> UserListBox -> (UserListBox, Cmd UserListBoxMsg, List UserListEvent)
+update msg (UserListBox model) = case msg of
+    ChangeFilter filter ->
+        ( UserListBox { model | filter = Just filter }
+        , Cmd.none
+        , []
+        )
+    OnCloseBox -> 
+        ( UserListBox model
+        , Cmd.none
+        , [ CloseBox ]
+        )

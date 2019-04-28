@@ -1,6 +1,5 @@
 module Game.Utils.Network exposing 
     ( Network
-    , Request
     , NetworkMsg
     , newNetwork
     , send
@@ -8,15 +7,13 @@ module Game.Utils.Network exposing
     , addRegulary
     , removeRegulary
     , subscriptions
-    , msgReceived
-    , isReceived
     )
 
 import Game.Types.Request exposing 
     ( encodeRequest
     , EncodedRequest
-    , Response (..)
-    , ResponseMulti (..)
+    , Request (..)
+    , RequestMulti (..)
     )
 import Game.Types.Response exposing (Response)
 import Game.Types.Changes exposing (ChangeConfig,Changes,concentrate)
@@ -30,28 +27,16 @@ import Time
 import Result exposing (Result)
 import Task exposing (perform,succeed)
 
-type alias Request = Game.Types.Request.Response
-type alias Response = Game.Types.Response.Response
-
 type Network
     = Network NetworkInfo 
 
 type NetworkMsg
     = Fetch (Result Error Response)
     | RegSend Time.Posix
-    | Received ChangeConfig
 
 type alias NetworkInfo =
     { regular : List Request
     }
-
-msgReceived : ChangeConfig -> NetworkMsg
-msgReceived = Received
-
-isReceived : NetworkMsg -> Maybe ChangeConfig
-isReceived msg = case msg of 
-    Received c -> Just c 
-    _ -> Nothing
 
 newNetwork : Network
 newNetwork = Network <| NetworkInfo []
@@ -68,25 +53,26 @@ send network request =
         |> withCacheBuster "nocache"
         |> HttpBuilder.send Fetch
         
-update : NetworkMsg -> Network -> (Network, Cmd NetworkMsg)
+update : NetworkMsg -> Network -> (Network, Cmd NetworkMsg, List ChangeConfig)
 update msg (Network network) =
     case msg of
         RegSend _ ->
             ( Network network
-            , send (Network network) <| RespMulti <| Multi network.regular
+            , send (Network network) <| ReqMulti <| Multi network.regular
+            , []
             )
-        Received config -> (Network network, Cmd.none)
         Fetch (Ok resp) ->
             ( Network network
-            , perform Received <| succeed <| concentrate resp
+            , Cmd.none
+            , [ concentrate resp ]
             )
         Fetch (Err err) ->
             let
                 debug = Debug.log "Network Error" err
             in
                 ( Network network
-                , perform Received <| succeed <| 
-                    ChangeConfig [ Game.Types.Changes.CNetworkError ] False
+                , Cmd.none
+                , [ ChangeConfig [ Game.Types.Changes.CNetworkError ] False ]
                 )
 
 addRegulary : Network -> Request -> Network

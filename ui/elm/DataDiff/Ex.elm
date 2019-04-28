@@ -18,6 +18,8 @@ module DataDiff.Ex exposing
     , makeEx
     , makeSimple
     , goPath
+    , cond
+    , noOp
     )
 
 -- elm/core
@@ -186,6 +188,19 @@ goPath : token
     -> DetectorEx (token -> path) data1 msg 
 goPath token func detector = mapPath (\f -> f token) 
     <| mapData func detector
+
+cond : (path -> data -> data -> Bool)
+    -> DetectorEx path data msg 
+    -> DetectorEx path data msg 
+cond check detector = andThen
+    (\path old new ->
+        if check path old new 
+        then execute detector path old new 
+        else []
+    )
+
+noOp : DetectorEx path data msg 
+noOp = DetectorEx <| \_ _ _ -> []
 
 -- tests
 

@@ -2,17 +2,10 @@ module Game.UI.Voting exposing
     ( Voting
     , VotingMsg
     , VotingEvent (..)
-    , VotingDef
-    , votingModule
-    , msgSetRooms
-    , msgSetVotes
-    , msgSetUser
-    , msgSetConfig
-    , msgSetLeader
-    , msgSetGame
+    , init
+    , view
+    , update 
     )
-
-import ModuleConfig as MC exposing (..)
 
 import Html exposing (Html,div,text,ul,li)
 import Html.Attributes exposing (class,style)
@@ -20,139 +13,94 @@ import Html.Events exposing (onClick)
 import List
 import Dict exposing (Dict)
 import Char
-import Time exposing (Zone)
 import Task
+import Time exposing (Posix)
 
 import Game.Utils.Dates exposing (DateTimeFormat (..), convert)
 import Game.Types.Request as Request exposing 
-    (ChatId, UserId, VoteKey, PlayerId
-    , Response(..), ResponseControl(..))
+    (Request(..), RequestControl(..))
 import Game.Types.Types as Types exposing (..)
-import Game.Utils.Network exposing (Request)
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
+import Game.Data as Data exposing (Data)
+import UnionDict exposing (UnionDict, SafeDict)
 
 type alias TVoting = Types.Voting
 
 type Voting = Voting VotingInfo
 
 type alias VotingInfo =
-    { config : LangConfiguration
-    , ownId : Int
-    , gameId : Maybe Int
-    , room : Dict ChatId Chat
-    , votes : Dict ChatId (Dict VoteKey (Dict UserId Vote))
-    , user : List User
-    , isLeader : Bool
-    , info : Dict (ChatId, VoteKey) Bool
-    , zone : Zone
+    { groupId : GroupId
+    , info : SafeDict (Int, String) (ChatId, VoteKey) Bool
     }
 
 type VotingMsg
     -- public methods
-    = SetRooms (Dict ChatId Chat)
-    | SetVotes (Dict ChatId (Dict VoteKey (Dict UserId Vote)))
-    | SetUser (List User)
-    | SetConfig LangConfiguration
-    | SetLeader Bool
-    | SetGame (Maybe Int)
     -- private methods
-    | OnVote ChatId VoteKey PlayerId
+    = OnVote ChatId VoteKey PlayerId
     | OnVoteStart ChatId VoteKey
     | OnVoteEnd ChatId VoteKey
-    | OnNextRound
+    | OnNextRound GameId
     | OnChangeVis ChatId VoteKey
     | OnCloseBox
-    | SetZone Zone
 
 type VotingEvent 
     = Send Request
     | CloseBox
 
-type alias VotingDef a = ModuleConfig Voting VotingMsg 
-    (LangConfiguration, Int) VotingEvent a
+init : GroupId -> Voting
+init group = Voting
+    { groupId = group
+    , info = UnionDict.include Dict.empty
+    }
 
-msgSetRooms : Dict ChatId Chat -> VotingMsg 
-msgSetRooms = SetRooms
+view : Data -> LangLocal -> Voting -> Html VotingMsg
+view data lang (Voting model) = div [ class "w-voting-box" ] 
+    <| (::) (viewBoxHeader lang model) 
+    <| (::) (viewGameControl data lang model) 
+    <| List.map (viewVoting data lang model) 
+    <| List.concat 
+    <| List.map (.chat >> .voting) 
+    <| UnionDict.values
+    <| UnionDict.unsafen ChatId Types.chatId 
+    <| Maybe.withDefault (UnionDict.include Dict.empty)
+    <| Maybe.map .chats 
+    <| UnionDict.get model.groupId
+    <| UnionDict.unsafen GroupId Types.groupId
+    <| data.game.groups
 
-msgSetVotes : Dict ChatId (Dict VoteKey (Dict UserId Vote)) -> VotingMsg 
-msgSetVotes = SetVotes
-
-msgSetUser : List User -> VotingMsg 
-msgSetUser = SetUser
-
-msgSetConfig : LangConfiguration -> VotingMsg 
-msgSetConfig = SetConfig
-
-msgSetLeader : Bool -> VotingMsg 
-msgSetLeader = SetLeader
-
-msgSetGame : Maybe Int -> VotingMsg 
-msgSetGame = SetGame
-
-votingModule : (VotingEvent -> List a) -> 
-    (LangConfiguration, Int) -> 
-    (VotingDef a, Cmd VotingMsg, List a)
-votingModule = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    } 
-    
-init : (LangConfiguration, Int) -> (Voting, Cmd VotingMsg, List a)
-init (config, ownId) =
-    ( Voting <| VotingInfo config ownId Nothing
-        Dict.empty Dict.empty [] False Dict.empty
-        Time.utc
-    , Task.perform SetZone Time.here
-    , []
-    )
-
-single : VotingInfo -> List String -> String
-single info = getSingle info.config.lang
-
-view : Voting -> Html VotingMsg
-view (Voting model) = div [ class "w-voting-box" ] <|
-    (::) (viewBoxHeader model) <|
-    (::) (viewGameControl model) <|
-    List.map (viewVoting model) <|
-    List.concat <|
-    List.map .voting <|
-    Dict.values model.room
-
-viewVoting : VotingInfo -> TVoting -> Html VotingMsg
-viewVoting info voting = div [ class "w-voting" ] 
+viewVoting : Data -> LangLocal -> VotingInfo -> TVoting -> Html VotingMsg
+viewVoting data lang info voting = div [ class "w-voting" ] 
     [ div 
         [ class "w-voting-header" 
         , onClick (OnChangeVis voting.chat voting.voteKey)
         ]
-        [ text <| single info [ "ui", "voting" ]
+        [ text <| getSingle lang [ "ui", "voting" ]
         , text " - "
         , div [ class "w-voting-chat" ]
-            [ text <| chatName info voting.chat ]
+            [ text <| chatName data lang info voting.chat ]
         , text " - "
         , div [ class "w-voting-room" ]
-            [ text <| voteName info voting.chat voting.voteKey ]
+            [ text <| voteName data lang info voting.chat voting.voteKey ]
         ]
     , div 
         [ class "w-voting-sub-header" 
         , onClick (OnChangeVis voting.chat voting.voteKey)
         ]
-        [ text <| single info [ "ui", "created" ]
+        [ text <| getSingle lang [ "ui", "created" ]
         , text ": "
         , div [ class "w-voting-created" ]
-            [ text <| dateName info <| Just voting.created ]
+            [ text <| dateName data lang info <| Just voting.created ]
         , text " - "
-        , text <| single info [ "ui", "started"  ]
+        , text <| getSingle lang [ "ui", "started"  ]
         , text ": "
         , div [ class "w-voting-started" ]
-            [ text <| dateName info voting.voteStart ]
+            [ text <| dateName data lang info voting.voteStart ]
         , text " - "
-        , text <| single info [ "ui", "voteEnd" ]
+        , text <| getSingle lang [ "ui", "voteEnd" ]
         , text ": "
         , div [ class "w-voting-ended" ]
-            [ text <| dateName info voting.voteEnd ]
+            [ text <| dateName data lang info voting.voteEnd ]
         ]
     , div 
         [ class "w-voting-votes" 
@@ -164,7 +112,7 @@ viewVoting info voting = div [ class "w-voting" ]
                     [ class "w-voting-bar-fill"
                     , style "width" 
                         <| ( String.fromFloat
-                            <| 100 * (toFloat <| voteCount info voting) /
+                            <| 100 * (toFloat <| voteCount data info voting) /
                             (toFloat <| List.length voting.enabledUser)
                             ) 
                         ++ "%"
@@ -172,50 +120,65 @@ viewVoting info voting = div [ class "w-voting" ]
                 ]
             ]
         , div [ class "w-voting-info-container" ]
-            [ text <| String.fromInt <| voteCount info voting
+            [ text <| String.fromInt <| voteCount data info voting
             , text "/"
             , text <| String.fromInt <| List.length voting.enabledUser
             ]
         ]
-    , let vis = Dict.get (voting.chat, voting.voteKey) info.info
+    , let vis = info.info
+                |> UnionDict.unsafen
+                    (Tuple.mapBoth ChatId VoteKey)
+                    (Tuple.mapBoth Types.chatId Types.voteKey)
+                |> UnionDict.get (voting.chat, voting.voteKey)
                 |> Maybe.withDefault False
         in if vis
-            then viewSingleVotingInfo info voting
-            else if canShowVoteSelection info voting
-            then viewVoteSelection info voting
+            then viewSingleVotingInfo data lang info voting
+            else if canShowVoteSelection data info voting
+            then viewVoteSelection data info voting
             else div [] []
-    , if info.isLeader
-        then viewVoteControl info voting
+    , if isLeader data info
+        then viewVoteControl lang info voting
         else div [] []
     ]
 
-canShowVoteSelection : VotingInfo -> TVoting -> Bool
-canShowVoteSelection info voting =
-    (voting.voteStart /= Nothing) &&
-    (voting.voteEnd == Nothing) &&
-    (hasUser info info.ownId voting.enabledUser)
+isLeader : Data -> VotingInfo -> Bool 
+isLeader data info = data.game.groups
+    |> UnionDict.unsafen GroupId Types.groupId 
+    |> UnionDict.get info.groupId
+    |> Maybe.map (.group >> .leader)
+    |> Maybe.map ((==) data.game.ownId << Just)
+    |> Maybe.withDefault False
 
-viewVoteSelection : VotingInfo -> TVoting -> Html VotingMsg
-viewVoteSelection info voting = 
+canShowVoteSelection : Data -> VotingInfo -> TVoting -> Bool
+canShowVoteSelection data info voting =
+    (voting.voteStart /= Nothing) 
+    && (voting.voteEnd == Nothing) 
+    &&  ( data.game.ownId
+            |> Maybe.map (\id -> hasUser data info id voting.enabledUser)
+            |> Maybe.withDefault False
+        )
+
+viewVoteSelection : Data -> VotingInfo -> TVoting -> Html VotingMsg
+viewVoteSelection data info voting = 
     div [ class "w-voting-voting" ] <| List.map
         (\user ->
             div [ class "w-voting-select-user"
                 , onClick <| OnVote voting.chat 
                     voting.voteKey user
                 ]
-                [ text <| userName info user ]
+                [ text <| userName data info user ]
         )
         voting.targetUser
 
-viewVoteControl : VotingInfo -> TVoting -> Html VotingMsg
-viewVoteControl info voting =
+viewVoteControl : LangLocal -> VotingInfo -> TVoting -> Html VotingMsg
+viewVoteControl lang info voting =
     div [ class "w-voting-control" ] <| List.filterMap identity <|
         [ if voting.voteStart == Nothing
             then Just <| div 
                 [ class "w-voting-start" 
                 , onClick <| OnVoteStart voting.chat voting.voteKey
                 ]
-                [ text <| getSingle info.config.lang 
+                [ text <| getSingle lang 
                     ["ui", "start-voting"] 
                 ]
             else Nothing
@@ -224,191 +187,252 @@ viewVoteControl info voting =
                 [ class "w-voting-end" 
                 , onClick <| OnVoteEnd voting.chat voting.voteKey
                 ]
-                [ text <| getSingle info.config.lang 
+                [ text <| getSingle lang 
                     ["ui", "end-voting"] 
                 ]
             else Nothing
         ]
 
-viewGameControl : VotingInfo -> Html VotingMsg
-viewGameControl info =
-    if info.isLeader && (info.gameId /= Nothing)
+viewGameControl : Data -> LangLocal -> VotingInfo -> Html VotingMsg
+viewGameControl data lang info =
+    if (&&) (isLeader data info)
+        <| (/=) Nothing
+        <| Maybe.map .id
+        <| Maybe.andThen (.currentGame << .group)
+        <| UnionDict.get info.groupId
+        <| UnionDict.unsafen GroupId Types.groupId 
+        <| data.game.groups
     then 
         div [ class "w-voting-game-control" ] <| 
             [ div [ class "w-voting-game-control-title" ]
-                [ text <| getSingle info.config.lang
+                [ text <| getSingle lang
                     [ "ui", "game-control"]
                 ]
             , div
                 [ class "w-voting-next-round"
-                , onClick <| OnNextRound
+                , onClick 
+                    <| OnNextRound
+                    <| Maybe.withDefault (GameId 0)
+                    <| Maybe.map .id 
+                    <| Maybe.andThen (.currentGame << .group)
+                    <| UnionDict.get info.groupId
+                    <| UnionDict.unsafen GroupId Types.groupId 
+                    <| data.game.groups
                 ]
-                [ text <| getSingle info.config.lang
+                [ text <| getSingle lang
                     [ "ui", "next-round" ]
                 ]
             ]
     else div [] []
 
-viewBoxHeader : VotingInfo -> Html VotingMsg
-viewBoxHeader info = div [ class "w-box-header"]
+viewBoxHeader : LangLocal -> VotingInfo -> Html VotingMsg
+viewBoxHeader lang info = div [ class "w-box-header"]
     [ div [ class "w-box-header-title" ]
-        [ text <| getSingle info.config.lang
+        [ text <| getSingle lang
             [ "ui", "vote-header" ]
         ]
     , div [ class "w-box-header-close", onClick OnCloseBox ]
         [ text "X" ]
     ]
 
-viewSingleVotingInfo : VotingInfo -> TVoting -> Html VotingMsg
-viewSingleVotingInfo info voting =
-    let votes = Dict.get voting.chat info.votes
-            |> Maybe.andThen (Dict.get voting.voteKey)
-            |> Maybe.withDefault Dict.empty
+viewSingleVotingInfo : Data -> LangLocal -> VotingInfo -> TVoting -> Html VotingMsg
+viewSingleVotingInfo data lang info voting =
+    let votes : UnionDict Int PlayerId Vote
+        votes = data.game.groups 
+            |> UnionDict.unsafen GroupId Types.groupId 
+            |> UnionDict.get info.groupId
+            |> Maybe.map .chats 
+            |> Maybe.withDefault (UnionDict.include Dict.empty)
+            |> UnionDict.unsafen ChatId Types.chatId 
+            |> UnionDict.get voting.chat 
+            |> Maybe.map .votes 
+            |> Maybe.withDefault (UnionDict.include Dict.empty)
+            |> UnionDict.unsafen VoteKey Types.voteKey 
+            |> UnionDict.get voting.voteKey 
+            |> Maybe.withDefault (UnionDict.include Dict.empty)
+            |> UnionDict.unsafen PlayerId Types.playerId
+        missing : List PlayerId
         missing = List.filter
-            (\key -> not <| List.member key (Dict.values votes |> List.map .voter))
+            (\key -> not 
+                <| List.member key
+                <| List.map .voter
+                <| UnionDict.values votes
+            )
             voting.enabledUser
     in div [ class "w-voting-info-box" ]
         [ div [ class "w-voting-info-header" ]
-            [ text <| getSingle info.config.lang ["ui", "voting-votes"] ]
-        , if Dict.size votes == 0
+            [ text <| getSingle lang ["ui", "voting-votes"] ]
+        , if UnionDict.size votes == 0
             then div [ class "w-voting-info-none" ]
-                [ text <| getSingle info.config.lang ["ui", "noone-voted"] ]
+                [ text <| getSingle lang ["ui", "noone-voted"] ]
             else div [ class "w-voting-info-votes" ] <| List.map
                 (\vote -> div [ class "w-voting-info-vote-single" ]
-                    [ div [] [ text <| userName info vote.voter ]
+                    [ div [] [ text <| userName data info vote.voter ]
                     , div [] [ text <| String.fromChar <| Char.fromCode 8594 ]
-                    , div [] [ text <| userName info vote.target ]
+                    , div [] [ text <| userName data info vote.target ]
                     ]
                 )
-                <| Dict.values votes
+                <| UnionDict.values votes
         , div [ class "w-voting-info-header" ]
-            [ text <| getSingle info.config.lang [ "ui", "voting-waits" ] ]
+            [ text <| getSingle lang [ "ui", "voting-waits" ] ]
         , if List.length missing == 0
             then div [ class "w-voting-info-none" ]
-                [ text <| getSingle info.config.lang ["ui", "noone-missing"] ]
+                [ text <| getSingle lang ["ui", "noone-missing"] ]
             else ul [ class "w-voting-info-missing" ] <| List.map
                 ( li [ class "w-voting-info-missing-single" ]
-                    << List.singleton << text << userName info
+                    << List.singleton << text << userName data info
                 )
                 <| missing
         , div [ class "w-voting-info-header" ]
-            [ text <| getSingle info.config.lang [ "ui", "voting-targets"] ]
+            [ text <| getSingle lang [ "ui", "voting-targets"] ]
         , if List.length voting.targetUser == 0
             then div [ class "w-voting-info-none" ]
-                [ text <| getSingle info.config.lang [ "ui", "no-targets" ] ]
+                [ text <| getSingle lang [ "ui", "no-targets" ] ]
             else ul [ class "w-voting-info-targets" ] <| List.map
                 ( li [ class "w-voting-info-target-single" ]
-                    << List.singleton << text << userName info
+                    << List.singleton << text << userName data info
                 )
                 voting.targetUser
         ]
 
-hasUser : VotingInfo -> UserId -> List PlayerId -> Bool
-hasUser info id list =
-    case List.filter ((==) id << .user) info.user of
+hasUser : Data -> VotingInfo -> UserId -> List PlayerId -> Bool
+hasUser data info id list =
+    case data.game.groups 
+        |> UnionDict.unsafen GroupId Types.groupId 
+        |> UnionDict.get info.groupId
+        |> Maybe.map .user 
+        |> Maybe.withDefault []
+        |> List.filter ((==) id << .user)
+    of
         [] -> False
         u :: us -> case u.player of
             Nothing -> False
             Just player -> List.member player.id list
 
-userName : VotingInfo -> UserId -> String
-userName info id =
+userName : Data -> VotingInfo -> PlayerId -> String
+userName data info id =
     let
         func : User -> Bool
         func = \user -> case user.player of
             Nothing -> False
             Just player -> player.id == id
-    in case find func info.user of
-        Nothing -> (++) "User #" <| String.fromInt id
-        Just user -> user.stats.name
+    in  case data.game.groups 
+            |> UnionDict.unsafen GroupId Types.groupId 
+            |> UnionDict.get info.groupId
+            |> Maybe.map .user 
+            |> Maybe.withDefault []
+            |> find func
+        of
+            Nothing -> (++) "Player #" 
+                <| String.fromInt
+                <| Types.playerId id
+            Just user -> user.stats.name
 
-chatName : VotingInfo -> ChatId -> String
-chatName info id =
-    case Dict.get id info.room of
-        Just chat -> getChatName info.config.lang chat.chatRoom
-        Nothing -> "Chat #" ++ (String.fromInt id)
+chatName : Data -> LangLocal -> VotingInfo -> ChatId -> String
+chatName data lang info id =
+    case data.game.groups 
+        |> UnionDict.unsafen GroupId Types.groupId 
+        |> UnionDict.get info.groupId
+        |> Maybe.map .chats 
+        |> Maybe.withDefault (UnionDict.include Dict.empty)
+        |> UnionDict.unsafen ChatId Types.chatId 
+        |> UnionDict.get id
+    of
+        Just chat -> getChatName lang chat.chat.chatRoom
+        Nothing -> (++) "Chat #" 
+            <| String.fromInt
+            <| Types.chatId id
 
-voteName : VotingInfo -> ChatId -> String -> String
-voteName info id key =
-    case Dict.get id info.room of
-        Just chat -> getVotingName info.config.lang chat.chatRoom key
-        Nothing -> "[" ++ key ++ "]"
+voteName : Data -> LangLocal -> VotingInfo -> ChatId -> VoteKey -> String
+voteName data lang info id key =
+    case data.game.groups 
+        |> UnionDict.unsafen GroupId Types.groupId 
+        |> UnionDict.get info.groupId
+        |> Maybe.map .chats 
+        |> Maybe.withDefault (UnionDict.include Dict.empty)
+        |> UnionDict.unsafen ChatId Types.chatId 
+        |> UnionDict.get id
+    of
+        Just chat -> getVotingName lang chat.chat.chatRoom 
+            <| Types.voteKey key
+        Nothing -> "[" ++ (Types.voteKey key) ++ "]"
 
-dateName : VotingInfo -> Maybe Int -> String
-dateName info time = case time of
-    Nothing -> single info [ "ui", "not-yet" ]
-    Just t -> convert info.config.conf.votingDateFormat 
-        (Time.millisToPosix <| t * 1000)
-        info.zone
+dateName : Data -> LangLocal -> VotingInfo -> Maybe Posix -> String
+dateName data lang info time = case time of
+    Nothing -> getSingle lang [ "ui", "not-yet" ]
+    Just t -> convert data.config.votingDateFormat 
+        t
+        data.time.zone
 
-voteCount : VotingInfo -> TVoting -> Int
-voteCount info voting = case Dict.get voting.chat info.votes of
-    Nothing -> 0
-    Just c -> case Dict.get voting.voteKey c of
-        Nothing -> 0
-        Just d -> Dict.size d
+voteCount : Data -> VotingInfo -> TVoting -> Int
+voteCount data info voting = data.game.groups
+    |> UnionDict.unsafen GroupId Types.groupId 
+    |> UnionDict.get info.groupId
+    |> Maybe.map .chats 
+    |> Maybe.withDefault (UnionDict.include Dict.empty)
+    |> UnionDict.unsafen ChatId Types.chatId 
+    |> UnionDict.get voting.chat
+    |> Maybe.map .votes 
+    |> Maybe.withDefault (UnionDict.include Dict.empty)
+    |> UnionDict.unsafen VoteKey Types.voteKey 
+    |> UnionDict.get voting.voteKey 
+    |> Maybe.withDefault (UnionDict.include Dict.empty)
+    |> UnionDict.extract 
+    |> Dict.size
 
-update : VotingDef a -> VotingMsg -> Voting -> (Voting, Cmd VotingMsg, List a)
-update def msg (Voting info) = case msg of
-    SetRooms room -> 
-        let minfo = Dict.toList room
-                |> List.map 
-                    (\(rid,r) -> 
-                        List.map
-                            (\v -> ((rid, v.voteKey), False))
-                            r.voting
-                    )
-                |> List.concat
-                |> Dict.fromList
-            ninfo = Dict.merge
-                (\(id,key) vis result -> Dict.insert (id,key) vis result)
-                (\(id,key) vis1 vis2 result -> Dict.insert (id,key) vis2 result)
-                (\(id,key) vis result -> result)
-                minfo
-                info.info
-                Dict.empty
-        in (Voting { info | room = room, info = ninfo }, Cmd.none, [])
-    SetVotes votes -> (Voting { info | votes = votes }, Cmd.none, [])
-    SetUser user -> (Voting { info | user = user }, Cmd.none, [])
-    SetConfig config -> (Voting { info | config = config }, Cmd.none, [])
-    SetLeader leader -> (Voting { info | isLeader = leader }, Cmd.none, [])
-    SetGame game -> (Voting { info | gameId = game}, Cmd.none, [])
-    SetZone zone -> (Voting { info | zone = zone}, Cmd.none, [])
+update : VotingMsg -> Voting -> (Voting, Cmd VotingMsg, List VotingEvent)
+update msg (Voting info) = case msg of
     OnVote chatId voteKey playerId ->
         (Voting info
         , Cmd.none
-        , MC.event def <| Send <| RespControl <| Request.Vote
+        , List.singleton <| Send <| ReqControl <| Request.Vote
             chatId voteKey playerId
         )
     OnVoteStart chatId votekey ->
         ( Voting info
         , Cmd.none
-        , MC.event def <| Send <| RespControl <| Request.StartVoting
+        , List.singleton <| Send <| ReqControl <| Request.StartVoting
             chatId votekey
         )
     OnVoteEnd chatId votekey ->
         ( Voting info
         , Cmd.none
-        , MC.event def <| Send <| RespControl <| Request.FinishVoting
+        , List.singleton <| Send <| ReqControl <| Request.FinishVoting
             chatId votekey
         )
-    OnNextRound ->
+    OnNextRound gameId->
         ( Voting info
         , Cmd.none
-        , MC.event def <| Send <| RespControl <| Request.NextPhase
-            <| Maybe.withDefault 0 info.gameId
+        , List.singleton 
+            <| Send 
+            <| ReqControl 
+            <| Request.NextPhase gameId
         )
     OnChangeVis chat key ->
-        let vis = not <| Maybe.withDefault False <| Dict.get (chat,key) info.info
-        in ( Voting { info | info = Dict.insert (chat, key) vis info.info }, Cmd.none, [])
+        let vis = not 
+                <| Maybe.withDefault False 
+                <| UnionDict.get (chat,key) 
+                <| UnionDict.unsafen
+                    (Tuple.mapBoth ChatId VoteKey)
+                    (Tuple.mapBoth Types.chatId Types.voteKey)
+                <| info.info
+        in  ( Voting 
+                { info 
+                | info = info.info 
+                    |> UnionDict.unsafen
+                        (Tuple.mapBoth ChatId VoteKey)
+                        (Tuple.mapBoth Types.chatId Types.voteKey)
+                    |> UnionDict.insert (chat, key) vis 
+                    |> UnionDict.safen
+                }
+            , Cmd.none
+            , []
+            )
     OnCloseBox ->
         ( Voting info
         , Cmd.none
-        , MC.event def <| CloseBox
+        , [ CloseBox ]
         )
-
-subscriptions : Voting -> Sub VotingMsg
-subscriptions model = Sub.none
 
 find : (a -> Bool) -> List a -> Maybe a
 find func list = case list of

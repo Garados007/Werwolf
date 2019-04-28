@@ -1,107 +1,44 @@
 module Game.Lobby.LanguageChanger exposing
-    ( LanguageChanger
-    , LanguageChangerMsg
+    ( LanguageChangerMsg
     , LanguageChangerEvent (..)
-    , LanguageChangerDef
-    , languageChangerModule
-    , msgSetConfig
-    , msgSetLangs
+    , update
+    , view
     )
     
-import ModuleConfig as MC exposing (..)
-
-import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
 import Game.Lobby.ModalWindow exposing (modal)
-import Game.Utils.LangLoader exposing (LangInfo)
+import Game.Data as Data exposing (..)
 
 import Html exposing (Html,div,text,a,img,input)
 import Html.Attributes exposing (class,attribute,href,value)
 import Html.Events exposing (onClick)
 
-type LanguageChanger = LanguageChanger LanguageChangerInfo
-
-type alias LanguageChangerInfo =
-    { config : LangConfiguration
-    , list : List LangInfo
-    }
-
 type LanguageChangerMsg
     -- public Methods
-    = SetConfig LangConfiguration
-    | SetLangs (List LangInfo)
     -- private Methods
-    | OnClose
+    = OnClose
     | OnChangeLang String
 
 type LanguageChangerEvent
     = Close
     | Change String
 
-type alias LanguageChangerDef a = ModuleConfig LanguageChanger LanguageChangerMsg
-    () LanguageChangerEvent a
+update : LanguageChangerMsg -> List LanguageChangerEvent
+update msg = case msg of
+    OnClose -> [ Close ]
+    OnChangeLang key -> [ Change key ]
 
-msgSetConfig : LangConfiguration -> LanguageChangerMsg
-msgSetConfig = SetConfig
-
-msgSetLangs : List LangInfo -> LanguageChangerMsg
-msgSetLangs = SetLangs
-
-languageChangerModule : (LanguageChangerEvent -> List a) ->
-    (LanguageChangerDef a, Cmd LanguageChangerMsg, List a)
-languageChangerModule event = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
-    event ()
-
-init : () -> (LanguageChanger, Cmd LanguageChangerMsg, List a)
-init () =
-    ( LanguageChanger
-        { config = LangConfiguration empty <|
-            createLocal (newGlobal lang_backup) Nothing
-        , list = []
-        }
-    , Cmd.none
-    , []
-    )
-
-update : LanguageChangerDef a -> LanguageChangerMsg -> LanguageChanger -> (LanguageChanger, Cmd LanguageChangerMsg, List a)
-update def msg (LanguageChanger model) = case msg of
-    SetConfig config ->
-        ( LanguageChanger { model | config = config }
-        , Cmd.none
-        , []
-        )
-    SetLangs list ->
-        ( LanguageChanger { model | list = list }
-        , Cmd.none
-        , []
-        )
-    OnClose ->
-        ( LanguageChanger model
-        , Cmd.none
-        , event def Close
-        )
-    OnChangeLang key ->
-        ( LanguageChanger model
-        , Cmd.none
-        , event def <| Change key
-        )
-
-view : LanguageChanger -> Html LanguageChangerMsg
-view (LanguageChanger model) = 
-    modal OnClose (getSingle model.config.lang ["lobby", "language" ]) <|
+view : Data -> LangLocal -> Html LanguageChangerMsg
+view data lang  = 
+    modal OnClose (getSingle lang ["lobby", "language" ]) <|
         div [ class "w-language-box" ] <|
-        if model.list == []
-        then [ text <| getSingle model.config.lang ["lobby", "no-languages" ] ]
+        if data.lang.info == []
+        then [ text <| getSingle lang ["lobby", "no-languages" ] ]
         else List.map
             (\ info -> div
                 [ class <| (++) "w-language-button" <|
-                    if info.short == getCurLangLocal model.config.lang
+                    if info.short == getCurLangLocal lang
                     then " selected"
                     else ""
                 , onClick <| OnChangeLang info.short
@@ -116,8 +53,4 @@ view (LanguageChanger model) =
                 , div [] [ text info.en ]
                 ]
             )
-            model.list
-
-subscriptions : LanguageChanger -> Sub LanguageChangerMsg
-subscriptions (LanguageChanger model) =
-    Sub.none
+            data.lang.info

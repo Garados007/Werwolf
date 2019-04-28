@@ -2,18 +2,20 @@ module Game.Lobby.GameSelector exposing
     ( GameSelector
     , GameSelectorMsg
     , GameSelectorEvent (..)
-    , GameSelectorDef
-    , gameSelectorModule
-    , msgSetConfig
-    , msgSetGames
     , msgSetCurrent
+    , init 
+    , view
+    , update
     )
-
-import ModuleConfig as MC exposing (..)
 
 import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 import Config exposing (..)
+import Game.Data as Data exposing (..)
+import Game.Types.Types as Types exposing (..)
+import DataDiff.Path as Diff exposing (DetectorPath, Path (..))
+import DataDiff.Ex exposing (SingleActionEx (..), ModActionEx (..))
+import UnionDict exposing (UnionDict)
 
 import Html exposing (Html,div,text)
 import Html.Attributes exposing (class,attribute)
@@ -23,70 +25,30 @@ import Dict exposing (Dict)
 type GameSelector = GameSelector GameSelectorInfo
 
 type alias GameSelectorInfo =
-    { config : LangConfiguration
-    , games : Dict Int String
-    , current : Maybe Int
+    { current : Maybe GroupId
     }
 
 type GameSelectorMsg
     -- public methods
-    = SetConfig LangConfiguration
-    | SetGames (Dict Int String)
-    | SetCurrent (Maybe Int)
+    = SetCurrent (Maybe GroupId)
     -- private methods
-    | OnChangeCurrent Int
+    | OnChangeCurrent GroupId
     | OnOpenMenu
 
-msgSetConfig : LangConfiguration -> GameSelectorMsg
-msgSetConfig = SetConfig
-
-msgSetGames : Dict Int String -> GameSelectorMsg
-msgSetGames = SetGames
-
-msgSetCurrent : Maybe Int -> GameSelectorMsg
+msgSetCurrent : Maybe GroupId -> GameSelectorMsg
 msgSetCurrent = SetCurrent
 
 type GameSelectorEvent
-    = ChangeCurrent (Maybe Int)
+    = ChangeCurrent GroupId
     | OpenMenu
 
-type alias GameSelectorDef a = ModuleConfig GameSelector GameSelectorMsg
-    () GameSelectorEvent a
-
-gameSelectorModule : (GameSelectorEvent -> List a) ->
-    (GameSelectorDef a, Cmd GameSelectorMsg, List a)
-gameSelectorModule event = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
+init : GameSelector
+init = GameSelector
+    { current = Nothing
     }
-    event ()
 
-init : () -> (GameSelector, Cmd GameSelectorMsg, List a)
-init () =
-    ( GameSelector
-        { config = LangConfiguration empty <|
-            createLocal (newGlobal lang_backup) Nothing
-        , games = Dict.empty
-        , current = Nothing
-        }
-    , Cmd.none
-    , []
-    )
-
-update : GameSelectorDef a -> GameSelectorMsg -> GameSelector -> (GameSelector, Cmd GameSelectorMsg, List a)
-update def msg (GameSelector model) = case msg of
-    SetConfig config ->
-        ( GameSelector { model | config = config }
-        , Cmd.none
-        , []
-        )
-    SetGames games ->
-        ( GameSelector { model | games = games }
-        , Cmd.none
-        , []
-        )
+update : GameSelectorMsg -> GameSelector -> (GameSelector, Cmd GameSelectorMsg, List GameSelectorEvent)
+update msg (GameSelector model) = case msg of
     SetCurrent current ->
         ( GameSelector { model | current = current }
         , Cmd.none
@@ -95,27 +57,27 @@ update def msg (GameSelector model) = case msg of
     OnChangeCurrent id ->
         ( GameSelector { model | current = Just id }
         , Cmd.none
-        , MC.event def <| ChangeCurrent <| Just id
+        , [ ChangeCurrent id ]
         )
     OnOpenMenu ->
         ( GameSelector model
         , Cmd.none
-        , MC.event def <| OpenMenu
+        , [ OpenMenu ]
         )
 
-view : GameSelector -> Html GameSelectorMsg
-view (GameSelector model) = div [ class "w-gameselector-box" ] 
+view : Data -> GameSelector -> Html GameSelectorMsg
+view data (GameSelector model) = div [ class "w-gameselector-box" ] 
     [ div [ class "w-gameselector-nav", onClick OnOpenMenu ] <|
         List.repeat 3 <| div [] []
     , div [ class "w-gameselector-tabs" ]
         [ div [ class "w-game-selector-tabarea" ]
-            <| viewButtons model
+            <| viewButtons data model
         ]
     ]
 
-viewButtons : GameSelectorInfo -> List (Html GameSelectorMsg)
-viewButtons model = 
-    List.map (\(id, name) ->
+viewButtons : Data -> GameSelectorInfo -> List (Html GameSelectorMsg)
+viewButtons data model = List.map 
+    (\(id, name) ->
         div [ class <| (++) "w-gameselector-button" <|
                 if Just id == model.current
                 then " selected"
@@ -123,8 +85,8 @@ viewButtons model =
             , onClick (OnChangeCurrent id)
             ]
             [ div [] [ text name ] ]
-    ) <| Dict.toList model.games
-
-subscriptions : GameSelector -> Sub GameSelectorMsg
-subscriptions (GameSelector model) =
-    Sub.none
+    )
+    <| UnionDict.toList 
+    <| UnionDict.map (\_ -> .group >> .name)
+    <| UnionDict.unsafen GroupId Types.groupId
+    <| data.game.groups

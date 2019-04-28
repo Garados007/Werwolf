@@ -2,12 +2,10 @@ module Game.UI.ChatInsertBox exposing
     ( Model
     , Msg
     , EventMsg (..)
-    , ChatInsertBoxDef
-    , chatInsertBoxModule
-    , msgUpdateConfig
+    , init 
+    , view
+    , update
     )
-
-import ModuleConfig exposing (..)
 
 import Html exposing (Html,div,textarea,text,button)
 import Html.Attributes exposing (class,value)
@@ -15,22 +13,12 @@ import Html.Events exposing (onInput,onClick)
 
 import Game.Utils.Keys exposing (onKeyUp,onKeyDown,keyEnter)
 import Game.Utils.Keys.ModDetector exposing (ModDetector,newModDetector,setDown,setUp,isCtrl,isPressed)
-import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
 
-type alias ChatInsertBoxDef a = ModuleConfig Model Msg LangConfiguration EventMsg a
 
-chatInsertBoxModule : (EventMsg -> List a) -> LangConfiguration -> (ChatInsertBoxDef a, Cmd Msg, List a)
-chatInsertBoxModule = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
 
-type alias Model =
-    { config : LangConfiguration
-    , text : String
+type Model = Model
+    { text : String
     , modDetector : ModDetector
     }
 
@@ -39,19 +27,21 @@ type Msg
     | KeyDown Int
     | KeyUp Int
     | Send
-    | UpdateConfig LangConfiguration
 
 type EventMsg
     = SendEvent String
 
-msgUpdateConfig : LangConfiguration -> Msg
-msgUpdateConfig = UpdateConfig
+init : (Model, Cmd Msg)
+init = 
+    (Model 
+        { text = ""
+        , modDetector = newModDetector
+        }
+    , Cmd.none
+    )
 
-init : LangConfiguration -> (Model, Cmd Msg, List a)
-init config = (Model config "" newModDetector, Cmd.none, [])
-
-view : Model -> Html Msg
-view model = 
+view : LangLocal -> Model -> Html Msg
+view lang (Model model) = 
     div [ class "chat-insert-box" ]
         [ textarea 
             [ class "chat-insert-box-textarea"
@@ -63,19 +53,17 @@ view model =
             [ text model.text
             ]
         , div [ class "chat-insert-box-button", onClick Send ]
-            [ text <| getSingle model.config.lang ["ui", "send"]
-
-            ]
+            [ text <| getSingle lang ["ui", "send"] ]
         ]
 
-update : ChatInsertBoxDef a -> Msg -> Model -> (Model, Cmd Msg, List a)
-update def msg model =
+update : Msg -> Model -> (Model, Cmd Msg, List EventMsg)
+update msg (Model model) =
     case msg of
-        ChangeText text -> ({ model | text = text }, Cmd.none, [])
+        ChangeText text -> (Model { model | text = text }, Cmd.none, [])
         Send ->
-            ( { model | text = "" }
+            ( Model { model | text = "" }
             , Cmd.none
-            , event def <| SendEvent model.text
+            , [ SendEvent model.text ]
             )
         KeyDown key -> 
             let
@@ -83,16 +71,15 @@ update def msg model =
                 isSend = (isCtrl md) && (isPressed md keyEnter)
                 events =
                     if isSend
-                    then event def (SendEvent model.text)
+                    then [ SendEvent model.text ]
                     else []
-            in  ({ model 
+            in  ( Model { model 
                 | modDetector = md
                 , text = if isSend then "" else model.text 
                 }
                 , Cmd.none, events)
-        KeyUp key -> ({ model | modDetector = setUp model.modDetector key }, Cmd.none, [])
-        UpdateConfig config -> ({ model | config = config}, Cmd.none, [])
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+        KeyUp key ->  
+            ( Model { model | modDetector = setUp model.modDetector key }
+            , Cmd.none
+            , []
+            )

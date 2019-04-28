@@ -1,12 +1,12 @@
 module Game.Types.Request exposing
     ( GroupVersion, NewGameConfig
     , TopUserFilter (..)
-    , Response (..)
-    , ResponseGet (..)
-    , ResponseConv (..)
-    , ResponseControl (..)
-    , ResponseInfo (..)
-    , ResponseMulti (..)
+    , Request (..)
+    , RequestGet (..)
+    , RequestConv (..)
+    , RequestControl (..)
+    , RequestInfo (..)
+    , RequestMulti (..)
     , EncodedRequest
     , encodeJson
     , encodeRequest
@@ -22,8 +22,8 @@ import Time exposing (Posix)
 
 type alias GroupVersion =
     { group : GroupId
-    , lastChange : Int
-    , leader : Int
+    , lastChange : Posix
+    , leader : UserId
     , phaseDay : Maybe (String, Int)
     }
 
@@ -44,14 +44,14 @@ type TopUserFilter
     | TFLongestBanned
     | TFMostPermaBanned
 
-type Response
-    = RespGet ResponseGet
-    | RespConv ResponseConv
-    | RespControl ResponseControl
-    | RespInfo ResponseInfo
-    | RespMulti ResponseMulti
+type Request
+    = ReqGet RequestGet
+    | ReqConv RequestConv
+    | ReqControl RequestControl
+    | ReqInfo RequestInfo
+    | ReqMulti RequestMulti
 
-type ResponseGet
+type RequestGet
     = GetUserStats UserId
     | GetOwnUserStat
     | GetGroup GroupId
@@ -70,7 +70,7 @@ type ResponseGet
     | GetUserSpokenBans UserId
     | GetBansFromGroup GroupId
 
-type ResponseConv
+type RequestConv
     = LastOnline GroupId
     | GetUpdatedGroup GroupVersion
     | GetChangedVotings GameId Posix --LastChange
@@ -78,7 +78,7 @@ type ResponseConv
     | GetAllNewChatEntrys GameId ChatEntryId --AfterId
     | GetNewVotes ChatId VoteKey Posix --LastChange
     
-type ResponseControl
+type RequestControl
     = CreateGroup String --name
     | JoinGroup String --key
     | ChangeLeader GroupId UserId
@@ -94,13 +94,13 @@ type ResponseControl
     | KickUser UserId GroupId
     | RevokeBan UserId GroupId
 
-type ResponseInfo
+type RequestInfo
     = InstalledGameTypes
     | CreateOptions String
     | Rolesets String
 
-type ResponseMulti
-    = Multi (List Response)
+type RequestMulti
+    = Multi (List Request)
 
 type alias EncodedRequestInternal =
     { class : String
@@ -133,11 +133,11 @@ allTopUserFilter = Dict.fromList
 ePosix : Posix -> EncodedValue
 ePosix posix = EInt <| Time.posixToMillis posix // 1000
 
-encodeRequestInternal : Response -> EncodedRequestInternal
-encodeRequestInternal response =
-    case response of
-        RespGet resp ->
-            case resp of
+encodeRequestInternal : Request -> EncodedRequestInternal
+encodeRequestInternal request =
+    case request of
+        ReqGet req ->
+            case req of
                 GetUserStats (UserId userId) ->
                     EncodedRequestInternal "get" "getUserStats"
                         [ ("user", EInt userId)
@@ -209,8 +209,8 @@ encodeRequestInternal response =
                     EncodedRequestInternal "get" "getBansFromGroup"
                         [ ("group", EInt group)
                         ]
-        RespConv resp ->
-            case resp of
+        ReqConv req ->
+            case req of
                 LastOnline (GroupId groupId) ->
                     EncodedRequestInternal "conv" "lastOnline"
                         [ ("group", EInt groupId)
@@ -219,8 +219,8 @@ encodeRequestInternal response =
                     EncodedRequestInternal "conv" "getUpdatedGroup"
                         (
                             [ ("group", gv.group |> \(GroupId id) -> EInt id)
-                            , ("lastChange", EInt gv.lastChange)
-                            , ("leader", EInt gv.leader)
+                            , ("lastChange", ePosix gv.lastChange)
+                            , ("leader", gv.leader |> \(UserId id) -> EInt id)
                             ]
                         ++ (case gv.phaseDay of
                             Just (p,d) ->
@@ -250,8 +250,8 @@ encodeRequestInternal response =
                         , ("voteKey", EString voteKey)
                         , ("lastChange", ePosix lastChange)
                         ]
-        RespControl resp ->
-            case resp of
+        ReqControl req ->
+            case req of
                 CreateGroup name ->
                     EncodedRequestInternal "control" "createGroup"
                         [ ("name", EString name)
@@ -324,8 +324,8 @@ encodeRequestInternal response =
                         [ ("user", EInt user)
                         , ("group", EInt group)
                         ]
-        RespInfo resp ->
-            case resp of
+        ReqInfo req ->
+            case req of
                 InstalledGameTypes ->
                     EncodedRequestInternal "info" "installedGameTypes"
                         []
@@ -337,16 +337,16 @@ encodeRequestInternal response =
                     EncodedRequestInternal "info" "rolesets"
                         [ ("type", EString key)
                         ]
-        RespMulti resp ->
-            case resp of
+        ReqMulti req ->
+            case req of
                 Multi lr ->
                     EncodedRequestInternal "multi" "multi"
                         [ ("tasks", EString <| encode 0 <| list encodeJson lr)]
 
-encodeJson : Response -> Value
-encodeJson response =
+encodeJson : Request -> Value
+encodeJson request =
     let
-        req = encodeRequestInternal response
+        req = encodeRequestInternal request
         vars =  
             ("_class", EString req.class) ::
             ("_method", EString req.method) ::
@@ -361,10 +361,10 @@ encodeJson response =
         )
         vars
 
-encodeRequest : Response -> EncodedRequest
-encodeRequest response =
+encodeRequest : Request -> EncodedRequest
+encodeRequest request =
     let
-        req = encodeRequestInternal response
+        req = encodeRequestInternal request
     in
         EncodedRequest req.class req.method <| map
             (\(k, ev) ->

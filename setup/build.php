@@ -42,7 +42,7 @@ if (MANUAL_BUILD) {
     echo '<h3 style="color:red;">Manual build instruction</h3><ol>';
     echo '<li>goto project root <code'.$codestyle.'>cd "'.realpath(__DIR__ .'/../').'"</code></li>';
     echo '<li>run elm build commands '.
-        $elmcom(['ui','elm','Game','Lobby','GameLobby.elm'], ['ui','game','script.js'], ['ui','game','doc.index.json']).
+        $elmcom(['ui','elm','Game','App.elm'], ['ui','game','script.js'], ['ui','game','doc.index.json']).
         $elmcom(['ui','elm','Game','Pages','RoleDescription.elm'],['ui','roles','script.js'],['ui','roles','doc.index.json']).
         '</li>';
     echo '<li>run this build setup again</li>';
@@ -69,7 +69,7 @@ else {
             CT.'build elm file '.$source.' to '.$target);
     };
     echo CT;
-    $elmmake($run, 'ui/elm/Game/Lobby/GameLobby.elm', 'ui/game/script.js', 'ui/game/doc.index.json');
+    $elmmake($run, 'ui/elm/Game/App.elm', 'ui/game/script.js', 'ui/game/doc.index.json');
     $elmmake($run, 'ui/elm/Game/Pages/RoleDescription.elm', 'ui/roles/script.js', 'ui/roles/doc.index.json');
 }
 chdir($cwd);

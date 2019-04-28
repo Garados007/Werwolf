@@ -1,20 +1,17 @@
 module Game.Lobby.BanSpecificUser exposing
     ( BanSpecificUser
     , BanSpecificUserMsg
-    , msgSetConfig
-    , msgSetUser
     , BanSpecificUserEvent (..)
-    , BanSpecificUserDef
-    , banSpecificUserModule
+    , init
+    , view
+    , update
     )
-    
-import ModuleConfig as MC exposing (..)
 
-import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
-import Config exposing (..)
 import Game.Lobby.ModalWindow exposing (modal)
+import Game.Types.Types as Types exposing (..)
 import Game.Types.Request exposing (..)
+import Game.Data as Data exposing (..)
 
 import Html exposing (Html,div,text,a,img,input,node)
 import Html.Attributes exposing (class,attribute,href,value,type_,checked,selected)
@@ -37,33 +34,26 @@ regex = Maybe.withDefault Regex.never
 
 type BanSpecificUser = BanSpecificUser BanSpecificUserInfo
 
-type alias Request = Game.Types.Request.Response
-
 type alias BanSpecificUserInfo =
-    { config : LangConfiguration
-    , ban : BanMode
-    , now : Posix
-    , zone : Zone
+    { ban : BanMode
     , comment : String
-    , user : Int
-    , group : Int
+    , user : UserId
+    , group : GroupId
     }
 
 type BanSpecificUserMsg
     -- public Methods
-    = SetConfig LangConfiguration
-    | SetUser Int Int --user group
     -- private Methods
-    | OnClose
+    = OnClose
     | OnChangeMode BanMode
-    | NewTime Posix
-    | NewZone Zone
     | OnCreate
     | OnInput String
+    | OnEvent (List BanSpecificUserEvent)
 
 type BanSpecificUserEvent
     = Close
     | Create Request
+    | ReqData (Data -> BanSpecificUserMsg)
 
 type BanTypeUnit
     = BTUMinute
@@ -76,82 +66,41 @@ type BanMode
     | DateBan Int Int Int Int Int -- day month year, hour minute
     | Perma
 
-type alias BanSpecificUserDef a = ModuleConfig BanSpecificUser BanSpecificUserMsg
-    () BanSpecificUserEvent a
-
-msgSetConfig : LangConfiguration -> BanSpecificUserMsg
-msgSetConfig = SetConfig
-
-msgSetUser : Int -> Int -> BanSpecificUserMsg 
-msgSetUser user group = SetUser user group
-
-banSpecificUserModule : (BanSpecificUserEvent -> List a) ->
-    (BanSpecificUserDef a, Cmd BanSpecificUserMsg, List a)
-banSpecificUserModule event = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
+init : UserId -> GroupId -> BanSpecificUser
+init user group = BanSpecificUser
+    { ban = Kick
+    , comment = ""
+    , user = user
+    , group = group
     }
-    event ()
 
-init : () -> (BanSpecificUser, Cmd BanSpecificUserMsg, List a)
-init () =
-    ( BanSpecificUser
-        { config = LangConfiguration empty <|
-            createLocal (newGlobal lang_backup) Nothing
-        , ban = Kick
-        , now = Time.millisToPosix 0
-        , zone = utc
-        , comment = ""
-        , user = 0
-        , group = 0
-        }
-    , Task.perform NewZone here
-    , []
-    )
-
-update : BanSpecificUserDef a -> BanSpecificUserMsg -> BanSpecificUser -> (BanSpecificUser, Cmd BanSpecificUserMsg, List a)
-update def msg (BanSpecificUser model) = case msg of
-    SetConfig config ->
-        ( BanSpecificUser { model | config = config }
-        , Cmd.none
-        , []
-        )
-    SetUser user group ->
-        ( BanSpecificUser 
-            { model 
-            | user = user
-            , group = group 
-            , comment = ""
-            }
-        , Cmd.none
-        , []
-        )
+update : BanSpecificUserMsg -> BanSpecificUser -> (BanSpecificUser, Cmd BanSpecificUserMsg, List BanSpecificUserEvent)
+update msg (BanSpecificUser model) = case msg of
     OnClose ->
         ( BanSpecificUser model
         , Cmd.none
-        , event def Close
+        , [ Close ]
         )
     OnChangeMode mode ->
         ( BanSpecificUser { model | ban = mode }
         , Cmd.none
         , []
         )
-    NewTime time ->
-        ( BanSpecificUser { model | now = time }
-        , Cmd.none
-        , []
-        )
-    NewZone zone ->
-        ( BanSpecificUser { model | zone = zone }
-        , Cmd.none
-        , []
-        )
     OnCreate ->
         ( BanSpecificUser model
         , Cmd.none
-        , event def <| Create <| Debug.log "BanSpecificUser:OnCreate" <| getRequest model
+        , List.singleton 
+            <| ReqData
+            (\data -> OnEvent
+                <| List.singleton
+                <| Create 
+                <| getRequest data model
+            )
+        )
+    OnEvent list ->
+        ( BanSpecificUser model 
+        , Cmd.none 
+        , []
         )
     OnInput text ->
         ( BanSpecificUser { model | comment = text }
@@ -159,25 +108,28 @@ update def msg (BanSpecificUser model) = case msg of
         , []
         )
 
-getRequest : BanSpecificUserInfo -> Request
-getRequest info = RespControl <| case info.ban of
+getRequest : Data -> BanSpecificUserInfo -> Request
+getRequest data info = ReqControl <| case info.ban of
     Kick -> KickUser info.user info.group
     TimeBan unit time ->
         let fact = case unit of
                 BTUMinute -> 60 * 1000
                 BTUHour -> 60 * 60 * 1000
                 BTUDays -> 24 * 60 * 60 * 1000
-            target = add Millisecond (round <| fact * time) info.zone info.now
-        in BanUser info.user info.group 
-            ((posixToMillis target) // 1000) 
+            target : Posix
+            target = add 
+                Millisecond 
+                (round <| fact * time) 
+                data.time.zone 
+                data.time.now
+        in BanUser info.user info.group target
             info.comment
     DateBan d m y h min ->
-        let date = partsToPosix info.zone
+        let date = partsToPosix data.time.zone
                 <| Parts y (numMonth m) d h min 0 0
-        in BanUser info.user info.group 
-            ((posixToMillis date) // 1000)
+        in BanUser info.user info.group date
             info.comment
-    Perma -> BanUser info.user info.group -1 info.comment
+    Perma -> BanUser info.user info.group (Time.millisToPosix -1000) info.comment
 
 monthNum : Time.Month -> Int
 monthNum month = case month of
@@ -211,24 +163,24 @@ numMonth num = case num of
     -- Fallback
     _ -> Time.Jan
 
-single : BanSpecificUserInfo -> String -> String
-single info key = getSingle info.config.lang [ "lobby", "bsu", key ]
+single : LangLocal -> BanSpecificUserInfo -> String -> String
+single lang info key = getSingle lang [ "lobby", "bsu", key ]
 
-view : BanSpecificUser -> Html BanSpecificUserMsg
-view (BanSpecificUser model) = 
-    modal OnClose (single model "ban-specific-user") <|
+view : Data -> LangLocal -> BanSpecificUser -> Html BanSpecificUserMsg
+view data lang (BanSpecificUser model) = 
+    modal OnClose (single lang model "ban-specific-user") <|
         div [ class "w-banuser-box" ] 
-            [ viewRadios model
+            [ viewRadios data lang model
             , case model.ban of
-                Kick -> viewKick model
-                TimeBan unit duration -> viewTimeBan model unit duration
-                DateBan d m y h min -> viewDateBan model d m y h min
-                Perma -> viewPerma model
+                Kick -> viewKick lang model
+                TimeBan unit duration -> viewTimeBan lang model unit duration
+                DateBan d m y h min -> viewDateBan lang model d m y h min
+                Perma -> viewPerma lang model
             , if model.ban /= Kick
                 then node "textarea"
                     [ onInput OnInput
                     , attribute "placeholder" <|
-                        single model "description"
+                        single lang  model "description"
                     , attribute "pattern" "^.{5,1000}$"
                     ]
                     [ text model.comment ]
@@ -238,12 +190,12 @@ view (BanSpecificUser model) =
                     [ class "w-banuser-create"
                     , onClick OnCreate
                     ]
-                    [ text <| single model "create" ]
+                    [ text <| single lang model "create" ]
                 else text ""
             ]
 
-viewRadios : BanSpecificUserInfo -> Html BanSpecificUserMsg
-viewRadios info =
+viewRadios : Data -> LangLocal -> BanSpecificUserInfo -> Html BanSpecificUserMsg
+viewRadios data lang info =
     let radio : String -> BanSpecificUserMsg -> Bool -> Html BanSpecificUserMsg
         radio = \labelKey event clicked ->
             node "label" []
@@ -252,7 +204,7 @@ viewRadios info =
                     , checked clicked
                     , onClick event
                     ] []
-                , text <| single info labelKey
+                , text <| single lang info labelKey
                 ]
     in div [ class "w-banuser-radios" ]
         [ radio "kick" (OnChangeMode Kick) <| info.ban == Kick
@@ -262,19 +214,19 @@ viewRadios info =
         , radio "dateban" 
             ( OnChangeMode <| (\p ->
                 DateBan p.day (monthNum p.month) p.year p.hour p.minute
-            ) <| posixToParts info.zone info.now) 
+            ) <| posixToParts data.time.zone data.time.now) 
             <| case info.ban of
                 DateBan _ _ _ _ _ -> True
                 _ -> False
         , radio "perma" (OnChangeMode Perma) <| info.ban == Perma
         ]
 
-viewKick : BanSpecificUserInfo -> Html BanSpecificUserMsg
-viewKick info = div [ class "w-ban-user-conf kick" ]
-    [ text <| single info "info-kick" ]
+viewKick : LangLocal -> BanSpecificUserInfo -> Html BanSpecificUserMsg
+viewKick lang info = div [ class "w-ban-user-conf kick" ]
+    [ text <| single lang info "info-kick" ]
 
-viewTimeBan : BanSpecificUserInfo -> BanTypeUnit -> Float -> Html BanSpecificUserMsg
-viewTimeBan info unit duration =
+viewTimeBan : LangLocal -> BanSpecificUserInfo -> BanTypeUnit -> Float -> Html BanSpecificUserMsg
+viewTimeBan lang info unit duration =
     let
         inp : Float -> (Float -> BanMode) -> Html BanSpecificUserMsg
         inp = \val event ->
@@ -304,7 +256,7 @@ viewTimeBan info unit duration =
                 [ value k
                 , selected <| f == unit
                 ]
-                [ text <| single info <| "timeunit-" ++ k ]
+                [ text <| single lang info <| "timeunit-" ++ k ]
             )
             [ (BTUMinute, "m")
             , (BTUHour, "h")
@@ -312,8 +264,8 @@ viewTimeBan info unit duration =
             ]
         ]
         
-viewDateBan : BanSpecificUserInfo -> Int -> Int -> Int -> Int -> Int -> Html BanSpecificUserMsg
-viewDateBan info day month year hour minute =
+viewDateBan : LangLocal -> BanSpecificUserInfo -> Int -> Int -> Int -> Int -> Int -> Html BanSpecificUserMsg
+viewDateBan lang info day month year hour minute =
     let inp : Int -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
         inp = \val min max event ->
             input
@@ -329,7 +281,7 @@ viewDateBan info day month year hour minute =
         part : String -> Int -> Int -> Int -> (Int -> BanMode) -> Html BanSpecificUserMsg
         part = \labelKey val min max event ->
             div []
-                [ div [] [ text <| single info labelKey ]
+                [ div [] [ text <| single lang info labelKey ]
                 , div [] [ inp val min max event ]
                 ]
     in div [ class "w-ban-user-conf dateban" ]
@@ -350,12 +302,6 @@ dayMax month year =
         then 31
         else 30
 
-viewPerma : BanSpecificUserInfo -> Html BanSpecificUserMsg
-viewPerma info = div [ class "w-ban-user-conf perma"] 
-    [ text <| single info "info-perma" ]
-
-subscriptions : BanSpecificUser -> Sub BanSpecificUserMsg
-subscriptions (BanSpecificUser model) =
-    if model.now == Time.millisToPosix 0
-    then Time.every 1000 NewTime
-    else Time.every 20000 NewTime
+viewPerma : LangLocal -> BanSpecificUserInfo -> Html BanSpecificUserMsg
+viewPerma lang info = div [ class "w-ban-user-conf perma"] 
+    [ text <| single lang info "info-perma" ]

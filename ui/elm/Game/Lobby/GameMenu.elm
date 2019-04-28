@@ -1,43 +1,22 @@
 module Game.Lobby.GameMenu exposing
-    ( GameMenu
-    , GameMenuMsg
+    ( GameMenuMsg
     , GameMenuEvent (..)
-    , GameMenuDef
-    , gameMenuModule
-    , msgSetConfig
-    , msgSetLang
+    , view
+    , update
     )
 
-import ModuleConfig as MC exposing (..)
-
-import Game.Configuration exposing (..)
 import Game.Utils.Language exposing (..)
-import Config exposing (..)
+import Config exposing (lang_backup, uri_host, uri_path, build_year, build_version)
 
 import Html exposing (Html,div,text,a,img)
 import Html.Attributes exposing (class,attribute,href)
 import Html.Events exposing (onClick)
 import Char
 
-type GameMenu = GameMenu GameMenuInfo
-
-type alias GameMenuInfo =
-    { config : LangConfiguration
-    , lang : String
-    }
-
 type GameMenuMsg
     -- public methods
-    = SetConfig LangConfiguration
-    | SetLang String
     -- private methods
-    | OnEvent GameMenuEvent
-
-msgSetConfig : LangConfiguration -> GameMenuMsg
-msgSetConfig = SetConfig
-
-msgSetLang : String -> GameMenuMsg
-msgSetLang = SetLang
+    = OnEvent GameMenuEvent
 
 type GameMenuEvent
     = CloseMenu
@@ -48,89 +27,51 @@ type GameMenuEvent
     | OptionsBox
     | TutorialBox
 
-type alias GameMenuDef a = ModuleConfig GameMenu GameMenuMsg
-    () GameMenuEvent a
+update : GameMenuMsg -> List GameMenuEvent
+update msg = case msg of
+    OnEvent event -> [ event ]
 
-gameMenuModule : (GameMenuEvent -> List a) ->
-    (GameMenuDef a, Cmd GameMenuMsg, List a)
-gameMenuModule event = createModule
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
-    event ()
-
-init : () -> (GameMenu, Cmd GameMenuMsg, List a)
-init () =
-    ( GameMenu
-        { config = LangConfiguration empty <|
-            createLocal (newGlobal lang_backup) Nothing
-        , lang = lang_backup
-        }
-    , Cmd.none
-    , []
-    )
-
-update : GameMenuDef a -> GameMenuMsg -> GameMenu -> (GameMenu, Cmd GameMenuMsg, List a)
-update def msg (GameMenu model) = case msg of
-    SetConfig config ->
-        ( GameMenu { model | config = config }
-        , Cmd.none
-        , []
-        )
-    SetLang lang ->
-        ( GameMenu { model | lang = lang }
-        , Cmd.none
-        , []
-        )
-    OnEvent event ->
-        ( GameMenu model
-        , Cmd.none
-        , MC.event def event
-        )
-
-view : GameMenu -> Html GameMenuMsg
-view (GameMenu model) = div [ class "w-menu-background" ]
+view : LangLocal -> Html GameMenuMsg
+view lang = div [ class "w-menu-background" ]
     [ div [ class "w-menu-box" ]
         [ div [ class "w-menu-title" ]
-            [ viewTitle model
+            [ viewTitle lang
             ]
         , div [ class "w-menu-content" ]
-            [ viewButtons model
+            [ viewButtons lang
             ]
         ]
     ]
 
-viewTitle : GameMenuInfo -> Html GameMenuMsg
-viewTitle model = div []
+viewTitle : LangLocal -> Html GameMenuMsg
+viewTitle lang = div []
     [ div [ class "w-menu-title-content" ] 
         [ div [ class "w-gameselector-nav", onClick <| OnEvent CloseMenu ] <|
             List.repeat 3 <| div [] []
-        , div [] [ text <| menuString model "menu-title" ]
+        , div [] [ text <| menuString lang "menu-title" ]
         ]
     ]
 
-menuString : GameMenuInfo -> String -> String
-menuString model subkey = getSingle model.config.lang ["lobby", subkey]
+menuString : LangLocal -> String -> String
+menuString lang subkey = getSingle lang ["lobby", subkey]
 
-viewButtons : GameMenuInfo -> Html GameMenuMsg
-viewButtons model = div []
+viewButtons : LangLocal -> Html GameMenuMsg
+viewButtons lang = div []
     [ div [ class "w-menu-content-box" ] <| List.singleton <| div []
-        [ viewButton (OnEvent NewGameBox) <| menuString model "new-group"
-        , viewButton (OnEvent JoinGameBox) <| menuString model "join-group"
-        , viewButton (OnEvent EditGamesBox) <| menuString model "manage-groups"
+        [ viewButton (OnEvent NewGameBox) <| menuString lang "new-group"
+        , viewButton (OnEvent JoinGameBox) <| menuString lang "join-group"
+        , viewButton (OnEvent EditGamesBox) <| menuString lang "manage-groups"
         , viewSplitter
-        , viewLink "" <| menuString model "main-screen"
-        , viewLink "" <| menuString model "user-info"
+        , viewLink "" <| menuString lang "main-screen"
+        , viewLink "" <| menuString lang "user-info"
         , viewSplitter
-        , viewButton (OnEvent TutorialBox) <| menuString model "tutorials"
-        , viewLink "ui/roles/" <| menuString model "role-wiki"
+        , viewButton (OnEvent TutorialBox) <| menuString lang "tutorials"
+        , viewLink "ui/roles/" <| menuString lang "role-wiki"
         , viewSplitter
         , viewImgButton (OnEvent LanguageBox) 
-            ("ui/img/lang/" ++ model.lang ++ ".png")
-            <| menuString model "language"
-        , viewButton (OnEvent OptionsBox) <| menuString model "options"
+            ("ui/img/lang/" ++ (getCurLangLocal lang) ++ ".png")
+            <| menuString lang "language"
+        , viewButton (OnEvent OptionsBox) <| menuString lang "options"
         , div [ class "w-menu-space" ] []
         , viewCredits
         ]
@@ -177,7 +118,3 @@ viewCredits = div [ class "w-credits" ]
         , text <| " - Version " ++ build_version
         ]
     ]
-
-subscriptions : GameMenu -> Sub GameMenuMsg
-subscriptions (GameMenu model) =
-    Sub.none

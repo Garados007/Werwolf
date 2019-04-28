@@ -50,12 +50,16 @@ type alias GameData =
     , bans : List BanInfo
     , invalidGroups : Dict String Posix
     , bannedGroups : Dict String Posix
+    -- temporary list with groupId that are required to fetch
+    -- the goal is to keep this list empty as possible
+    , fetchGroups : List GroupId
     }
 
 type alias GroupData =  
     { group : Group
     , user : List User 
     , chats : SafeDict Int ChatId ChatData
+    , newGameLang : Maybe String
     }
 
 type alias ChatData =
@@ -86,6 +90,7 @@ empty now zone =
         , bans = []
         , invalidGroups = Dict.empty 
         , bannedGroups = Dict.empty
+        , fetchGroups = []
         }
     , config = Configuration.empty
     , error = NoError
@@ -133,9 +138,12 @@ update changement data =
                                 { group = ng 
                                 , user = []
                                 , chats = UnionDict.include Dict.empty
+                                , newGameLang = Nothing
                                 }
                         )
                     |> safen 
+                , fetchGroups = game.fetchGroups
+                    |> List.filter ((/=) ng.id)
                 }
             }
         CGame ng ->
@@ -158,28 +166,38 @@ update changement data =
         CUser nu ->
             { model 
             | game = model.game |> \game ->
-                { game 
-                | groups = unsafen GroupId Types.groupId game.groups
-                    |> UnionDict.update nu.group
-                        (Maybe.map <| \gd ->
-                            { gd 
-                            | user = 
-                                if List.isEmpty
-                                    <| List.filter 
-                                        (.user >> (==) nu.user)
+                let groups1 = unsafen GroupId Types.groupId game.groups
+                    groupD = UnionDict.get nu.group groups1
+                        |> Maybe.map 
+                            (\gd ->
+                                { gd 
+                                | user = 
+                                    if List.isEmpty
+                                        <| List.filter 
+                                            (.user >> (==) nu.user)
+                                            gd.user
+                                    then gd.user ++ [ nu ]
+                                    else List.map
+                                        (\u -> 
+                                            if u.user == nu.user 
+                                            then nu 
+                                            else u
+                                        )
                                         gd.user
-                                then gd.user ++ [ nu ]
-                                else List.map
-                                    (\u -> 
-                                        if u.user == nu.user 
-                                        then nu 
-                                        else u
-                                    )
-                                    gd.user
-                            }
-                        )
-                    |> safen
-                }
+                                }
+                            )
+                    groups2 = case groupD of 
+                        Just g -> UnionDict.insert nu.group g groups1
+                            |> safen
+                        Nothing -> game.groups
+                in 
+                    { game 
+                    | groups = groups2
+                    , fetchGroups =
+                        if groupD /= Nothing && not (List.member nu.group game.fetchGroups)
+                        then game.fetchGroups
+                        else nu.group :: game.fetchGroups
+                    }
             }
         CChat nc ->
             { model
@@ -449,3 +467,34 @@ pathSafeDictString
 pathSafeDictString pathName cp mods = Diff.goPath (PathString pathName) cp
     << Diff.mapData UnionDict.extract
     << Diff.dict (\_ _ n -> PathString n) PathString mods
+
+
+getGroup : GroupId -> Data -> Maybe GroupData
+getGroup groupId data = data.game.groups
+    |> UnionDict.unsafen GroupId Types.groupId 
+    |> UnionDict.get groupId 
+
+getGameId : Maybe GroupData -> Maybe GameId 
+getGameId group = group 
+    |> Maybe.andThen (.group >> .currentGame)
+    |> Maybe.map .id
+
+getChat : ChatId -> Maybe GroupData -> Maybe ChatData 
+getChat chatId group = getChats group
+    |> UnionDict.get chatId
+
+getChats : Maybe GroupData -> UnionDict Int ChatId ChatData 
+getChats group = group 
+    |> Maybe.map .chats 
+    |> Maybe.withDefault (UnionDict.include Dict.empty)
+    |> UnionDict.unsafen ChatId Types.chatId
+
+getVoting : VoteKey -> Maybe ChatData -> Maybe Types.Voting 
+getVoting voteKey chat = getVotings chat 
+    |> List.filter ((==) voteKey << .voteKey)
+    |> List.head
+
+getVotings : Maybe ChatData -> List Types.Voting 
+getVotings chat = chat
+    |> Maybe.map (.chat >> .voting)
+    |> Maybe.withDefault []

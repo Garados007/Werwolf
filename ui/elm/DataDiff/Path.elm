@@ -15,6 +15,8 @@ module DataDiff.Path exposing
     , andThen
     , inline
     , goPath
+    , cond
+    , noOp
     )
 
 -- elm/core
@@ -93,3 +95,11 @@ goPath : Path
     -> DetectorPath data1 msg 
 goPath token func detector = DDEx.mapPath (\p -> p ++ [token])
     <| mapData func detector
+
+cond : (List Path -> data -> data -> Bool)
+    -> DetectorPath data msg 
+    -> DetectorPath data msg 
+cond = DDEx.cond
+
+noOp : DetectorPath data msg 
+noOp = DDEx.noOp
