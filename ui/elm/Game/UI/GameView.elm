@@ -2,7 +2,6 @@ module Game.UI.GameView exposing
     ( GameView
     , GameViewMsg
     , GameViewEvent (..)
-    , msgDisposing
     , init
     , view
     , update
@@ -56,15 +55,15 @@ type GameViewViewType
 
 type GameViewMsg
     -- public methods
-    = Disposing --unregisters all registered requests and other cleanup
     -- Wrapper methods
-    | WrapUserListBox UserListBoxMsg
+    = WrapUserListBox UserListBoxMsg
     | WrapChatBox ChatBoxMsg
     | WrapVoting VotingMsg
     | WrapNewGame NewGameMsg
     -- private methodss
     | CreateNewGame
     -- event handler
+    | Disposing --unregisters all registered requests and other cleanup
     | ChangeVotingBox Bool 
     | ChangePlayerBox Bool
     | NoOp
@@ -75,6 +74,7 @@ type GameViewMsg
     | PeriodsVotingChange GameId (List Types.Voting) Posix
     | PeriodsChatEntryAdded GameId ChatEntryId
     | Batch (List GameViewMsg)
+    | UnknownUserAdded UserId
     -- detector handler
     | PathGameFinished
     | PathGameStarted
@@ -111,9 +111,6 @@ type alias Periods =
     , getVotes : List Request
     }
 
-msgDisposing : GameViewMsg 
-msgDisposing = Disposing
- 
 mapVotingEvent : Voting.VotingEvent -> GameViewEvent 
 mapVotingEvent event = case event of 
     Voting.Send r -> Send r 
@@ -166,7 +163,12 @@ detector (GameView model) = Diff.batch
 detectorInternal : GameView -> DetectorPath Data GameViewMsg
 detectorInternal (GameView model) = Data.pathGameData
     <| Diff.batch
-    [ Data.pathGroupData []
+    [ Data.pathGroupData 
+            [ RemovedEx <| \_ g -> 
+                if g.group.id == model.ownGroupId
+                then Disposing
+                else NoOp
+            ]
         <| Diff.cond (\_ _ g -> g.group.id == model.ownGroupId)
         <| Diff.batch 
         [ Diff.mapData .group
@@ -261,7 +263,13 @@ detectorInternal (GameView model) = Data.pathGameData
                 [ AddedEx <| \_ c -> PathChatEntryAdded c.id
                 ]
             <| Diff.noOp
-        ] 
+        , Diff.mapData .unknownUser
+            <| Diff.list
+                (\_ _ -> PathInt)
+                [ AddedEx <| \_ -> UnknownUserAdded
+                ]
+            <| Diff.noOp
+        ]
     ]
 
 init : GroupId -> (GameView, Cmd GameViewMsg, List GameViewEvent)
@@ -666,6 +674,29 @@ update msg (GameView model) = case msg of
                 <| List.map Unregister
                 <| model.periods.getVotes
             )
+    UnknownUserAdded id ->
+        ( GameView model 
+        , Cmd.none 
+        ,   [ Send <| ReqGet <| GetUser model.ownGroupId id
+            , ModData <| \data ->
+                { data 
+                | game = data.game |> \game ->
+                    { game 
+                    | groups = game.groups
+                        |> UnionDict.unsafen GroupId Types.groupId
+                        |> UnionDict.update model.ownGroupId
+                            ( Maybe.map <| \group -> 
+                                { group 
+                                | unknownUser = List.filter
+                                    ((/=) id)
+                                    group.unknownUser 
+                                }
+                            )
+                        |> UnionDict.safen
+                    }
+                }
+            ]
+        )
 
 requestUpdatedGroup : Group -> Request
 requestUpdatedGroup group =

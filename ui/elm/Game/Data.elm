@@ -60,6 +60,7 @@ type alias GroupData =
     , user : List User 
     , chats : SafeDict Int ChatId ChatData
     , newGameLang : Maybe String
+    , unknownUser : List UserId
     }
 
 type alias ChatData =
@@ -139,6 +140,7 @@ update changement data =
                                 , user = []
                                 , chats = UnionDict.include Dict.empty
                                 , newGameLang = Nothing
+                                , unknownUser = []
                                 }
                         )
                     |> safen 
@@ -319,27 +321,36 @@ update changement data =
                 { game 
                 | groups = unsafen GroupId Types.groupId game.groups 
                     |> UnionDict.update ng
-                        (Maybe.map <| \group ->
-                            { group 
-                            | user = List.foldr
-                                (\u r1 -> List.foldr
-                                    (\(nu,nt) ru -> 
-                                        (if ru.user == nu
-                                        then
-                                            { ru 
-                                            | stats = u.stats |> \s ->
-                                                { s | lastOnline = nt }
-                                            }
-                                        else ru
+                        ( Maybe.map <| \group ->  
+                            List.foldr
+                                (\(nu, nt) (user, unknown) -> 
+                                    List.foldr
+                                        (\ou (ru, changed) ->
+                                            if ou.user == nu
+                                            then
+                                                ( { ou
+                                                    | stats = ou.stats |> \s ->
+                                                        { s | lastOnline = nt }
+                                                    }
+                                                    :: ru
+                                                , True 
+                                                )
+                                            else (ou :: ru, changed)
                                         )
-                                    )
-                                    u
-                                    nl
-                                    :: r1
+                                        ([], False)
+                                        user
+                                    |> \(nuser, changed) ->
+                                        if changed 
+                                        then (nuser, unknown)
+                                        else (user, nu :: unknown)
                                 )
-                                []
-                                group.user
-                            }
+                                (group.user, [])
+                                nl
+                            |> \(user, unknown) ->
+                                { group 
+                                | user = user 
+                                , unknownUser = group.unknownUser ++ unknown
+                                }
                         )
                     |> safen
                 }

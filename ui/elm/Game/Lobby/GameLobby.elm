@@ -47,7 +47,6 @@ type alias GameLobbyInfo =
     , curGame : Maybe GroupId
     , showMenu : Bool
     , modal : ViewModal
-    , error : ErrorLevel
     , tutorial : Tutorial
     }
 
@@ -76,6 +75,7 @@ type GameLobbyMsg
     | SubmitFetchLangset String String
     | CallEvent (List GameLobbyEvent)
     | AddGroup GroupId
+    | CallRemoveGroup GroupId
 
 type GameLobbyEvent 
     = Register Request
@@ -122,6 +122,7 @@ detectorInternal (GameLobby model) = Data.pathGameData
         <| Diff.noOp
     , pathGroupData 
         [ AddedEx <| \_ group -> AddGroup group.group.id
+        , RemovedEx <| \_ group -> CallRemoveGroup group.group.id
         ] 
         <| Diff.noOp
     ]
@@ -218,7 +219,6 @@ init =
             , curGame = Nothing
             , showMenu = False
             , modal = None
-            , error = NoError
             , tutorial = mt
             }
     in  ( GameLobby model
@@ -276,8 +276,8 @@ view data (GameLobby model) = div [] <| viewStyles
     , if model.showMenu
         then Html.map MGameMenu <| GameMenu.view data.lang.default
         else div [] []
-    , if model.error /= NoError 
-        then viewError data.lang.default model.error
+    , if data.error /= NoError 
+        then viewError data.lang.default data.error
         else case model.modal of
             None -> div [] []
             VMCreateGroup -> Html.map MCreateGroup 
@@ -479,6 +479,20 @@ update msg (GameLobby model) = case msg of
                         else []
                     )
             )
+    CallRemoveGroup id ->
+        ( GameLobby model 
+        , Cmd.none 
+        ,   [ ModData <| \data ->
+                { data
+                | game = data.game |> \game ->
+                    { game 
+                    | bans = game.bans 
+                        |> List.filter
+                            ((/=) id << .group)
+                    }
+                }
+            ]
+        )
         
 updateLang : GameLobby -> (LangGlobal -> LangGlobal) -> (GameLobby, Cmd GameLobbyMsg, List GameLobbyEvent)
 updateLang model func = 
