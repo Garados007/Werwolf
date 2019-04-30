@@ -120,5 +120,5 @@ $index = function ($target, $title,$start) {
     file_put_contents(__DIR__.'/../'.$target.'/index.php', $content);
     echo CT.'Index file /'.$target.'/index.php created';
 };
-$index('ui/game', 'Game Lobby','Elm.Game.Lobby.GameLobby');
+$index('ui/game', 'Game Lobby','Elm.Game.App');
 $index('ui/roles', 'Roles Help', 'Elm.Game.Pages.RoleDescription');

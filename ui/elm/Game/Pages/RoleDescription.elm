@@ -8,7 +8,7 @@ import Dict exposing (Dict)
 import Game.Utils.Language exposing (LangGlobal, LangLocal, newGlobal, createLocal, addMainLang, addSpecialLang, getSingle, hasGameset, updateCurrentLang)
 import Game.Utils.LangLoader exposing (fetchPageLang, fetchModuleLang, LangInfo, fetchLangList)
 import Config exposing (..)
-import Game.Utils.Network as Network exposing (Network, Request, NetworkMsg(..), newNetwork, send, update)
+import Game.Utils.Network as Network exposing (Network, NetworkMsg(..), newNetwork, send, update)
 import Game.Types.Request exposing (..)
 import Game.Types.Changes exposing (Changes(..))
 import Browser
@@ -50,7 +50,7 @@ init =
     , Cmd.batch 
         [ fetchPageLang "roles" lang_backup MainLang
         , Cmd.map MNetwork <| send newNetwork <|
-            RespInfo <| InstalledGameTypes
+            ReqInfo <| InstalledGameTypes
         , fetchLangList LangList
         ]
     )
@@ -205,23 +205,25 @@ update msg model = case msg of
         ( { model | lang = updateCurrentLang model.lang lang }
         , Cmd.none 
         )
-    MNetwork smsg -> case Network.isReceived smsg of
-        Just conf ->
-            let (nm, cmd) = List.foldl updateChanges (model, []) conf.changes 
-            in (nm, Cmd.batch cmd)
-        _ ->
-            let (nm, nc) = Network.update smsg model.network
-            in  ( { model | network = nm }
-                , Cmd.map MNetwork nc
-                )
+    MNetwork smsg -> 
+        let (nn, ncmd, changed) = Network.update smsg model.network
+            (nm, ucmd) = List.foldl
+                updateChanges
+                ({ model | network = nn }, [])
+                <| List.concatMap .changes changed
+        in  ( nm
+            , Cmd.batch 
+                <| Cmd.map MNetwork ncmd
+                :: ucmd
+            )
 
 updateChanges : Changes -> (Model, List (Cmd Msg)) -> (Model, List (Cmd Msg))
 updateChanges change (model, cmd) = case change of
     CInstalledGameTypes types ->
         ( { model | gametypes = types }
         ,   ( Cmd.map MNetwork <| send model.network <|
-                RespMulti <| Multi <| List.map
-                (RespInfo << Rolesets)
+                ReqMulti <| Multi <| List.map
+                (ReqInfo << Rolesets)
                 types
             ) :: 
             (List.map 
