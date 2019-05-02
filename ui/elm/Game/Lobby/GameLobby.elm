@@ -302,7 +302,7 @@ view data (GameLobby model) = div [] <| viewStyles
         ++ uri_path 
         ++ "ui/css/themes/" 
         ++ data.config.theme 
-        ++ ".css"
+        ++ ".less"
     ]
 
 viewStyles : List (Html msg) -> List (Html msg)

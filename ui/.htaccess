@@ -6,3 +6,6 @@ Header set Access-Control-Allow-Headers "Accept,Accept-Charset,Accept-Encoding,A
 Header set Access-Control-Allow-Methods "*" 
 # allow credentials (cookies) 
 Header set Access-Control-Allow-Credentials true
+
+RewriteEngine on
+RewriteRule ^css/(.*)\.less$ css/less-jit.php?css=$1.less [L,QSA]
