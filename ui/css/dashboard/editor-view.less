@@ -1,0 +1,791 @@
+@col-all: rgb(255, 0, 0);
+@col-calc: rgb(251, 255, 0);
+@col-vars: rgb(0, 255, 0);
+@col-branch: rgb(0, 195, 255);
+@col-util: rgb(255, 0, 212);
+
+@col-new-entry-header: rgb(235, 115, 68);
+@col-new-entry-body: lighten(@col-new-entry-header, 20%);
+@col-type-color: rgb(95, 95, 95);
+
+@col-code-bg: rgb(110, 110, 110);
+
+.new-entry-box {
+    display: flex;
+    align-items: stretch;
+    .container {
+        display: flex;
+        flex-direction: column;
+    }
+    .container .header {
+        .filter-icons {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-evenly;
+            align-items: center;
+
+            .filter-icon {
+                .icon (@name, @color) {
+                    &.@{name} {
+                        background-color: lighten(desaturate(@color, 10%), 30%);
+                        border: 1px solid @color;
+                    }
+                    &.@{name}.active,
+                    &.@{name}:hover {
+                        background-color: @color;
+                    }
+                    &.@{name}.active {
+                        border: 1px solid black;
+                    }
+                }
+                .icon(all, @col-all);
+                .icon(calc, @col-calc);
+                .icon(vars, @col-vars);
+                .icon(branch, @col-branch);
+                .icon(util, @col-util);
+
+                width: 2em;
+                height: 2em;
+                cursor: pointer;
+            }
+        }
+        .filter-text {
+            margin-top: 0.5em;
+            input {
+                box-sizing: border-box;
+                width: 100%;
+            }
+        }
+        padding: 0.5em;
+        background-color: @col-new-entry-header;
+    }
+    .container .elements {
+        .element {
+            .styling (@name, @color) {
+                &.@{name} > div {
+                    background-color: lighten(desaturate(@color, 10%), 30%);
+                }
+                &.@{name} > div:hover,
+                &.@{name} .active {
+                    background-color: @color;
+                }
+                &.@{name} .preview-button {
+                    border-left: 1px solid saturate(@color, 20%);
+                }
+            }
+            .styling(calc, @col-calc);
+            .styling(vars, @col-vars);
+            .styling(branch, @col-branch);
+            .styling(util, @col-util);
+
+            margin: 0.5em;
+            display: flex;
+            flex-direction: row;
+
+            .title {
+                font-size: 0.9em;
+                border-bottom: 1px solid black;
+            }
+            .desc {
+                font-size: 0.6em;
+            }
+            .type {
+                font-size: 0.6em;
+                color: @col-type-color;
+            }
+            .create-button {
+                flex-grow: 1;
+                padding: 0.5em;
+                cursor: pointer;
+            }
+            .preview-button {
+                padding: 0.5em;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+            }
+        }
+
+        background-color: @col-new-entry-body;
+        max-height: 20em;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    .details {
+        background-color: @col-new-entry-body;
+    }
+}
+
+.code-preview {
+    .styling (@name, @color) {
+        &.@{name} .header {
+            background-color: @color;
+        }
+        &.@{name} .setup-container {
+            background-color: lighten(desaturate(@color, 10%), 30%);
+        }
+    }
+
+    margin: 0.5em;
+
+    .styling(calc, @col-calc);
+    .styling(vars, @col-vars);
+    .styling(branch, @col-branch);
+    .styling(util, @col-util);
+
+    .header {
+        display: flex;
+        padding: 0.5em;
+        align-items: center;
+        .command-name {
+            font-size: 0.9em;
+            flex-grow: 1;
+        }
+        .output-type {
+            font-size: 0.75em;
+            color: @col-type-color;
+
+        }
+    }
+    .setup-container {
+        min-height: 1em;
+        padding: 0.5em;
+        .item {
+            margin-bottom: 0.5em;
+            display: flex;
+            align-items: center;
+            &.value {
+                border-radius: 0.5em;
+                background-color: lighten(@col-all, 20%);
+                padding: 0.25em 0.5em;
+            }
+            &.block {
+                background-color: @col-code-bg;
+                padding: 0.25em 0.5em;
+            }
+            &.op {
+                border-radius: 0.5em; 
+                background-color: spin(lighten(@col-all, 20%), 20);
+                padding: 0.25em 0.5em;
+            }
+            &.param {
+                border-radius: 0.5em; 
+                background-color: spin(lighten(@col-all, 20%), 40);
+                padding: 0.25em 0.5em;
+            }
+            &.list {
+                background-color: white;
+                padding: 0.25em 0.5em;
+                display: block;
+                & .list.placeholder {
+                    margin-bottom: 0.5em;
+                }
+            }
+            .placeholder {
+                font-size: 0.8em;
+                flex-grow: 1;
+            }
+            .type {
+                font-size: 0.7em;
+                color: @col-type-color;
+            }
+        }
+    }
+}
+
+.code-element-view {
+    .styling (@name, @color) {
+        &.@{name} > .header {
+            background-color: @color;
+        }
+        &.@{name} > .body {
+            background-color: lighten(desaturate(@color, 10%), 30%);
+        }
+    }
+
+    .styling(calc, @col-calc);
+    .styling(vars, @col-vars);
+    .styling(branch, @col-branch);
+    .styling(util, @col-util);
+
+    position: relative;
+
+    & > .header {
+        display: flex;
+        padding: 0.5em;
+        align-items: center;
+        .closer {
+            width: 2em;
+            position: relative;
+            cursor: pointer;
+            div {
+                width: 0;
+                height: 0;
+                top: 50%;
+                left: 50%;
+                position: absolute;
+                &::before {
+                    content: '';
+                    border-top: 0px solid;
+                    border-left: 0.5em solid transparent;
+                    border-right: 0.5em solid transparent;
+                    border-bottom: 1em solid lighten(@col-code-bg, 20);
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    top: -0.5em;
+                    left: -0.75em;
+                }
+            }
+            &.closed div::before {
+                transform: rotate(180deg);
+            }
+            &:hover div::before {
+                border-bottom: 1em solid darken(@col-code-bg, 20);
+            }
+        }
+        .movable {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            cursor: move;
+        }
+        .name {
+            font-size: 0.9em;
+        }
+        .preview {
+            flex-grow: 1;
+            font-size: 0.8em;
+            text-align: center;
+        }
+        .type {
+            font-size: 0.75em;
+            color: @col-type-color;
+        }
+        & > .remover {
+            padding: 0.25em 0.5em;
+            cursor: pointer;
+            background-color: lighten(@col-type-color, 20);
+            color:white;
+            border-radius: 1em;
+            margin-left: 0.5em;
+            &:hover {
+                background-color: darken(@col-type-color, 20);
+            }
+        }
+    }
+    & > .body {
+        min-height: 1em;
+        padding: 0.5em;
+        & > * {
+            margin-bottom: 0.5em;
+        }
+        .operator-view {
+            border-radius: 0.5em;
+            background-color: spin (lighten(@col-all, 20%), 20);
+            overflow: hidden;
+            padding: 0 0.5em;
+            .select {
+                box-sizing: border-box;
+                border: none;
+                width: 100%;
+                padding: 0.25em 0;
+                background-color: transparent;
+            }
+        }
+        .value-info-view {
+            border-radius: 0.5em;
+            background-color: lighten(@col-all, 20%);
+            display: flex;
+            &.focus {
+                background-color: mix(lighten(@col-all, 20%), yellow);
+            }
+            & > .header {
+                padding: 0.25em 0.5em;
+                cursor: pointer;
+                position: relative;
+                border-right: 1px solid @col-all;
+                align-self: stretch;
+                .type {
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0.5em;
+                    background-color: white;
+                    color: @col-type-color;
+                    padding: 0.25em 0.5em;
+                    white-space: nowrap;
+                    z-index: 10;
+                    font-size: 0.75em;
+                    box-shadow: 0.25em 0.25em 0.5em black;
+                }
+                &:hover .type {
+                    display: block;
+                }
+            }
+            & > .input {
+                flex-grow: 1;
+                align-self: center;
+                & > .empty {
+                    padding: 0.25em 0;
+                    text-align: center;
+                    font-style: italic;
+                    color: darken(@col-all, 40);
+                    font-size: 0.7em;
+                }
+                & > .value.int,
+                & > .value.float,
+                & > .value.string,
+                & > .value.RoleKey,
+                & > .value.PhaseKey,
+                & > .value.ChatKey,
+                & > .value.VotingKey,
+                & > .variable {
+                    padding: 0 0.25em;
+                    display: flex;
+                    input, select {
+                        box-sizing: border-box;
+                        border: none;
+                        background-color: transparent;
+                        padding: 0.25em 0;
+                        flex-grow: 1;
+                    }
+                }
+                & > .value.bool {
+                    display: flex;
+                    padding: 0.25em 0;
+                    justify-content: center;
+                    .buttons {
+                        display: flex;
+                        border-radius: 0.25em;
+                        overflow: hidden;
+                        .button(@name, @color) {
+                            .@{name} {
+                                background-color: #ffffff88;
+                                border: 1px solid @color;
+                                padding: 0.25em 0.5em;
+                                cursor: pointer;
+                            }
+                            .@{name}:hover, 
+                            .@{name}.active {
+                                background-color: @color;
+                            }
+                        }
+                        .border(@radius) {
+                            .true {
+                                border-top-left-radius: @radius;
+                                border-bottom-left-radius: @radius;
+                            }
+                            .false {
+                                border-top-right-radius: @radius;
+                                border-bottom-right-radius: @radius;
+                            }
+                        }
+                        .button(true, green);
+                        .button(false, red);
+                        .border(0.5em);
+                    }
+                }
+                & > .block {
+                    padding: 0.25em;
+                }
+            }
+            & > .input-selector {
+                position: relative;
+            }
+            & > .input-selector select {
+                height: 100%;
+                background-color: transparent;
+                border: none;
+                padding: 0.25em 0.5em;
+                margin: 0 0.5em 0 0;
+                border-left: 1px solid @col-all;
+            }
+        }
+        
+        .parameter-view {
+            border-radius: 0.5em;
+            background-color: spin(lighten(@col-all, 20%), 40);
+            display: flex;
+            align-items: center;
+            .header {
+                padding: 0.25em 0.5em;
+            }
+            input {
+                box-sizing: border-box;
+                padding: 0.25em 0.5em;
+                border: none;
+                border-left: 1px solid darken(spin(lighten(@col-all, 20%), 40), 40%);
+                border-right: 1px solid darken(spin(lighten(@col-all, 20%), 40), 40%);
+                background-color: transparent;
+                flex-grow: 1;
+                height: 100%;
+            }
+            .type {
+                padding: 0.25em 0.5em;
+                color: @col-type-color;
+                font-size: 0.8em;
+            }
+        }
+    }
+    & > .drag-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #88888888;
+        cursor: no-drop;
+        &:hover {
+            background-color: #888888cc;
+        }
+    }
+}
+.code-block-view {
+    & > .header {
+        background-color: @col-code-bg;
+        .name {
+            background-color: darken(@col-code-bg, 20);
+            color: white;
+            padding: 0.25em 0.5em;
+            cursor: pointer;
+        }
+        & > div {
+            display: flex;
+        }
+        .return, .input-vars {
+            display: flex;
+            padding: 0.25em 0.5em;
+        }
+        .spacer {
+            flex-grow: 1;
+        }   
+        & .remover {
+            padding: 0.25em 0.5em;
+            cursor: pointer;
+            background-color: lighten(@col-type-color, 20);
+            color:white;
+            font-size: 0.8em;
+            border-radius: 1em;
+            margin: 0.25em 0.25em 0.25em 0.5em;
+            &:hover {
+                background-color: darken(@col-type-color, 20);
+            }
+        }
+    }
+    & > .body {
+        background-color: lighten(@col-code-bg, 20%);
+        padding: 0 0.5em 0.5em;
+        & > .adder-space {
+            display: flex;
+            justify-content: center;
+            .adder {
+                background-color: @col-code-bg;
+                color: darken(@col-code-bg, 20);
+                border-radius: 1em;
+                padding: 0.2em 0.5em;
+                font-size: 1.2em;
+                cursor: pointer;
+                &:hover {
+                    background-color: darken(@col-code-bg, 20);
+                    color: lighten(@col-code-bg, 20%);
+                }
+            }
+        }
+        & > .spacer {
+            height: 0.5em;
+            position: relative;
+            &.expand div {
+                position: absolute;
+                top: -1em;
+                bottom: -1em;
+                left: 0;
+                right: 0;
+                z-index: 5;
+            }
+            &.focus {
+                background-color: white;
+                background: repeating-linear-gradient(
+                    135deg,
+                    white,
+                    white 0.2em,
+                    black 0.2em,
+                    black 0.4em
+                );
+            }
+            &.focus div {
+                cursor: grab;
+            }
+        }
+    }
+}
+
+.variable-info-view {
+    display: flex;
+    background-color: lighten(@col-all, 20%);
+    font-size: 0.8em;
+    border-radius: 0.5em;
+    align-items: center;
+    input {
+        box-sizing: border-box;
+        border: none;
+        background-color: transparent;
+        padding: 0.25em 0.5em;
+        width: 5em;
+    }
+    .splitter {
+        color: darken(@col-all, 30);
+    }
+    .type {
+        color: @col-type-color;
+        font-size: 0.9em;
+        padding: 0.25em 0.5em;
+    }
+}
+
+.edit-list-view {
+    padding: 0.25em 0.5em;
+    background-color: white;
+
+    & > .body {
+        & > .entry {
+            display: flex;
+            margin: 0.25em 0;
+            & > :first-child {
+                flex-grow: 1;
+            }
+            & > .adder,
+            & > .remover {
+                padding: 0.25em 0.65em;
+                cursor: pointer;
+                background-color: lighten(@col-type-color, 20);
+                color:red;
+                border-radius: 1em;
+                margin-left: 0.5em;
+                &:hover {
+                    background-color: darken(@col-type-color, 20);
+                }
+            }
+            & > .adder {
+                color: inherit;
+            }
+        }
+    }
+    & > .adder {
+        margin-top: 0.5em;
+        padding: 0.25em 0.5em;
+        cursor: pointer;
+        background-color: lighten(@col-type-color, 40);
+        text-align: center;
+        border-radius: 0.25em;
+        &:hover {
+            background-color: darken(@col-type-color, 40);
+            color: white;
+        }
+    }
+    & > .body > .entry > .edit-list-view {
+        border: 1px solid gray;
+    }
+}
+
+.error-node {
+    margin: 0.25em 0.5em;
+    position: relative;
+    .indicator {
+        background-color: red;
+        color: white;
+        padding: 0.5em;
+        border-radius: 1em;
+        cursor: pointer;
+        font-size: 0.75em;
+    }
+    .info {
+        display: none;
+        position: absolute;
+        z-index: 10;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        font-size: 0.75em;
+        box-shadow: 0.25em 0.25em 0.5em black;
+        white-space: nowrap;
+        .error {
+            padding: 0.25em 0.5em;
+        }
+    }
+    .info.active,
+    &:hover .info {
+        display: block;
+    }
+}
+
+.code-environment {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    .code-section {
+        flex-grow: 3;
+        flex-shrink: 3;
+        padding: 0.5em;
+        .code-section-container {
+            .code-section-header {
+                font-size: 1.6em;
+                border-bottom: 1px solid #ccc;
+                margin: 0.5em 0;
+            }
+            .code-section-adder {
+                display: flex;
+                margin-bottom: 0.5em;
+                .selects {
+                    display: flex;
+                    div {
+                        padding: 0 0.5em;
+                        background-color: #ccc;
+                        border-radius: 1em;
+                    }
+                    select {
+                        background: transparent;
+                        border: none;
+                        font-family: inherit;
+                    }
+                    div + div,
+                    & + div {
+                        margin-left: 0.5em;
+                    }
+                }
+                .add {
+                    font-size: 0.8em;
+                    padding: 0.1em 0.75em;
+                    background-color: #aaa;
+                    cursor: pointer;
+                    &:hover {
+                        background-color: #ccc;
+                    }
+                }
+            }
+            .code-section-body {
+                & > div + div {
+                    margin-top: 0.5em;
+                }
+            }
+        }
+    }
+    .clipboard {
+        flex-grow: 2;
+        flex-shrink: 2;
+        padding: 0.5em;
+        & > .adder {
+            background-color: lighten(@col-code-bg, 20%);
+            text-align: center;
+            padding: 0.5em 0;
+            border-radius: 1em;
+            margin-bottom: 0.5em;
+            cursor: pointer;
+            &:hover {
+                background-color: darken(@col-code-bg, 20);
+                color: lighten(@col-code-bg, 20%);
+            }
+        }
+        & > div + div {
+            margin-top: 0.5em;
+        }
+    }
+}
+.code-editor {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .view-mode-selector {
+        display: flex;
+        border-bottom: 1px solid #ccc;
+
+        .button {
+            padding: 0.25em 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 0.5em;
+            margin: 0.25em;
+            cursor: pointer;
+
+            &.selected {
+                background-color: #ccc;
+                color: white;
+            }
+            &:hover {
+                background-color: #eee;
+                color: inherit;
+            }
+        }
+    }
+    & > pre {
+        margin: 0;
+        flex-grow: 1;
+        flex-shrink: 1;
+        overflow: auto;
+    }
+}
+
+.new-entry-frame {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    & > .background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+    .new-entry-box {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        max-height: 100%;
+        max-width: 100%;
+        box-shadow: 0.5em 0.5em 2em #333;
+    }
+}
+
+body {
+    font-family: sans-serif;
+    padding: 0;
+    margin: 0;
+
+    .container, .details {
+        width: 20em;
+    }
+
+    & > div:first-child,    
+    .code-editor-container {
+      position: relative;
+    }
+    & > div:first-child {
+      width: 100%;
+      height: 100vh;
+    }   
+    .code-editor-container {
+      flex-grow: 1;
+      flex-shrink: 1;
+    }
+    .code-section,
+    .clipboard {
+      overflow: auto;
+    }
+}

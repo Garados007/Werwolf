@@ -1,0 +1,34 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+}
+.page-main-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+.navigation-box {
+  flex-shrink: 0;
+  padding: 0.5em;
+  min-width: 12em;
+  overflow: auto;
+  border-right: 1px solid #aaa;
+}
+.page-content {
+  position: relative;
+  overflow: auto;
+  flex-grow: 1;
+  flex-shrink: 1;
+  
+  & > :first-child {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+  }
+}

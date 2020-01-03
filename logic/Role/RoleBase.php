@@ -193,9 +193,9 @@ class RoleBase {
     protected function filterTopScore($score) {
         $list = array();
         if (count($score) === 0) return $list;
-        for ($i = 0; $i<count($result); ++$i)
-            if ($result[$i][1] == $result[0][1])
-                $list[] = Player::create($result[$i][0]);
+        for ($i = 0; $i<count($score); ++$i)
+            if ($score[$i][1] == $score[0][1])
+                $list[] = Player::create($score[$i][0]);
             else break;
         return $list;
     }

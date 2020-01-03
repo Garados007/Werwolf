@@ -67,7 +67,7 @@ class RoleHandler {
             return true;
         $config = self::loadConfig($key);
         if ($config === false) {
-            $this->roleBuffer[$key] = array();
+            self::$roleBuffer[$key] = array();
             return false;
         }
         $roles = array();
