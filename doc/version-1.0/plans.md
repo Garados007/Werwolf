@@ -1,6 +1,6 @@
 # Version 1.0
 
-After nearly 4 years of development, many experiments, fails and success I plan to release my first version 1.0. For this the whole project get a new facelift. 
+After almost 4 years of development, many experiments, fails and success I plan to release my first version 1.0. For this the whole project get a new facelift. 
 
 During the major changes that will happen it could be that the backward compability will be destroyed. But I will try my best to restore old games.
 
@@ -74,6 +74,12 @@ The build could also be managed by the online workbench or command line. But the
 
 Additionaly I plan to add a build pipeline to automaticly submit the build package from the build server to the runtime build. But for this there is more security required (no manipulation from outside).
 
+## LESS CSS Preprocessor
+
+To write the styles in css is a little difficult. In future I want to use a php implementation of a less css preprocessor [https://github.com/leafo/lessphp](https://github.com/leafo/lessphp). 
+
+These files will also precompiled during the setup routine.
+
 ## Reorganisation of the repository paths
 
 The paths will be reorganised in a better logical structure. Currently the different projects are somehow merged and are not realy separated.
@@ -92,3 +98,4 @@ First I want to make some plans and refine my decissions. A new branch `develop-
 
 Because this is my hobby free time project this will take some time. I hope I can finish these changes at the end of 2020.
 
+The old tickets will not be deleted. Instead new ones will created.
