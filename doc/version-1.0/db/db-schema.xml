@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd 
+        http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd">
+    <Environment>
+        <EnvVars>
+            <Attribute name="userId" type="uint" />
+        </EnvVars>
+        <Build profile="default">
+            <PHP dbEngine="sql-mabron-db-connector"
+                classNamespace="Werewolf\DB"
+            />
+        </Build>
+    </Environment>
+    <Types>
+        <Type name="UserStats">
+            <Attributes>
+                <Attribute name="UserId" type="uint" unique="true" />
+                <Attribute name="FirstGame" type="date" optional="true" />
+                <Attribute name="LastGame" type="date" optional="true" />
+                <Attribute name="GameCount" type="uint" default="0" />
+                <Attribute name="WinningCount" type="uint" default="0" />
+                <Attribute name="ModeratorCount" type="uint" default="0" />
+                <Attribute name="LastOnline" type="date" default="now" />
+                <Attribute name="TotalBanCount" type="uint" default="0" />
+                <Attribute name="TotalBanDays" type="uint" default="0" />
+                <Attribute name="PermaBanCount" type="uint" default="0" />
+                <Attribute name="SpokenBanCount" type="uint" default="0" />
+            </Attributes>
+        </Type>
+        <Type name="Group">
+            <Attributes>
+                <Attribute name="Name" type="string" />
+                <Attribute name="Created" type="date" default="now" />
+                <Attribute name="LastGame" type="date" optional="true" />
+                <Attribute name="EnterKey" type="string" unique="true" />
+            </Attributes>
+            <Joints>
+                <Joint name="Creator" target="UserStats" />
+                <Joint name="Leader" target="UserStats" />
+                <Joint name="CurrentGame" target="Game" required="false" />
+            </Joints>
+            <Access>
+                <Query name="getFromEnterKey" use="search">
+                    <Inputs>
+                        <InputVar name="key" type="string" />
+                    </Inputs>
+                    <Bounds>
+                        <Compare type="=">
+                            <Target name="EnterKey" />
+                            <Input name="key" />
+                        </Compare>
+                    </Bounds>
+                </Query>
+            </Access>
+        </Type>
+        <Type name="Game">
+            <Attributes>
+                <Attribute name="Started" type="date" default="now" />
+                <Attribute name="Finished" type="date" optional="true" />
+                <Attribute name="CurrentPhase" type="string" />
+                <Attribute name="CurrentDay" type="byte" />
+                <Attribute name="Gamemode" type="string" />
+            </Attributes>
+            <Joints>
+                <Joint name="Group" target="Group" />
+            </Joints>
+        </Type>
+        <Type name="GameWinner">
+            <Attributes>
+            </Attributes>
+            <Joints>
+                <Joint name="Game" target="Game" />
+                <Joint name="User" target="GameUser" />
+            </Joints>
+        </Type>
+        <Type name="GroupUser">
+            <Attributes>
+            </Attributes>
+            <Joints>
+                <Joint name="Group" target="Group" />
+                <Joint name="User" target="UserStats" />
+                <Joint name="Player" target="Player" required="false" />
+            </Joints>
+        </Type>
+        <Type name="Player">
+            <Attributes>
+                <Attribute name="Alive" type="bool" default="true" />
+            </Attributes>
+            <Joints>
+                <Joint name="User" target="GameUser" />
+            </Joints>
+        </Type>
+        <Type name="Core_Player_OldMan" base="Player">
+            <Attributes>
+                <Attribute name="ExtraLive" type="bool" default="true" />
+            </Attributes>
+        </Type>
+        <Type name="Role">
+            <Attributes>
+                <Attribute name="Key" type="string" />
+            </Attributes>
+            <Joints>
+                <Joint name="Player" target="Player" />
+            </Joints>
+        </Type>
+        <Type name="VisibleRole">
+            <Attributes></Attributes>
+            <Joints>
+                <Joint name="Role" target="Role" />
+                <Joint name="Viewer" target="Player" />
+            </Joints>
+        </Type>
+        <Type name="ChatRoom">
+            <Attributes>
+                <Attribute name="Key" type="string" />
+                <Attribute name="GameRoom" type="bool" default="true" />
+            </Attributes>
+            <Joints>
+                <Joint name="Group" target="Group" />
+            </Joints>
+        </Type>
+        <Type name="ChatLog">
+            <Attributes>
+                <Attribute name="Message" type="string" />
+                <Attribute name="SendDate" type="date" />
+            </Attributes>
+            <Joints>
+                <Joint name="Chat" target="ChatRoom" />
+                <Joint name="Sender" target="User" />
+            </Joints>
+            <Access>
+                <Query name="getNewerEntrys" use="search">
+                    <Inputs>
+                        <InputVar name="startDate" type="date" />
+                        <InputObj name="chat" target="ChatRoom" />
+                    </Inputs>
+                    <Bounds>
+                        <Bool type="and">
+                            <Compare type="geq">
+                                <Target name="SendDate" />
+                                <Input name="startDate" />
+                            </Compare>
+                            <Compare type="=">
+                                <Joint name="Chat" />
+                                <Object name="chat" />
+                            </Compare>
+                        </Bool>
+                    </Bounds>
+                </Query>
+            </Access>
+        </Type>
+        <Type name="ChatPermission">
+            <Attributes>
+                <Attribute name="PEnable" type="bool" />
+                <Attribute name="PWrite" type="bool" />
+                <Attribute name="PVisible" type="bool" />
+            </Attributes>
+            <Joints>
+                <Joint name="Chat" target="ChatRoom" />
+                <Joint name="User" target="GroupUser" />
+            </Joints>
+        </Type>
+        <Type name="Voting">
+            <Attributes>
+                <Attribute name="Key" type="string" />
+                <Attribute name="Created" type="date" default="now" />
+                <Attribute name="VoteStart" type="date" optional="true" />
+                <Attribute name="VoteEnd" type="date" optional="true" />
+            </Attributes>
+            <Joints>
+                <Joint name="Chat" target="ChatRoom" />
+                <Joint name="Result" target="GroupUser" required="false" />
+            </Joints>
+        </Type>
+        <Type name="VotingVoter">
+            <Attributes></Attributes>
+            <Joints>
+                <Joint name="Voting" target="Voting" />
+                <Joint name="User" target="GroupUser" />
+            </Joints>
+        </Type>
+        <Type name="VotingTarget">
+            <Attributes></Attributes>
+            <Joints>
+                <Joint name="Voting" target="Voting" />
+                <Joint name="User" target="GroupUser" />
+            </Joints>
+        </Type>
+        <Type name="Vote">
+            <Attributes>
+                <Attribute name="Date" type="date" default="now" />
+            </Attributes>
+            <Joints>
+                <Joint name="Voting" target="Voting" />
+                <Joint name="Voter" target="VotingVoter" />
+                <Joint name="Target" target="VotingTarget" />
+            </Joints>
+        </Type>
+        <Type name="UserConfig">
+            <Attributes>
+                <Attribute name="UiConfig" type="json" default="null" />
+            </Attributes>
+            <Joints>
+                <Joint name="User" target="UserStats" />
+            </Joints>
+        </Type>
+        <Type name="BanInfo">
+            <Attributes>
+                <Attribute name="Start" type="date" default="now" />
+                <Attribute name="EndDate" type="date" optional="true" />
+                <Attribute name="Comment" type="string" />
+            </Attributes>
+            <Joints>
+                <Joint name="User" target="UserStats" />
+                <Joint name="Spoker" target="UserStats" />
+                <Joint name="Group" target="Group" />
+            </Joints>
+        </Type>
+    </Types>
+</DataDefinition>
