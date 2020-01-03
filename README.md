@@ -1,7 +1,8 @@
 # Werwolf
 
-This is the web implementation of the popular group game Werwolves of Millers Hill. 
-This project is not finnished but in parts playable. 
+This hobby project of mine is a web implemantion of one of my favorite games: Werwolves of Millers Hill (in german Werwölfe von Düsterwald). In this project I will experiment a lot and currently it is partly playable.
+
+At this time I prepare the next step to the first public release `1.0`. My plans for it you can find [here](https://github.com/Garados007/Werwolf/blob/master/doc/version-1.0/plans.md).
 
 ## What about this project?
 
