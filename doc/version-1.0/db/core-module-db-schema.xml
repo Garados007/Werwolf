@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd 
+        file:///E:\Dokumente\GitLab\DataLayout\data-layout.xsd">
+    <Environment>
+        <Build>
+            <CSharp supported="false" />
+            <PHP supported="false"/>
+        </Build>
+    </Environment>
+    <Types>
+        <Type name="Player_OldMan" base="Player">
+            <Attributes>
+                <Attribute name="ExtraLive" type="bool" default="true" />
+            </Attributes>
+        </Type>
+    </Types>
+</DataDefinition>

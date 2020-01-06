@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd"
+<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd 
-        http://doc.mabron.de/xsd/data-layout/2019-01/data-layout.xsd">
+    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd 
+    http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd">
     <Environment>
         <EnvVars>
             <Attribute name="userId" type="uint" />
+            <Attribute name="dbLimit" type="uint" default="20" />
         </EnvVars>
         <Build profile="default">
             <PHP dbEngine="sql-mabron-db-connector"
@@ -13,6 +14,9 @@
             />
         </Build>
     </Environment>
+    <Extensions>
+        <Extension file="core-module-db-schema.xml" prefix="Core_" use="required" />
+    </Extensions>
     <Types>
         <Type name="UserStats">
             <Attributes>
@@ -28,6 +32,71 @@
                 <Attribute name="PermaBanCount" type="uint" default="0" />
                 <Attribute name="SpokenBanCount" type="uint" default="0" />
             </Attributes>
+            <Access>
+                <Query name="getUser" use="search" limit="first" cache="true">
+                    <Inputs>
+                        <InputVar name="userId" type="uint" />
+                    </Inputs>
+                    <Bounds>
+                        <Compare type="=">
+                            <Target name="UserId" />
+                            <Input name="userId" />
+                        </Compare>
+                    </Bounds>
+                </Query>
+                <Query name="me" use="search" limit="first" cache="true">
+                    <Inputs>
+                    </Inputs>
+                    <Bounds>
+                        <Compare type="=">
+                            <Target name="UserId" />
+                            <Env name="userId" />
+                        </Compare>
+                    </Bounds>
+                </Query>
+                <Query name="getMostGameCount" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="GameCount" order="descend" />
+                        <Member name="WinningCount" order="descend" />
+                        <Member name="ModeratorCount" order="descend" />
+                    </Sort>
+                </Query>
+                <Query name="getMostWinGameCount" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="WinningCount" order="descend" />
+                        <Member name="GameCount" order="descend" />
+                        <Member name="ModeratorCount" order="descend" />
+                    </Sort>
+                </Query>
+                <Query name="getMostModCount" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="ModeratorCount" order="descend" />
+                        <Member name="GameCount" order="descend" />
+                        <Member name="WinningCount" order="descend" />
+                    </Sort>
+                </Query>
+                <Query name="getMostBanned" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="TotalBanCount" order="descend" />
+                        <Member name="TotalBanDays" order="descend" />
+                        <Member name="PermaBanCount" order="descend" />
+                    </Sort>
+                </Query>
+                <Query name="getLongestBanned" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="TotalBanDays" order="descend" />
+                        <Member name="TotalBanCount" order="descend" />
+                        <Member name="PermaBanCount" order="descend" />
+                    </Sort>
+                </Query>
+                <Query name="getMostPermaBanned" use="search" limit="env" limitVar="dbLimit">
+                    <Sort>
+                        <Member name="PermaBanCount" order="descend" />
+                        <Member name="TotalBanCount" order="descend" />
+                        <Member name="TotalBanDays" order="descend" />
+                    </Sort>
+                </Query>
+            </Access>
         </Type>
         <Type name="Group">
             <Attributes>
@@ -42,7 +111,7 @@
                 <Joint name="CurrentGame" target="Game" required="false" />
             </Joints>
             <Access>
-                <Query name="getFromEnterKey" use="search">
+                <Query name="getFromEnterKey" use="search" limit="first">
                     <Inputs>
                         <InputVar name="key" type="string" />
                     </Inputs>
@@ -68,16 +137,12 @@
             </Joints>
         </Type>
         <Type name="GameWinner">
-            <Attributes>
-            </Attributes>
             <Joints>
                 <Joint name="Game" target="Game" />
-                <Joint name="User" target="GameUser" />
+                <Joint name="User" target="GroupUser" />
             </Joints>
         </Type>
         <Type name="GroupUser">
-            <Attributes>
-            </Attributes>
             <Joints>
                 <Joint name="Group" target="Group" />
                 <Joint name="User" target="UserStats" />
@@ -89,13 +154,8 @@
                 <Attribute name="Alive" type="bool" default="true" />
             </Attributes>
             <Joints>
-                <Joint name="User" target="GameUser" />
+                <Joint name="User" target="GroupUser" />
             </Joints>
-        </Type>
-        <Type name="Core_Player_OldMan" base="Player">
-            <Attributes>
-                <Attribute name="ExtraLive" type="bool" default="true" />
-            </Attributes>
         </Type>
         <Type name="Role">
             <Attributes>
@@ -106,7 +166,6 @@
             </Joints>
         </Type>
         <Type name="VisibleRole">
-            <Attributes></Attributes>
             <Joints>
                 <Joint name="Role" target="Role" />
                 <Joint name="Viewer" target="Player" />
@@ -128,10 +187,10 @@
             </Attributes>
             <Joints>
                 <Joint name="Chat" target="ChatRoom" />
-                <Joint name="Sender" target="User" />
+                <Joint name="Sender" target="GroupUser" />
             </Joints>
             <Access>
-                <Query name="getNewerEntrys" use="search">
+                <Query name="getNewerEntrys" use="search" limit="env" limitVar="dbLimit">
                     <Inputs>
                         <InputVar name="startDate" type="date" />
                         <InputObj name="chat" target="ChatRoom" />
@@ -148,6 +207,9 @@
                             </Compare>
                         </Bool>
                     </Bounds>
+                    <Sort>
+                        <Member name="SendDate" order="ascend" />
+                    </Sort>
                 </Query>
             </Access>
         </Type>
@@ -175,14 +237,12 @@
             </Joints>
         </Type>
         <Type name="VotingVoter">
-            <Attributes></Attributes>
             <Joints>
                 <Joint name="Voting" target="Voting" />
                 <Joint name="User" target="GroupUser" />
             </Joints>
         </Type>
         <Type name="VotingTarget">
-            <Attributes></Attributes>
             <Joints>
                 <Joint name="Voting" target="Voting" />
                 <Joint name="User" target="GroupUser" />
@@ -217,6 +277,56 @@
                 <Joint name="Spoker" target="UserStats" />
                 <Joint name="Group" target="Group" />
             </Joints>
+            <Access>
+                <Query name="getNewest" use="search" limit="env" limitVar="dbLimit">
+                    <Bounds>
+                        <Compare type="geq">
+                            <Target name="EndDate" />
+                            <Value type="date" value="now" />
+                        </Compare>
+                    </Bounds>
+                    <Sort>
+                        <Member name="Start" order="descend" />
+                        <Member name="EndDate" order="ascend" />
+                    </Sort>
+                </Query>
+                <Query name="getOldest" use="search" limit="env" limitVar="dbLimit">
+                    <Bounds>
+                        <Compare type="geq">
+                            <Target name="EndDate" />
+                            <Value type="date" value="now" />
+                        </Compare>
+                    </Bounds>
+                    <Sort>
+                        <Member name="Start" order="ascend" />
+                        <Member name="EndDate" order="ascend" />
+                    </Sort>
+                </Query>
+                <Query name="getSpecific" use="search" limit="first">
+                    <Inputs>
+                        <InputObj name="user" target="UserStats" />
+                        <InputObj name="group" target="Group" />
+                    </Inputs>
+                    <Bounds>
+                        <Bool type="and">
+                            <Bool type="and">
+                                <Compare type="=">
+                                    <Joint name="User" />
+                                    <Object name="user" />
+                                </Compare>
+                                <Compare type="=">
+                                    <Joint name="Group" />
+                                    <Object name="group" />
+                                </Compare>
+                            </Bool>
+                            <Compare type="geq">
+                                <Target name="EndDate" />
+                                <Value type="date" value="now" />
+                            </Compare>
+                        </Bool>
+                    </Bounds>
+                </Query>
+            </Access>
         </Type>
     </Types>
 </DataDefinition>
