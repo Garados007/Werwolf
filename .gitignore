@@ -10,3 +10,4 @@ ui/module/cache/
 ui/roles
 setup/version.txt
 node_modules/
+vendor/

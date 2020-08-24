@@ -1,22 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd"
+<DataDefinition xmlns="http://doc.mabron.de/xsd/data-layout/2020-04/data-layout.xsd"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd 
-    http://doc.mabron.de/xsd/data-layout/2020-01/data-layout.xsd">
+    xsi:schemaLocation="http://doc.mabron.de/xsd/data-layout/2020-04/data-layout.xsd 
+    file:///E:\Dokumente\GitLab\DataLayout\data-layout.xsd">
     <Environment>
         <EnvVars>
             <Attribute name="userId" type="uint" />
             <Attribute name="dbLimit" type="uint" default="20" />
         </EnvVars>
-        <Build profile="default">
+        <Build profile="default" security="include">
             <PHP dbEngine="sql-mabron-db-connector"
                 classNamespace="Werewolf\DB"
+                maxDbTableNameLength="16"
+            />
+            <PHP-GraphQL 
+                classLoaderType="Query"
+
             />
         </Build>
     </Environment>
     <Extensions>
         <Extension file="core-module-db-schema.xml" prefix="Core_" use="required" />
     </Extensions>
+    <DefaultTypeSecurity>
+        <Create>
+            <Exclude build="php-graphql"/>
+        </Create>
+        <Delete>
+            <Exclude build="php-graphql"/>
+        </Delete>
+        <DefaultAttribute>
+            <Exclude build="php-graphql" access="set" />
+        </DefaultAttribute>
+        <DefaultJoint>
+            <Exclude build="php-graphql" access="set"/>
+        </DefaultJoint>
+    </DefaultTypeSecurity>
     <Types>
         <Type name="UserStats">
             <Attributes>
@@ -124,7 +143,7 @@
                 </Query>
             </Access>
         </Type>
-        <Type name="Game">
+        <Type name="Game" fullQuery="true">
             <Attributes>
                 <Attribute name="Started" type="date" default="now" />
                 <Attribute name="Finished" type="date" optional="true" />
@@ -149,7 +168,7 @@
                 <Joint name="Player" target="Player" required="false" />
             </Joints>
         </Type>
-        <Type name="Player">
+        <Type name="Player" fullQuery="true">
             <Attributes>
                 <Attribute name="Alive" type="bool" default="true" />
             </Attributes>
@@ -157,7 +176,7 @@
                 <Joint name="User" target="GroupUser" />
             </Joints>
         </Type>
-        <Type name="Role">
+        <Type name="Role" fullQuery="true">
             <Attributes>
                 <Attribute name="Key" type="string" />
             </Attributes>
@@ -280,10 +299,15 @@
             <Access>
                 <Query name="getNewest" use="search" limit="env" limitVar="dbLimit">
                     <Bounds>
-                        <Compare type="geq">
-                            <Target name="EndDate" />
-                            <Value type="date" value="now" />
-                        </Compare>
+                        <Bool type="or">
+                            <IsNull>
+                                <Target name="EndDate" />
+                            </IsNull>
+                            <Compare type="geq">
+                                <Target name="EndDate" />
+                                <Value type="date" value="now" />
+                            </Compare>
+                        </Bool>
                     </Bounds>
                     <Sort>
                         <Member name="Start" order="descend" />
@@ -292,10 +316,15 @@
                 </Query>
                 <Query name="getOldest" use="search" limit="env" limitVar="dbLimit">
                     <Bounds>
-                        <Compare type="geq">
-                            <Target name="EndDate" />
-                            <Value type="date" value="now" />
-                        </Compare>
+                        <Bool type="or">
+                            <IsNull>
+                                <Target name="EndDate" />
+                            </IsNull>
+                            <Compare type="geq">
+                                <Target name="EndDate" />
+                                <Value type="date" value="now" />
+                            </Compare>
+                        </Bool>
                     </Bounds>
                     <Sort>
                         <Member name="Start" order="ascend" />
@@ -319,10 +348,15 @@
                                     <Object name="group" />
                                 </Compare>
                             </Bool>
-                            <Compare type="geq">
-                                <Target name="EndDate" />
-                                <Value type="date" value="now" />
-                            </Compare>
+                            <Bool type="or">
+                                <IsNull>
+                                    <Target name="EndDate" />
+                                </IsNull>
+                                <Compare type="geq">
+                                    <Target name="EndDate" />
+                                    <Value type="date" value="now" />
+                                </Compare>
+                            </Bool>
                         </Bool>
                     </Bounds>
                 </Query>
