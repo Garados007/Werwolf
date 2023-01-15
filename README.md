@@ -1,5 +1,7 @@
 # Werwolf
 
+> In favour of https://github.com/Garados007/Werewolf is this project no longer developed and maintained. Any suggestions and ideas can be implemented there. The official live server of this project will be closed down in near future.
+
 This hobby project of mine is a web implemantion of one of my favorite games: Werwolves of Millers Hill (in german Werwölfe von Düsterwald). In this project I will experiment a lot and currently it is partly playable.
 
 At this time I prepare the next step to the first public release `1.0`. My plans for it you can find [here](https://github.com/Garados007/Werwolf/blob/master/doc/version-1.0/plans.md).
